@@ -4,11 +4,11 @@ Space Engineers 1 client engineering HUD prototype. Start with [ROADMAP.md](ROAD
 
 ## Current implementation
 
-Version 0.5.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
+Version 0.6.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
 
 Controller changes, closed grids, session unload and disposal clear the schematic. Grid name changes update without waiting for geometry rebuilding. The view defaults and cockpit-relative view commands are unchanged.
 
-A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). No full block meshes, blueprint import, settings UI, custom networking or world edits yet. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
+A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). Local blueprint import with an explicit alignment preview, system/state filters, live/reference/compare modes, expanded layout and saved display preferences are included. See [current commands](docs/COMMANDS.md) and the editable [testing to-do](TESTING-TODO.md). Full block meshes, a graphical settings editor, mechanical construct comparison and automatic Nexus reassociation are not implemented. No custom networking or world edits. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
 
 ## Build and checks
 
@@ -113,3 +113,11 @@ The user confirmed the default/reset horizontal projection in 0.4.10 is correct.
 Implemented `/mg anchor`, persistent `/mg capture`, `/mg profiles`, `/mg profile select ID`, `/mg profile detach`, `/mg profile delete ID`, and `/mg recover`. Data is stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, using versioned bounded records, atomic replacement and a previous-version backup. Profile selection after reload is explicit; automatic Nexus matching and blueprint import remain deferred. See docs/PROFILES-0.5.md for usage and verification. Historical session-only notes above describe older builds.
 
 0.5.0 validation: Release build completed with zero warnings/errors. Passed 119 profile persistence/alignment checks plus the existing observer, comparison, fill, geometry and control checks. Installed assembly 0.5.0.0 into MarigoldDev with SHA-256 verification of all package files; previous package retained under artifacts/backup-before-0.5.0. In-game save/reload and Nexus transfer validation remain pending.
+
+## 0.6.0 — Blueprint import and engineering display controls
+
+Adds bounded plain/gzip SBC import, explicit grid/cockpit pairing, unsaved alignment preview and accepted persistent baselines. Adds system isolation, change filters, marker pagination, live/reference/compare modes, compact/expanded layouts, explicit saved preferences and cockpit-relative profile suggestions. Unchanged observations reuse geometry; game-thread snapshots still run periodically. Suggestions never select a profile automatically.
+
+Release build passed with zero warnings/errors. Automated checks: 12 observer lifecycle, 16 blueprint parser/command, 45 display/settings/suggestion, 119 profile persistence/alignment, 5 fill, 29 snapshot comparison, 6,973 geometry and 403 command/orientation checks. Pure checks and API doubles do not validate the live renderer, imported game definition conversion, multiplayer replication or Nexus transfers. User testing is deferred in [TESTING-TODO.md](TESTING-TODO.md); no unchecked item is considered validated.
+
+Installed assembly 0.6.0.0 into the authorized Pulsar `Legacy/Local/MarigoldDev` folder. DLL, PDB and metadata SHA-256 hashes match the built package. The previous package is preserved under `artifacts/backup-before-0.6.0`. Restart the game to load the new version.

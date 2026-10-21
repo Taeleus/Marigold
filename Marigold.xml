@@ -7,14 +7,16 @@
   <Description>Marigold shows a small, rotating diagram of the ship you are piloting. Turn the view, zoom in, and spot damaged or missing blocks.
 
 GETTING STARTED
-Sit in a cockpit and type /mg for help.
+Sit in a cockpit and type /mg for help. Try /mg layout expanded for a larger view.
 Use /mg anchor to save this cockpit as your ship profile's anchor, then /mg capture to save its layout. Use /mg report to see what has changed.
 
 After reloading, sit in the matching cockpit, use /mg profiles to find its ID, then /mg profile select ID.
 
 Yellow shading marks damage. Orange marks blocks too damaged or unfinished to function. Gently pulsing red marks missing blocks, green marks additions, and purple marks replacements. Gray marks unreadable block data. Missing means absent from this ship compared with your reference, including parts that have detached.
 
-This is an early prototype. Ship profiles and captured layouts are saved locally across reloads. Blueprint imports, automatic Nexus matching, and attached rotor or piston grids are not supported yet.
+This is an early prototype. Ship profiles and captured layouts are saved locally across reloads. You can import a local blueprint as your intended layout: /mg help blueprint explains the preview and acceptance steps. Use /mg help display for system filters, view modes and saved display preferences.
+
+Attached rotor or piston grids and automatic Nexus matching are not supported yet. /mg profile suggest can help you find a saved profile after reconnecting; you choose which one to use.
 
 You can also use /marigold instead of /mg.</Description>
   <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>

@@ -1,45 +1,36 @@
 # Marigold roadmap
 
-## Current position â€” 0.4.10
+## Current position — 0.6.0
 
-The usable prototype is in place: a cockpit-relative ship schematic, chat controls, persistent profile-based reference capture, comparison markers and translucent damage shading. The user confirmed missing-block behavior and the corrected default/reset orientation. Source is published at https://github.com/Taeleus/Marigold on master.
+The single-grid engineering HUD now includes persistent cockpit-anchored profiles, capture and blueprint baselines, damage comparison, system/state filters, marker pagination, display modes, a larger display layout, saved preferences and manual profile suggestions. Source is published at https://github.com/Taeleus/Marigold on master.
+
+The user confirmed earlier orientation and missing-marker fixes. Versions 0.5 and 0.6 still need in-game testing. Development proceeds independently of that backlog: append checks to [TESTING-TODO.md](TESTING-TODO.md) without overwriting user notes. Automated checks do not complete in-game checkboxes.
 
 ## Scope and guardrails
 
-Client-only Space Engineers 1 engineering HUD for Pulsar Legacy / .NET Framework 4.8. Never change the world or send custom network messages. Red means absent from the observed ship relative to its baseline, including detached blocks; it does not assert destruction. Gray is reserved for unreadable block data. The game installation and SpaceEngineers roaming directory remain read-only development references.
+Client-only Space Engineers 1 HUD for Pulsar Legacy / .NET Framework 4.8. No world edits or custom network messages. Game installation and SpaceEngineers roaming folders are read-only. Profile/settings data goes in `%APPDATA%/Marigold`. Red means absent from the selected grid relative to its baseline, including detached blocks; gray means unreadable integrity data.
 
-## Milestones and acceptance gates
+## Milestones
 
-| Milestone | Status | Remaining verification or work |
+| Milestone | Implementation | Remaining |
 | --- | --- | --- |
-| Setup and API research | Established | Recheck rules and packaging before PluginHub submission |
-| Controlled-ship observer | Implemented; switching and live naming confirmed | Broader remote-control, disconnect and teardown testing |
-| Schematic renderer and controls | Implemented; user confirmed rotation, controls, shading and corrected orientation | Real in-game profiling on large ships; broader display/resolution checks |
-| Snapshot comparison | Implemented for this world session; missing-state behavior confirmed | Verify orange functional threshold, repair/replacement cases, splits and multiplayer freshness in game |
-| Persistent profiles and cockpit anchors | Implemented in 0.5.0; pure persistence/alignment tests pass | In-game save/reload and explicit profile reassociation checks; Nexus-specific validation |
-| Blueprint baseline import | After persistent profiles | Bounded local blueprint parser, grid selection, cockpit pairing, alignment preview and acceptance |
-| Categories and observation quality | Planned | System filters, isolation, incremental updates and multiplayer observation testing |
-| Mechanical constructs | Planned | Rotor/hinge/piston grids, moving transforms, detachment and connector exclusion |
-| Engineering UI and release | Planned | Settings/profile UI, profiling, PluginHub source compilation, cleanup and rules review |
+| Controlled-grid observer | Implemented; switching/live names previously confirmed | Remote control, multiplayer and unload regressions |
+| Outline and orientation | Implemented; default/reset orientation previously confirmed | Broader displays, ship sizes and live profiling |
+| Damage comparison | Implemented for selected grid; colors and missing behavior previously confirmed | Functional thresholds, repairs, replacements and multiplayer freshness |
+| Persistent profiles and anchors | Implemented 0.5 | User save/reload, cockpit switching and transfer tests |
+| Blueprint baseline import | Implemented 0.6 | User tests of multi-cell anchors, rotated/modded blocks and preview acceptance |
+| System filters and display modes | Implemented 0.6 | User visual/filter/page tests; unusual mod types may classify as other |
+| Observation optimization | Unchanged geometry reused in 0.6 | Large-grid game-thread sampling benchmarks; true incremental dirty-block sampling |
+| Profile reassociation | Manual selection and layout suggestions implemented | Nexus testing; automatic matching must not confuse identical ships |
+| Mechanical constructs | Not implemented | Stable component identity, per-grid baselines, moving transforms, detachment, connector exclusion |
+| Engineering UI | Chat workflows and compact/expanded panels implemented | Graphical settings/profile/blueprint picker and localized text |
+| Release readiness | Local package builds and automated checks available | In-game performance/compatibility, PluginHub source compilation and pinned manifest/rules review |
 
-## Implemented slice: persistent profiles and cockpit anchors
+## Next development slices
 
-1. Save versioned profiles containing a stable profile ID, baseline blocks and an anchor record. Store them outside the read-only SpaceEngineers folders. Use atomic writes and recoverable backups; test malformed or incompatible files.
-2. Implement `/mg anchor` while seated. Record the selected cockpit's grid-local position, orientation, definition and name. Keep this separate from the game's Main cockpit setting. Switching seats must not change baseline alignment.
-3. Make capture update the selected profile explicitly, and provide profile list/select/remove commands. Distinguish clearing a baseline from deleting a saved profile.
-4. Restore profiles after world reload or reconnect. Keep profile identity independent of display names and runtime grid IDs. Require explicit selection when multiple identical ships could match.
-5. Research and test Nexus transfers before enabling automatic reassociation. Verify a candidate using its anchor and surrounding layout; retain manual reassociation when uncertain. Do not promise Nexus compatibility before this validation.
+1. Mechanical constructs: represent component grids and their attachment topology separately from display coordinates. Preserve each component's block coordinates while rotor/hinge/piston transforms move. Compare against persistent component baselines, distinguish detachment from motion, and exclude connector-only docked ships. Add tests before exposing construct capture; the existing single-grid format must remain readable.
+2. Incremental observations: reduce full-grid sampling cost, bound queued work and retain periodic reconciliation for damage events not exposed to clients. Measure in the actual game before promising frame-time limits.
+3. Graphical settings/profile picker: reuse existing commands and explicit blueprint preview/accept workflow. Retain readable chat help and compact ship-name-only caption.
+4. Release packaging: confirm PluginHub rules and source compile against the target loader, prepare a pinned source manifest, and run the accumulated in-game checklist before calling the plugin release-ready.
 
-Acceptance: anchor and capture a ship, leave/reload the world, select or reliably reassociate its profile, and compare against the original baseline. Renames and cockpit switches preserve the anchor. Two identical ships remain distinct profiles. Missing anchors never silently attach a baseline to another ship.
-
-## Following slice: blueprint baselines
-
-Import a local blueprint into the same profile format used by captures. Select the intended grid and pair its cockpit with the live anchor. Use the cockpit orientation for rotation and its position for translation. Preview and accept the alignment before reporting differences. Multiple cockpit candidates require selection; mechanical subgrid alignment is deferred.
-
-## Validation ledger
-
-Build/check results are recorded in README.md; API evidence is in docs/API-EVIDENCE.md. Pure tests and compilation do not establish live runtime or multiplayer behavior. Historical implementation notes remain in docs; this roadmap supersedes their older milestone priorities. Persistent profiles and anchors are implemented in 0.5.0. Blueprint import and automatic Nexus reassociation are not implemented.
-
-## Immediate next gate
-
-Validate 0.5.0 in game: anchor, capture, reload, select the saved profile, and verify damage remains aligned. Test switching seats and selecting profiles for identically named ships. After that, implement bounded local blueprint import and an alignment preview. Automatic transfer matching stays gated on Nexus research and testing.
+No automated Nexus matching or mechanical construct compatibility is claimed. The explicit profile workflow is available across worlds without relying on runtime entity IDs or grid names.

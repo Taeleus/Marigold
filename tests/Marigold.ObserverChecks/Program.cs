@@ -68,6 +68,8 @@ internal static class Program
         plugin.Dispose();plugin.Dispose();
         Check(MySession.Handlers==0 && overlay.Grid==null && overlay.Disposed,"Disposal cleans up");
         Console.WriteLine("PASS: " + checks + " observer lifecycle checks (API doubles, not in-game validation).");
+        BlueprintChecks.Run();
+        DisplayChecks.Run();
         ProfileChecks.Run();
         FillChecks.Run();
         SnapshotChecks.Run();

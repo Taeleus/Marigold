@@ -17,12 +17,13 @@ namespace Marigold
     {
         public Box3 Bounds;
         public ChangeKind Kind;
+        public string Definition;
     }
     internal sealed class Comparison
     {
         public readonly List<BlockChange> Changes=new List<BlockChange>();
         public readonly int[] Counts=new int[7];
-        public void Add(Box3 bounds,ChangeKind kind) { Changes.Add(new BlockChange { Bounds=bounds,Kind=kind }); Counts[(int)kind]++; }
+        public void Add(Box3 bounds,ChangeKind kind,string definition) { Changes.Add(new BlockChange { Bounds=bounds,Kind=kind,Definition=definition }); Counts[(int)kind]++; }
         public string Summary { get { return Counts[1]+" missing, "+Counts[2]+" damaged/degraded, "+Counts[6]+" non-functional, "+Counts[3]+" replaced, "+Counts[4]+" added, "+Counts[5]+" unknown"; } }
     }
     internal static class SnapshotComparison
@@ -36,21 +37,21 @@ namespace Marigold
             {
                 BlockSample now;
                 if(!observed.TryGetValue(old.Position,out now))
-                { result.Add(old.Bounds,ChangeKind.Missing); continue; }
+                { result.Add(old.Bounds,ChangeKind.Missing,old.Definition); continue; }
                 observed.Remove(old.Position);
                 if(old.Definition!=now.Definition || old.Forward!=now.Forward || old.Up!=now.Up ||
                     !old.Bounds.Min.Equals(now.Bounds.Min) || !old.Bounds.Max.Equals(now.Bounds.Max))
-                    result.Add(SchematicGeometry.Union(old.Bounds,now.Bounds),ChangeKind.Replaced);
-                else if(!Valid(now) || !Valid(old)) result.Add(now.Bounds,ChangeKind.Unknown);
-                else if(now.HasFunctionalState && !now.IsFunctional) result.Add(now.Bounds,ChangeKind.NonFunctional);
+                    result.Add(SchematicGeometry.Union(old.Bounds,now.Bounds),ChangeKind.Replaced,now.Definition);
+                else if(!Valid(now) || !Valid(old)) result.Add(now.Bounds,ChangeKind.Unknown,now.Definition);
+                else if(now.HasFunctionalState && !now.IsFunctional) result.Add(now.Bounds,ChangeKind.NonFunctional,now.Definition);
                 else
                 {
                     double tolerance=Math.Max(0.001,now.MaxIntegrity*0.0001);
                     if(now.Integrity+tolerance<old.Integrity || now.BuildIntegrity+tolerance<old.BuildIntegrity ||
-                        now.Integrity+tolerance<now.BuildIntegrity) result.Add(now.Bounds,ChangeKind.Damaged);
+                        now.Integrity+tolerance<now.BuildIntegrity) result.Add(now.Bounds,ChangeKind.Damaged,now.Definition);
                 }
             }
-            foreach(var pair in observed) result.Add(pair.Value.Bounds,ChangeKind.Added);
+            foreach(var pair in observed) result.Add(pair.Value.Bounds,ChangeKind.Added,pair.Value.Definition);
             result.Changes.Sort((a,b)=>
             {
                 int c=Priority(a.Kind).CompareTo(Priority(b.Kind)); if(c!=0)return c;

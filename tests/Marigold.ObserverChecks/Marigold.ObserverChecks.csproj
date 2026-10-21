@@ -14,5 +14,9 @@
     <Compile Include="../../src/Marigold.Plugin/MarkerFill.cs" Link="MarkerFill.cs" />
     <Compile Include="../../src/Marigold.Plugin/ShipProfile.cs" Link="ShipProfile.cs" />
     <Compile Include="../../src/Marigold.Plugin/ProfileStore.cs" Link="ProfileStore.cs" />
+    <Compile Include="../../src/Marigold.Plugin/BlueprintDocument.cs" Link="BlueprintDocument.cs" />
+    <Compile Include="../../src/Marigold.Plugin/DisplayFilter.cs" Link="DisplayFilter.cs" />
+    <Compile Include="../../src/Marigold.Plugin/DisplaySettings.cs" Link="DisplaySettings.cs" />
+    <Compile Include="../../src/Marigold.Plugin/ProfileSuggestions.cs" Link="ProfileSuggestions.cs" />
   </ItemGroup>
 </Project>
