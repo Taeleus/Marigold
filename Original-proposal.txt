@@ -1,0 +1,844 @@
+# Project: Space Engineers Ship Hologram & Damage Diagnostics
+
+## 1. Project Overview
+
+Develop a **completely client-side Space Engineers 1 plugin using Pulsar** that displays an interactive, miniature 3D holographic representation of the player's current ship directly in the HUD.
+
+The inspiration is the Space Engineers **Projector Preview** mod, but instead of requiring a physical projector block, the ship visualization should appear as an independent HUD overlay.
+
+The system should support:
+
+* Real-time visualization of the player's current ship.
+* Loading saved blueprints as reference models.
+* Capturing snapshots of existing ships.
+* Comparing live ships against their original blueprints or snapshots.
+* Identifying missing, damaged, destroyed, or newly added blocks.
+* Filtering ship components by category.
+* Automatically detecting and switching between ships.
+* Persistent ship profiles and reference blueprints.
+* Fully client-side execution without requiring server mods, plugins, or configuration changes.
+
+**Primary goal:** Create a lightweight, interactive engineering and damage-assessment interface suitable for large ships and multiplayer environments, including heavily modded servers such as SDX2.
+
+The plugin must be read-only and must never modify the player's ship or the game world.
+
+---
+
+# 2. Development Platform
+
+## Primary Implementation: Pulsar Client Plugin
+
+Use C# and the current Pulsar plugin development framework.
+
+Investigate compatibility with:
+
+* Space Engineers 1 (.NET Framework runtime).
+* Space Engineers 1 (.NET 10 runtime).
+* Pulsar Legacy and Interim plugin targets.
+
+Prioritize the runtime used by the current development environment, but design the code to support both where practical.
+
+### Development Resources
+
+**Pulsar:**
+https://github.com/SpaceGT/Pulsar
+
+**PluginHub:**
+https://github.com/StarCpt/PluginHub
+
+**Client Plugin Template:**
+https://github.com/CometWorks/client-plugin-template
+
+**Space Engineers AI Development Skills:**
+https://github.com/CometWorks/skills
+
+**Keen Software House ModAPI:**
+https://github.com/KeenSoftwareHouse/SpaceEngineersModAPI
+
+**ModAPI Documentation:**
+https://keensoftwarehouse.github.io/SpaceEngineersModAPI/
+
+**Projector Preview reference:**
+https://steamcommunity.com/sharedfiles/filedetails/?id=517675282
+
+### AI Development Skills
+
+Install and review the appropriate development skills:
+
+```bash
+npx skills add CometWorks/skills
+```
+
+Relevant skills:
+
+* `se-dev-plugin`
+* `se-dev-mod`
+* `se-dev-game-code`
+* `se-dev`
+
+Read the current skills and relevant project documentation before implementing anything.
+
+Use decompiled game code where necessary to identify available rendering methods, grid interfaces, and client-side functionality.
+
+**Do not invent Keen API methods or assume internal game interfaces are accessible. Verify implementations against current game assemblies and documentation.**
+
+---
+
+# 3. Plugin vs. Client Mod Decision
+
+Two implementations were considered:
+
+### Pulsar Client Plugin — Preferred
+
+Advantages:
+
+* Greater access to client-side game functionality.
+* More flexibility for HUD rendering.
+* Easier access to local blueprint files.
+* Better options for advanced UI and input handling.
+* More freedom to optimize rendering.
+* Easier management of persistent ship profiles.
+
+Disadvantages:
+
+* Greater potential maintenance requirements after game updates.
+* Internal API access may require publicizers or Harmony patches.
+* Plugin availability may depend on server policies.
+
+### Pulsar Client Mod — Alternative
+
+Advantages:
+
+* Can rely on Keen's supported ModAPI.
+* Potentially simpler integration.
+* Less dependence on internal game implementation details.
+
+Disadvantages:
+
+* More restrictive API whitelist.
+* Limited filesystem access.
+* Potentially more difficult interactive HUD rendering.
+* More restrictive blueprint import functionality.
+
+**Decision:** Build the initial implementation as a Pulsar client plugin.
+
+However, separate the core ship-model and comparison logic from Pulsar-specific functionality so that a client-mod implementation remains possible in the future.
+
+Do not implement both simultaneously unless a technical blocker warrants comparison.
+
+---
+
+# 4. Core Features
+
+## 4.1 Automatic Ship Detection
+
+The plugin should automatically detect the ship currently being controlled by the player.
+
+Expected behavior:
+
+1. Player enters a cockpit, flight seat, or remote-control interface.
+2. Plugin identifies the controlled grid.
+3. Plugin determines the relevant ship construct.
+4. Plugin searches for an existing saved ship profile.
+5. If found, the associated reference blueprint and display settings are loaded.
+6. If no profile exists, the live grid is displayed and the player can create or associate a reference.
+7. Switching to another ship automatically switches the displayed hologram and profile.
+
+Examples:
+
+* Enter Miner A → Display Miner A.
+* Exit Miner A → Hide HUD or preserve last view according to settings.
+* Enter Corvette B → Display Corvette B.
+* Return to Miner A → Restore Miner A's profile and settings.
+
+Support:
+
+* Cockpits.
+* Flight seats.
+* Remote-control blocks.
+* Multiple controllers on the same construct.
+* Mechanically connected subgrids.
+
+Distinguish mechanical subgrids from grids merely connected through connectors.
+
+Docked ships should not automatically become part of one another's reference models.
+
+### Ship Identification
+
+Do not rely exclusively on grid entity IDs.
+
+Use a persistent profile system incorporating:
+
+* Grid entity ID.
+* Ship name.
+* Grid dimensions.
+* Structural fingerprint.
+* Associated reference blueprint.
+* Last known state.
+* User-defined profile identifier.
+
+Entity IDs may change after respawning, pasting, merging, or rebuilding ships.
+
+Structural matching should help identify previously known ships when their entity IDs change.
+
+Avoid automatically associating two ships based on a weak match. Offer manual confirmation when identification is ambiguous.
+
+---
+
+# 5. HUD Hologram
+
+## 5.1 General Appearance
+
+Display a miniature, interactive 3D model of the ship directly in the player's HUD.
+
+The display should be independent of physical projector blocks and should not require placing any blocks in the world.
+
+The hologram should support:
+
+* Rotation.
+* Zoom.
+* Camera reset.
+* Pan, where practical.
+* Adjustable HUD position.
+* Adjustable display size.
+* Transparency controls.
+* Wireframe mode.
+* Component highlighting.
+* Visibility filters.
+* Preset configurations.
+
+## 5.2 Display Modes
+
+Implement two interface modes using the same rendering engine.
+
+### Compact HUD
+
+A small hologram displayed in a configurable corner of the screen.
+
+Designed for use while flying.
+
+Features:
+
+* Minimal screen obstruction.
+* Basic ship overview.
+* Current damage indicators.
+* Configurable component filters.
+* Hotkey-controlled visibility.
+
+### Expanded Engineering HUD
+
+An enlarged interactive display activated through a configurable hotkey.
+
+Features:
+
+* Full rotation and zoom.
+* Detailed component filtering.
+* Blueprint selection.
+* Live/reference comparison.
+* Damage diagnostics.
+* Ship statistics.
+* Profile management.
+
+The expanded display should avoid interfering with normal ship controls when it is not active.
+
+---
+
+# 6. Component Filtering
+
+Users should be able to independently toggle visibility of different ship systems.
+
+Suggested categories:
+
+| Category        | Displayed Components                           |
+| --------------- | ---------------------------------------------- |
+| Armor           | Light armor, heavy armor, decorative armor     |
+| Conveyors       | Conveyor tubes, junctions, sorters, connectors |
+| Thrusters       | Atmospheric, ion, hydrogen, modded thrusters   |
+| Weapons         | Turrets, fixed weapons, launchers              |
+| Power           | Reactors, batteries, hydrogen engines          |
+| Hydrogen/Oxygen | Tanks, generators, relevant systems            |
+| Mechanical      | Rotors, hinges, pistons                        |
+| Production      | Assemblers, refineries                         |
+| Cargo           | Cargo containers and inventories               |
+| Control         | Cockpits, gyroscopes, remote controls          |
+| Functional      | Other functional blocks                        |
+| Damage          | Damaged and missing components                 |
+
+Support modded blocks through their definitions where possible.
+
+Filtering modes should include:
+
+* Visible.
+* Hidden.
+* Transparent.
+* Highlighted.
+* Wireframe.
+
+### Isolate Mode
+
+Allow the user to display only selected categories.
+
+Example:
+
+**Conveyor Isolation**
+
+Hide all armor and unrelated functional blocks while displaying the conveyor network.
+
+This should make it easier to trace conveyor routing through heavily armored ships.
+
+Future functionality may include actual conveyor connectivity diagnostics, but simple visualization should be implemented first.
+
+---
+
+# 7. Live Grid and Blueprint References
+
+The system must maintain two independent ship models:
+
+**Live Model:** The current state of the player's ship.
+
+**Reference Model:** A saved blueprint or snapshot representing the expected ship configuration.
+
+These models must never overwrite one another automatically.
+
+## 7.1 Reference Sources
+
+Support three reference sources:
+
+### Live Snapshot
+
+Capture the current ship's block configuration and save it locally.
+
+Useful for recording the ship's pristine state before combat.
+
+### Local Blueprint
+
+Allow the player to load a locally stored Space Engineers blueprint, such as `bp.sbc`.
+
+### Workshop Blueprint
+
+Support importing locally available Workshop blueprints where technically feasible.
+
+Do not require downloading blueprints from external services for normal operation.
+
+## 7.2 Reference Locking
+
+Reference models should remain immutable until explicitly replaced by the user.
+
+For example:
+
+1. Player captures a pristine ship.
+2. Reference is saved and locked.
+3. Ship enters combat.
+4. Ship loses multiple blocks.
+5. Live model updates.
+6. Reference remains unchanged.
+7. Damage comparison identifies the missing components.
+
+The reference must never be automatically updated from a damaged ship.
+
+## 7.3 Reference Revisions
+
+Design the data model to support multiple named reference versions.
+
+Examples:
+
+* Original Build.
+* Mk II Retrofit.
+* Pre-Combat.
+* Post-Repair.
+* Custom Revision.
+
+Only one reference needs to be active at a time.
+
+---
+
+# 8. Damage Comparison
+
+Implement three visualization modes.
+
+### Live Mode
+
+Display the ship's current block configuration.
+
+### Reference Mode
+
+Display the selected saved reference.
+
+### Comparison Mode
+
+Overlay differences between the live ship and reference.
+
+## 8.1 Damage Classification
+
+Suggested visual states:
+
+| State              | Suggested Color |
+| ------------------ | --------------- |
+| Intact             | Green           |
+| Damaged            | Orange          |
+| Missing/Destroyed  | Red             |
+| Newly Added        | Blue            |
+| Unknown/Unverified | Gray            |
+
+Colors should eventually be configurable.
+
+The comparison engine should detect:
+
+* Missing blocks.
+* Existing but damaged blocks, when integrity information is available.
+* Newly installed blocks.
+* Replaced blocks.
+* Modified ship structure.
+* Differences in functional-block placement.
+
+Do not assume every client has access to complete server-side block integrity data.
+
+Validate available information in multiplayer.
+
+### Important: Blueprint Alignment
+
+Reference blueprints may not share the same origin or orientation as live grids.
+
+The plugin must align the reference to the live grid before comparing block positions.
+
+Investigate approaches involving:
+
+* Block coordinates.
+* Block orientations.
+* Grid dimensions.
+* Structural fingerprints.
+* Distinctive block patterns.
+
+Provide a manual alignment mechanism if automatic alignment is ambiguous or unsuccessful.
+
+Account for heavily damaged ships that no longer retain their original overall shape.
+
+### Ship Integrity Statistics
+
+Potential metrics:
+
+* Reference block count.
+* Current matching block count.
+* Missing block count.
+* Damaged block count.
+* Added block count.
+* Structural completeness percentage.
+* Integrity percentage, if sufficiently reliable data exists.
+
+Clearly distinguish block completeness from actual block integrity.
+
+Do not report unverified values as authoritative.
+
+---
+
+# 9. Subgrid Support
+
+Design the architecture to support complete mechanical constructs.
+
+Relevant systems:
+
+* Rotors.
+* Hinges.
+* Pistons.
+* Turret subgrids.
+* Mechanically connected grids.
+
+Each grid should retain its own coordinate system.
+
+The renderer must transform subgrid geometry relative to the parent construct.
+
+Account for moving subgrids and changing mechanical orientations.
+
+Initial implementation may render only the main grid, but the internal data model must not assume that every ship consists of a single grid.
+
+Connector-docked ships should normally remain separate constructs.
+
+---
+
+# 10. Persistent Ship Profiles
+
+Persist profile information locally on the client.
+
+A profile should contain:
+
+```text
+ShipProfile
+├── ProfileId
+├── DisplayName
+├── KnownGridEntityIds
+├── StructuralFingerprint
+├── ReferenceBlueprints
+│   ├── ReferenceId
+│   ├── ReferenceName
+│   ├── ReferenceSource
+│   ├── ReferenceData
+│   └── CreatedAt
+├── ActiveReferenceId
+├── HUDSettings
+│   ├── Position
+│   ├── Size
+│   ├── CameraRotation
+│   ├── CameraZoom
+│   └── ComponentFilters
+└── LastObservedState
+```
+
+Use versioned serialization so profile data can be migrated after plugin updates.
+
+Avoid unnecessarily storing complete snapshots every frame.
+
+Allow profile selection and reference reassignment through the user interface.
+
+---
+
+# 11. Performance Requirements
+
+Performance is a high priority.
+
+The plugin must remain practical for large, modded multiplayer ships.
+
+Design for ships containing thousands or tens of thousands of blocks.
+
+## Performance Rules
+
+1. Do not rescan the entire ship every frame.
+2. Cache block positions, types, and orientations.
+3. Subscribe to appropriate grid events where reliable.
+4. Use incremental updates when blocks are added, removed, or modified.
+5. Maintain separate caches for the live model and immutable reference.
+6. Avoid allocating large collections every frame.
+7. Batch or instance geometry where supported.
+8. Use simplified geometry for distant or compact views.
+9. Reuse block meshes and block-definition information.
+10. Avoid unnecessary recalculation when switching display filters.
+11. Do not access live game objects from unsafe background threads.
+12. Support configurable refresh rates.
+13. Defer expensive blueprint parsing or matching operations when practical.
+14. Avoid expensive work during cockpit transitions.
+15. Release rendering resources and event handlers correctly.
+
+### Rendering Targets
+
+Initial goals, subject to profiling:
+
+* Smooth 30 FPS hologram rendering.
+* Minimal additional CPU overhead.
+* Minimal GPU overhead.
+* No noticeable simulation stuttering.
+* No full-grid reconstruction every frame.
+
+Measure actual frame times rather than assuming the plugin is faster than a mod.
+
+### Suggested Rendering Strategy
+
+```text
+Game Grid
+    ↓
+Grid Data Reader
+    ↓
+Normalized Block Model
+    ↓
+Incremental Model Cache
+    ↓
+Component Filtering
+    ↓
+Cached Geometry / Instances
+    ↓
+HUD Rendering Engine
+```
+
+Separate data collection from rendering.
+
+---
+
+# 12. Client-Side and Multiplayer Requirements
+
+The plugin must:
+
+* Run entirely on the client.
+* Require no server installation.
+* Avoid modifying the game world.
+* Avoid changing ship blocks.
+* Avoid sending custom network messages.
+* Avoid requesting unavailable server-side information.
+* Respect normal entity replication and visibility.
+* Use only information already accessible to the player's client.
+* Avoid attempts to bypass anti-cheat or server restrictions.
+
+Server compatibility is not guaranteed merely because the plugin is client-side.
+
+Test against ordinary multiplayer environments and document limitations.
+
+### Read-Only Design
+
+The plugin is a visualization and diagnostic tool only.
+
+It must never perform ship repair, block placement, automated welding, inventory manipulation, or other world-changing actions.
+
+---
+
+# 13. Recommended Software Architecture
+
+Use a modular design.
+
+Suggested repository:
+
+```text
+ShipHologram/
+├── src/
+│   ├── ShipHologram.Core/
+│   │   ├── Models/
+│   │   ├── GridComparison/
+│   │   ├── ShipMatching/
+│   │   ├── BlueprintNormalization/
+│   │   └── Profiles/
+│   │
+│   ├── ShipHologram.Plugin/
+│   │   ├── GameIntegration/
+│   │   ├── GridReader/
+│   │   ├── GridTracking/
+│   │   ├── BlueprintImport/
+│   │   ├── Rendering/
+│   │   ├── HUD/
+│   │   ├── Input/
+│   │   └── Settings/
+│   │
+│   └── ShipHologram.Mod/
+│       └── ModIntegration/
+│
+├── tests/
+├── docs/
+└── README.md
+```
+
+The mod project is optional and should not be implemented initially.
+
+### Core Library
+
+Responsible for:
+
+* Normalized grid representation.
+* Structural matching.
+* Reference alignment.
+* Damage comparison.
+* Profile serialization.
+* Component classification.
+
+Avoid direct dependencies on Keen's game runtime wherever practical.
+
+### Plugin Integration
+
+Responsible for:
+
+* Pulsar lifecycle.
+* Game API integration.
+* Player/controller detection.
+* Live grid observation.
+* Blueprint loading.
+* HUD rendering.
+* User input.
+* Local storage.
+
+### Rendering
+
+Responsible for:
+
+* Camera transforms.
+* Model scaling.
+* Geometry caching.
+* Visibility filtering.
+* Rendering batches.
+* HUD compositing.
+
+---
+
+# 14. Optional Future Features
+
+These features should not delay the initial prototype.
+
+## Damage History
+
+Record observed changes over time.
+
+Example:
+
+```text
+22:14:03 — Port armor block destroyed
+22:14:05 — Forward hydrogen thruster lost
+22:14:06 — Conveyor junction removed
+22:14:12 — Reactor integrity reduced
+```
+
+Records must represent changes actually observed by the client.
+
+They are not authoritative server combat telemetry.
+
+## Advanced Engineering Diagnostics
+
+Potential future capabilities:
+
+* Conveyor connectivity visualization.
+* Isolated conveyor-network identification.
+* Power distribution overview.
+* Thruster direction visualization.
+* Weapon placement analysis.
+* Functional block status indicators.
+* Damage clustering.
+* Repair priority visualization.
+* Pre-combat versus post-combat reports.
+
+---
+
+# 15. Development Phases
+
+## Phase 0 — Research and Feasibility
+
+Before implementing the complete plugin:
+
+1. Read current Pulsar documentation.
+2. Read the CometWorks development skills.
+3. Inspect the client plugin template.
+4. Inspect Keen's public ModAPI.
+5. Investigate relevant Space Engineers internal code.
+6. Identify the correct client rendering entry points.
+7. Determine how to access the player's controlled grid.
+8. Verify local blueprint parsing.
+9. Verify multiplayer accessibility of block integrity data.
+10. Confirm plugin lifecycle and cleanup requirements.
+
+The highest-risk technical problem is rendering an independent interactive 3D ship model within the HUD.
+
+Investigate this first.
+
+## Phase 1 — Minimal Plugin
+
+Create a working Pulsar plugin that:
+
+* Loads successfully.
+* Detects the player's current controlled grid.
+* Displays ship name and basic statistics.
+* Detects cockpit changes.
+* Correctly unloads and releases resources.
+
+No 3D rendering required yet.
+
+## Phase 2 — Basic 3D HUD
+
+Implement:
+
+* Simplified ship geometry.
+* HUD overlay.
+* Rotation.
+* Zoom.
+* Show/hide hotkey.
+* Automatic ship switching.
+
+Prioritize proving that the rendering architecture works.
+
+## Phase 3 — Component Filtering
+
+Implement:
+
+* Block categorization.
+* Visibility toggles.
+* Armor transparency.
+* Conveyor isolation.
+* Basic rendering presets.
+
+## Phase 4 — Reference System
+
+Implement:
+
+* Live snapshots.
+* Local blueprint imports.
+* Persistent ship profiles.
+* Reference locking.
+* Automatic reference loading.
+
+## Phase 5 — Damage Comparison
+
+Implement:
+
+* Blueprint alignment.
+* Missing block detection.
+* Added block detection.
+* Available integrity-state comparison.
+* Visual difference highlighting.
+* Structural completeness metrics.
+
+## Phase 6 — Advanced Support
+
+Implement:
+
+* Mechanical subgrids.
+* Improved modded-block compatibility.
+* Expanded engineering interface.
+* Performance optimizations.
+* Additional diagnostics.
+
+---
+
+# 16. Implementation Rules for Codex
+
+Follow these principles throughout development.
+
+1. Research APIs before using them.
+2. Prefer supported public APIs where possible.
+3. Use game internals only when justified.
+4. Avoid Harmony patches unless required.
+5. Keep Harmony patches isolated and documented.
+6. Do not assume Projector Preview's implementation can be reused without inspecting its actual source and licensing.
+7. Do not invent methods, interfaces, or properties.
+8. Verify multiplayer data availability before implementing dependent features.
+9. Avoid unnecessary dependencies.
+10. Keep core comparison logic independently testable.
+11. Write unit tests for reference alignment, ship matching, and damage comparison.
+12. Use robust error handling around blueprint parsing.
+13. Preserve saved ship profiles across plugin updates.
+14. Avoid blocking the game's main thread with expensive calculations.
+15. Document technical limitations and unresolved issues.
+16. Do not implement unnecessary features before proving the core renderer.
+17. Prioritize correctness, performance, maintainability, and multiplayer compatibility.
+
+---
+
+# 17. Immediate Assignment
+
+**Begin with Phase 0: Research and Feasibility.**
+
+Do not immediately attempt to implement the complete plugin.
+
+First:
+
+1. Inspect the current Pulsar repository and relevant development documentation.
+2. Read the `se-dev-plugin`, `se-dev-mod`, and `se-dev-game-code` skills.
+3. Examine the current plugin template and build requirements.
+4. Investigate existing Space Engineers hologram and projector-preview implementations.
+5. Locate the game's rendering APIs and identify realistic HUD-rendering approaches.
+6. Determine the best way to read and track controlled ship grids.
+7. Identify blueprint parsing and local storage options.
+8. Evaluate multiplayer limitations.
+9. Propose a concrete rendering architecture.
+10. Identify potential technical blockers.
+
+Produce a concise technical feasibility report containing:
+
+* Verified APIs and source references.
+* Recommended rendering implementation.
+* Plugin lifecycle design.
+* Grid detection strategy.
+* Blueprint loading strategy.
+* Reference comparison approach.
+* Expected performance considerations.
+* Known limitations.
+* Recommended implementation sequence.
+
+**After completing the research, proceed with a minimal working Pulsar plugin prototype that detects the controlled ship and displays its name and block count.**
+
+Keep the architecture extensible, but do not overengineer the initial prototype.
+
+## Final Objective
+
+Build a high-performance, completely client-side Space Engineers engineering HUD that provides an interactive holographic representation of the player's ship, automatically follows the ship they are controlling, supports saved reference blueprints, and visually identifies damage and structural differences without requiring any server-side modifications.
+
+The finished system should function as a practical ship diagnostics interface for mining vessels, combat ships, and large modded constructs.

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <DefineConstants>LOCAL_BUILD</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Marigold.Plugin/Plugin.cs" Link="Plugin.cs" />
+    <Compile Include="../../src/Marigold.Plugin/SchematicGeometry.cs" Link="SchematicGeometry.cs" />
+    <Compile Include="../../src/Marigold.Plugin/SchematicControls.cs" Link="SchematicControls.cs" />
+    <Compile Include="../../src/Marigold.Plugin/OutlineGeometry.cs" Link="OutlineGeometry.cs" />
+    <Compile Include="../../src/Marigold.Plugin/SnapshotComparison.cs" Link="SnapshotComparison.cs" />
+    <Compile Include="../../src/Marigold.Plugin/MarkerFill.cs" Link="MarkerFill.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>Marigold</AssemblyName>
+    <RootNamespace>Marigold</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Version>0.4.10</Version>
+    <DefineConstants>$(DefineConstants);LOCAL_BUILD</DefineConstants>
+    <Bin64 Condition="'$(Bin64)' == ''">D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</Bin64>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Sandbox.Graphics"><HintPath>$(Bin64)\Sandbox.Graphics.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage.Input"><HintPath>$(Bin64)\VRage.Input.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage.Render"><HintPath>$(Bin64)\VRage.Render.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Sandbox.Common"><HintPath>$(Bin64)\Sandbox.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Sandbox.Game"><HintPath>$(Bin64)\Sandbox.Game.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage"><HintPath>$(Bin64)\VRage.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage.Game"><HintPath>$(Bin64)\VRage.Game.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage.Library"><HintPath>$(Bin64)\VRage.Library.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="VRage.Math"><HintPath>$(Bin64)\VRage.Math.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+  </ItemGroup>
+  <Target Name="ValidateGamePath" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(Bin64)\Sandbox.Game.dll')" Text="Set Bin64 to the installed Space Engineers Bin64 directory." />
+  </Target>
+</Project>
+
+

@@ -1,0 +1,10 @@
+bin/
+obj/
+.cache/
+research/
+*.user
+*.log
+artifacts/
+
+# Downloaded reference snapshot, not project source
+PluginHub-Plugins.md

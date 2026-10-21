@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<PluginData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="GitHubPlugin">
+  <Id>7db0d53e-7572-4cbc-911e-25fa26ef182c</Id>
+  <FriendlyName>Marigold (prototype)</FriendlyName>
+  <Author>Taeleus</Author>
+  <Tooltip>See your ship's layout and spot damaged or missing blocks.</Tooltip>
+  <Description>Marigold shows a small, rotating diagram of the ship you are piloting. Turn the view, zoom in, and spot damaged or missing blocks.
+
+GETTING STARTED
+Sit in a cockpit and type /mg for help.
+Use /mg capture to remember your ship's current layout, then /mg report to see what has changed.
+
+Yellow shading marks damage. Orange marks blocks too damaged or unfinished to function. Gently pulsing red marks missing blocks, green marks additions, and purple marks replacements. Gray marks unreadable block data. Missing means absent from this ship compared with your reference, including parts that have detached.
+
+This is an early prototype. References are forgotten when you leave the world. Saved ship profiles, cockpit anchors, blueprint imports, and attached rotor or piston grids are not supported yet.
+
+You can also use /marigold instead of /mg.</Description>
+  <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>
+  <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
+</PluginData>
+
