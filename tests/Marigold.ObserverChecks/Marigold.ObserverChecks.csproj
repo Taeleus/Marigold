@@ -12,5 +12,7 @@
     <Compile Include="../../src/Marigold.Plugin/OutlineGeometry.cs" Link="OutlineGeometry.cs" />
     <Compile Include="../../src/Marigold.Plugin/SnapshotComparison.cs" Link="SnapshotComparison.cs" />
     <Compile Include="../../src/Marigold.Plugin/MarkerFill.cs" Link="MarkerFill.cs" />
+    <Compile Include="../../src/Marigold.Plugin/ShipProfile.cs" Link="ShipProfile.cs" />
+    <Compile Include="../../src/Marigold.Plugin/ProfileStore.cs" Link="ProfileStore.cs" />
   </ItemGroup>
 </Project>

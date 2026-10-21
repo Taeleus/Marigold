@@ -4,11 +4,11 @@ Space Engineers 1 client engineering HUD prototype. Start with [ROADMAP.md](ROAD
 
 ## Current implementation
 
-Version 0.4.10 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
+Version 0.5.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
 
 Controller changes, closed grids, session unload and disposal clear the schematic. Grid name changes update without waiting for geometry rebuilding. The view defaults and cockpit-relative view commands are unchanged.
 
-A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Session-only reference capture and comparison are included; see [Snapshot diagnostics](docs/SNAPSHOTS-0.4.md). No full block meshes, blueprint import, settings UI, networking, world edits or disk persistence yet. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
+A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). No full block meshes, blueprint import, settings UI, custom networking or world edits yet. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
 
 ## Build and checks
 
@@ -107,3 +107,9 @@ Replaces the insufficient 0.4.9 starting-angle adjustment with an explicit scree
 ## In-game confirmation
 
 The user confirmed the default/reset horizontal projection in 0.4.10 is correct. Current snapshots still last only for the world session; persistent profiles, cockpit anchors and blueprint import remain planned.
+
+## 0.5.0 persistent profiles
+
+Implemented `/mg anchor`, persistent `/mg capture`, `/mg profiles`, `/mg profile select ID`, `/mg profile detach`, `/mg profile delete ID`, and `/mg recover`. Data is stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, using versioned bounded records, atomic replacement and a previous-version backup. Profile selection after reload is explicit; automatic Nexus matching and blueprint import remain deferred. See docs/PROFILES-0.5.md for usage and verification. Historical session-only notes above describe older builds.
+
+0.5.0 validation: Release build completed with zero warnings/errors. Passed 119 profile persistence/alignment checks plus the existing observer, comparison, fill, geometry and control checks. Installed assembly 0.5.0.0 into MarigoldDev with SHA-256 verification of all package files; previous package retained under artifacts/backup-before-0.5.0. In-game save/reload and Nexus transfer validation remain pending.

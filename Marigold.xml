@@ -8,11 +8,13 @@
 
 GETTING STARTED
 Sit in a cockpit and type /mg for help.
-Use /mg capture to remember your ship's current layout, then /mg report to see what has changed.
+Use /mg anchor to save this cockpit as your ship profile's anchor, then /mg capture to save its layout. Use /mg report to see what has changed.
+
+After reloading, sit in the matching cockpit, use /mg profiles to find its ID, then /mg profile select ID.
 
 Yellow shading marks damage. Orange marks blocks too damaged or unfinished to function. Gently pulsing red marks missing blocks, green marks additions, and purple marks replacements. Gray marks unreadable block data. Missing means absent from this ship compared with your reference, including parts that have detached.
 
-This is an early prototype. References are forgotten when you leave the world. Saved ship profiles, cockpit anchors, blueprint imports, and attached rotor or piston grids are not supported yet.
+This is an early prototype. Ship profiles and captured layouts are saved locally across reloads. Blueprint imports, automatic Nexus matching, and attached rotor or piston grids are not supported yet.
 
 You can also use /marigold instead of /mg.</Description>
   <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>

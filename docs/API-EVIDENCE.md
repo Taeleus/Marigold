@@ -37,3 +37,7 @@ Installed decompiled Sandbox.Game/Entities/Cube/MySlimBlock.cs exposes Integrity
 MyCubeGrid.OnGridSplit is Action<MyCubeGrid,MyCubeGrid> (line 3878); split creation invokes originalGrid.OnGridSplit(originalGrid,myCubeGrid) at line 4810. Captured references retain this subscription until clear/session teardown. MultiplayerActive/IsServer compile against the installed ModAPI; client absence is conservatively unknown. These facts verify signatures/implementation, not live multiplayer observation freshness.
 
 0.4.4: installed Sandbox.Game/Entities/MyCubeBlock.cs line 321 defines IsFunctional as SlimBlock.ComponentStack.IsFunctional; IsWorking is a separate property at line 327. Only FatBlock instances implementing Sandbox.ModAPI.IMyFunctionalBlock are sampled for the orange state; Enabled and IsWorking are not used to infer structural failure.
+
+## Profiles 0.5
+
+MyCockpit in Sandbox.Game.Entities provides Position, Orientation, BlockDefinition and CustomName; these accesses compile against the installed assemblies. MyBlockOrientation.GetMatrix provides the anchor's discrete axes. Verified Base6Directions.Direction order in installed VRage.Math: Forward, Backward, Left, Right, Up, Down. Profile alignment transforms these directions and all envelope corners. No world IDs, grid names or runtime entity IDs are used as automatic persistent identity. Explicit profile selection pairs the cockpit after reload.

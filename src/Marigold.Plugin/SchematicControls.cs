@@ -18,11 +18,11 @@ namespace Marigold
         }
         public int Detail = 1;
         public bool StatsRequested;
-        public string ReferenceAction;
+        public string ReferenceAction, ProfileArgument;
         public string DetailName { get { return Detail == 0 ? "low" : Detail == 1 ? "medium" : "high"; } }
         public const double DefaultYaw = 0;
         public double Yaw = DefaultYaw, Pitch = -0.4, Zoom = 0.85;
-        public const string Help = "/mg show|hide|spin|reset|left|right|top|bottom|in|out; /mg zoom 0.25..3; /mg detail low|medium|high; /mg stats; /mg capture|clear|report";
+        public const string Help = "/mg show|hide|spin|reset|left|right|top|bottom|in|out; /mg zoom 0.25..3; /mg detail low|medium|high; /mg stats; /mg anchor|capture|clear|report; /mg profiles; /mg profile select|delete ID; /mg profile detach";
 
         public static bool Owns(string text)
         {
@@ -38,7 +38,7 @@ namespace Marigold
 
         public string Execute(string text)
         {
-            StatsRequested=false; ReferenceAction=null;
+            StatsRequested=false; ReferenceAction=null; ProfileArgument=null;
             var args = text.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             if (args.Length == 1) return Help;
             if (args.Length == 3 && args[1].Equals("zoom", StringComparison.OrdinalIgnoreCase))
@@ -61,10 +61,16 @@ namespace Marigold
                 }
                 return "Detail: " + DetailName + " (rebuilding outline).";
             }
+            if(args.Length==4 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) &&
+                (args[2].Equals("select",StringComparison.OrdinalIgnoreCase) || args[2].Equals("delete",StringComparison.OrdinalIgnoreCase)))
+            { ReferenceAction="profile "+args[2].ToLowerInvariant(); ProfileArgument=args[3]; return "Profile command requested."; }
+            if(args.Length==3 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) && args[2].Equals("detach",StringComparison.OrdinalIgnoreCase))
+            { ReferenceAction="profile detach"; return "Profile command requested."; }
             if (args.Length != 2) return Help;
             switch (args[1].ToLowerInvariant())
             {
-                case "anchor": case "claim": return "Cockpit anchors and persistent profiles are not available yet. Use /mg capture for a reference that lasts until you leave this world.";
+                case "anchor": case "claim": ReferenceAction="anchor"; return "Anchor requested.";
+                case "profiles": case "recover": ReferenceAction=args[1].ToLowerInvariant(); return "Profile command requested.";
                 case "capture": case "clear": case "report": ReferenceAction=args[1].ToLowerInvariant(); return "Reference command requested.";
                 case "stats": StatsRequested=true; return "Statistics requested.";
                 case "show": Visible = true; return "Schematic shown.";

@@ -39,7 +39,10 @@ namespace Marigold
         private sealed class Reference
         {
             public BlockSample[] Blocks;
+            public string ProfileId;
+            public AnchorFrame Anchor;
         }
+        private ProfileStore profileStore;
         private readonly Dictionary<MyCubeGrid,Reference> references=new Dictionary<MyCubeGrid,Reference>();
         private string comparisonReport="No reference captured.";
         private void ClearReferences()
@@ -66,29 +69,80 @@ namespace Marigold
                 });
             return result.ToArray();
         }
+        private void RefreshReference(string message)
+        { generation++;dirty=true;cooldown=0;comparisonReport=message; }
+        private void Detach(MyCubeGrid target)
+        { if(references.Remove(target)) target.OnGridSplit-=OnSplit; }
+        private void BindProfile(ShipProfile profile,AnchorFrame anchor)
+        {
+            var closed=new List<MyCubeGrid>();
+            foreach(var pair in references)if(pair.Key.Closed || pair.Key.MarkedForClose)closed.Add(pair.Key);
+            foreach(var old in closed)Detach(old);
+            if(!references.ContainsKey(grid))grid.OnGridSplit+=OnSplit;
+            references[grid]=new Reference { ProfileId=profile.Id,Anchor=anchor,Blocks=ProfileAlignment.Transform(profile.Blocks,anchor,false) };
+            RefreshReference(profile.Blocks==null?"Profile anchored; use /mg capture.":"Comparison pending.");
+        }
+        private AnchorFrame SeatedAnchor()
+        {
+            var cockpit=Sandbox.Game.World.MySession.Static?.ControlledEntity?.Entity as MyCockpit;
+            if(cockpit==null || cockpit.CubeGrid!=grid)throw new InvalidOperationException("Sit in the intended anchor cockpit first.");
+            Matrix m;cockpit.Orientation.GetMatrix(out m);
+            return new AnchorFrame { Position=new Point3(cockpit.Position.X,cockpit.Position.Y,cockpit.Position.Z),
+                Right=new Point3(m.Right.X,m.Right.Y,m.Right.Z),Up=new Point3(m.Up.X,m.Up.Y,m.Up.Z),Backward=new Point3(m.Backward.X,m.Backward.Y,m.Backward.Z),
+                Definition=cockpit.BlockDefinition.Id.ToString(),Name=cockpit.CustomName.ToString() };
+        }
         private string ReferenceCommand(string action)
         {
-            if(grid==null || grid.Closed || grid.MarkedForClose) return "Control a ship first.";
-            if(action=="report") return (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending!=null ? "Refresh pending. " : "") + comparisonReport;
-            if(action=="clear")
+            if(action=="profiles")
             {
-                if(references.Remove(grid)) grid.OnGridSplit-=OnSplit;
-                generation++; dirty=true; cooldown=0; comparisonReport="No reference captured.";
-                return "Reference cleared for " + grid.DisplayName + ".";
+                var lines=new List<string>();
+                if(profileStore.Warning!=null)lines.Add(profileStore.Warning);
+                foreach(var p in profileStore.Profiles)lines.Add(p.Id.Substring(0,8)+" | "+p.Name+" | "+(p.Blocks==null?"anchor only":p.Blocks.Length+" baseline blocks"));
+                return lines.Count==0?"No saved profiles. Sit in a cockpit and use /mg anchor.":string.Join("\n",lines);
             }
-            var obsolete=new List<MyCubeGrid>();
-            foreach(var pair in references) if(pair.Key.Closed || pair.Key.MarkedForClose) obsolete.Add(pair.Key);
-            foreach(var old in obsolete) { old.OnGridSplit-=OnSplit; references.Remove(old); }
-            var snapshot=Sample(grid);
-            int total=snapshot.Length;
-            foreach(var pair in references) if(!ReferenceEquals(pair.Key,grid)) total+=pair.Value.Blocks.Length;
-            if(total>250000 || (!references.ContainsKey(grid) && references.Count>=16))
-                return "Reference limit reached (16 ships / 250,000 blocks). Clear another ship's reference first.";
-            if(!references.ContainsKey(grid)) grid.OnGridSplit+=OnSplit;
-            references[grid]=new Reference { Blocks=snapshot };
-            generation++; dirty=true; cooldown=0; comparisonReport="Reference captured; comparison pending.";
-            return "Captured " + snapshot.Length + " blocks for " + grid.DisplayName +
-                ". Session only. Red: missing; yellow: damaged; orange: non-functional; purple: replaced; green: added; gray: unreadable data. Use /mg report.";
+            if(action=="recover") { profileStore.Recover();ClearReferences();RefreshReference("Select a restored profile.");return "Backup restored. Use /mg profile select ID from the matching cockpit."; }
+            if(action=="profile delete")
+            {
+                var deleted=profileStore.Find(controls.ProfileArgument);
+                profileStore.Delete(deleted.Id);
+                var detach=new List<MyCubeGrid>();
+                foreach(var pair in references)if(pair.Value.ProfileId==deleted.Id)detach.Add(pair.Key);
+                foreach(var target in detach)Detach(target);
+                RefreshReference("Profile deleted.");return "Deleted profile "+deleted.Name+". Previous database retained in backup.";
+            }
+            if(grid==null || grid.Closed || grid.MarkedForClose) return "Control a ship first.";
+            Reference selected;references.TryGetValue(grid,out selected);
+            if(action=="report") return (selected==null?"No profile selected. Use /mg profiles or /mg anchor. ":"Profile "+selected.ProfileId.Substring(0,8)+". ")+
+                (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending!=null ? "Refresh pending. " : "")+comparisonReport;
+            if(action=="profile detach") { Detach(grid);RefreshReference("No profile selected.");return "Detached this ship from its profile; saved data is unchanged."; }
+            if(action=="profile select")
+            {
+                var profile=profileStore.Find(controls.ProfileArgument);var anchor=SeatedAnchor();
+                if(profile.Anchor.Definition!=anchor.Definition || Math.Abs(profile.GridSize-grid.GridSize)>.001)
+                    return "Anchor cockpit definition or grid size does not match this profile.";
+                foreach(var pair in references)if(pair.Value.ProfileId==profile.Id && pair.Key!=grid && !pair.Key.Closed && !pair.Key.MarkedForClose)
+                    return "That profile is attached to another ship this session. Detach it there before reusing it.";
+                BindProfile(profile,anchor);
+                return "Selected "+profile.Name+" using this cockpit as its saved anchor counterpart. Verify alignment before capturing again.";
+            }
+            if(action=="anchor")
+            {
+                var anchor=SeatedAnchor();
+                var profile=new ShipProfile { Id=selected==null?Guid.NewGuid().ToString("N"):selected.ProfileId,Name=grid.DisplayName??"Unnamed ship",GridSize=grid.GridSize,Anchor=anchor,
+                    Blocks=selected==null?null:ProfileAlignment.Transform(selected.Blocks,anchor,true) };
+                profileStore.Put(profile);BindProfile(profile,anchor);
+                return "Saved cockpit anchor for "+profile.Name+" ("+profile.Id.Substring(0,8)+"). "+(profile.Blocks==null?"Use /mg capture to save the baseline.":"Existing baseline preserved.");
+            }
+            if(selected==null)return "Use /mg anchor to create a profile, or /mg profile select ID to reconnect an existing one.";
+            var saved=profileStore.Find(selected.ProfileId);
+            if(action=="clear" || action=="capture")
+            {
+                var blocks=action=="clear"?null:ProfileAlignment.Transform(Sample(grid),selected.Anchor,true);
+                var updated=new ShipProfile { Id=saved.Id,Name=grid.DisplayName??saved.Name,GridSize=saved.GridSize,Anchor=selected.Anchor,Blocks=blocks };
+                profileStore.Put(updated);BindProfile(updated,selected.Anchor);
+                return action=="clear"?"Saved baseline cleared; profile and cockpit anchor retained.":"Saved "+blocks.Length+" baseline blocks to profile "+saved.Id.Substring(0,8)+". This reference survives leaving the world.";
+            }
+            return SchematicControls.Help;
         }
         private static Color LineColor(ChangeKind kind, byte missingAlpha)
         {
@@ -177,6 +231,8 @@ namespace Marigold
 
         public void Init()
         {
+            profileStore=new ProfileStore(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Marigold"));
+            if(profileStore.Warning!=null)MyLog.Default.WriteLineAndConsole("[Marigold] "+profileStore.Warning);
             harmony = new Harmony(PatchId);
             harmony.Patch(AccessTools.Method(typeof(MyGuiScreenHudSpace), "Draw"),
                 postfix: new HarmonyMethod(typeof(SchematicOverlay), nameof(AfterHudDraw)));
@@ -230,7 +286,7 @@ namespace Marigold
                     commandUtilities?.ShowMessage("Marigold", response);
                 }
             }
-            catch (Exception e) { MyLog.Default.WriteLineAndConsole("[Marigold] Command failed: " + e); }
+            catch (Exception e) { MyLog.Default.WriteLineAndConsole("[Marigold] Command failed: " + e); commandUtilities?.ShowMessage("Marigold", "Command failed: "+e.Message); }
         }
 
         public void Update(MyCubeGrid current, IMyShipController controller)

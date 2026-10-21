@@ -1,3 +1,5 @@
+> Historical 0.4 implementation notes. For 0.5 persistent references and commands, see [Profiles and anchors](PROFILES-0.5.md).
+
 # Snapshot diagnostics 0.4
 
 ## Use
