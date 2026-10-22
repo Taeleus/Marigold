@@ -6,6 +6,7 @@ namespace Marigold
 {
     internal static class BlueprintCatalog
     {
+        internal const int ResultsPerPage=4;
         internal sealed class Listing { public string[] Paths,Names; }
         public static Listing Scan(string root)
         {
@@ -51,11 +52,16 @@ namespace Marigold
         }
         public static Listing Merge(Listing[] sources,string search)
         {
+            if(string.IsNullOrWhiteSpace(search))throw new ArgumentException("Blueprint search can't be empty.",nameof(search));
+            string query=search.Trim();
             var rows=new List<Tuple<string,string>>();var seen=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach(var source in sources)for(int i=0;i<source.Paths.Length;i++)if(seen.Add(source.Paths[i]) && (string.IsNullOrWhiteSpace(search) || source.Names[i].IndexOf(search.Trim(),StringComparison.OrdinalIgnoreCase)>=0))rows.Add(Tuple.Create(source.Paths[i],source.Names[i]));
+            foreach(var source in sources)for(int i=0;i<source.Paths.Length;i++)if(seen.Add(source.Paths[i]) && source.Names[i].IndexOf(query,StringComparison.OrdinalIgnoreCase)>=0)rows.Add(Tuple.Create(source.Paths[i],source.Names[i]));
             rows.Sort((a,b)=>StringComparer.OrdinalIgnoreCase.Compare(a.Item2,b.Item2));
             return new Listing{Paths=rows.ConvertAll(row=>row.Item1).ToArray(),Names=rows.ConvertAll(row=>row.Item2).ToArray()};
         }
+        public static int PageCount(int resultCount){return Math.Max(1,(Math.Max(0,resultCount)+ResultsPerPage-1)/ResultsPerPage);}
+        public static int ClampPage(int page,int resultCount){return Math.Max(0,Math.Min(page,PageCount(resultCount)-1));}
+        public static int PageStart(int page,int resultCount){return ClampPage(page,resultCount)*ResultsPerPage;}
         public static string[] Find(string root)
         {
             var files=new List<string>();if(!Directory.Exists(root))return files.ToArray();int inspected=0;

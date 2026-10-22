@@ -41,7 +41,9 @@ namespace Marigold
             private int captureShortcut=-1;private MyGuiControlTextbox shortcutBox;
             private int tab;private readonly Stack<int> history=new Stack<int>();private string status="",path="",confirm;
             private MyGuiControlMultilineText output;
-            private MyGuiControlTextbox pathBox;
+            private MyGuiControlTextbox pathBox,blueprintSearchBox;
+            private MyGuiControlButton[] blueprintResultButtons;
+            private MyGuiControlLabel blueprintPageLabel;
             private string[] localFiles=new string[0], localNames=new string[0];private Task<BlueprintCatalog.Listing> catalog;
             public Panel(SchematicOverlay owner):base(new Vector2(.5f,.5f),new Vector4(.03f,.06f,.08f,1),new Vector2(.92f,.92f),backgroundTransition:1f,guiTransition:1f)
             {this.owner=owner;CanHideOthers=false;RecreateControls(true);}
@@ -73,7 +75,7 @@ namespace Marigold
             {Button(-.28f,y,title,()=>Switch(next));Controls.Add(new MyGuiControlLabel(new Vector2(-.15f,y),text:T(description),textScale:.60f,maxWidth:.54f,isAutoEllipsisEnabled:true));}
             public override void RecreateControls(bool constructor)
             {
-                base.RecreateControls(constructor);pathBox=null;captureShortcut=-1;shortcutBox=null;
+                base.RecreateControls(constructor);pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
                 Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+PageNames[tab]);
                 Button(-.28f,-.33f,Section==0?"[ Ship ]":"Ship",()=>Switch(0));Button(0,-.33f,Section==1?"[ Baseline ]":"Baseline",()=>Switch(1));Button(.28f,-.33f,Section==2?"[ Customize ]":"Customize",()=>Switch(9));
                 if(history.Count>0)Button(-.31f,.40f,"Back",Back);
@@ -265,29 +267,66 @@ namespace Marigold
                 Func<string> id=()=>{int i=(int)choice.GetSelectedKey();if(i<0 || i>=profiles.Count)throw new InvalidOperationException("Select a saved profile first.");return profiles[i].Id;};
                 Button(-.21f,-.06f,"Use selected ship",()=>Run("profile load "+id()));Button(.21f,-.06f,"Find matches",()=>Run("profile suggest"));
                 Label(-.39f,.025f,"Detach stops comparison; it does not delete your saved ship.");
-                Button(-.21f,.09f,"Detach baseline",()=>Run("profile detach"));Button(.21f,.09f,"Delete selected",()=>Run("profile delete "+id(),true));
+                Button(-.21f,.09f,"Detach baseline",()=>Run("profile detach"));Button(.21f,.09f,"Delete selected",()=>{
+                    string command="profile delete "+id();bool confirmed=confirm==command;Run(command,true);
+                    if(confirmed && status.StartsWith("Deleted profile ",StringComparison.Ordinal))RecreateControls(false);
+                });
             }
             private void BlueprintBrowser()
             {
                 Button(-.28f,-.25f,(browseLocal?"[x] ":"[ ] ")+"Local",()=>{browseLocal=!browseLocal;RecreateControls(false);});
                 Button(0,-.25f,(browseWorkshop?"[x] ":"[ ] ")+"Workshop",()=>{browseWorkshop=!browseWorkshop;RecreateControls(false);});
                 Button(.28f,-.25f,(browseCloud?"[x] ":"[ ] ")+"Cloud",()=>{browseCloud=!browseCloud;RecreateControls(false);});
-                var search=new MyGuiControlTextbox(new Vector2(-.10f,-.16f),searchText,maxLength:100,textScale:.65f){Size=new Vector2(.56f,.04f)};Controls.Add(search);search.TextChanged+=box=>searchText=box.Text;
-                Button(.32f,-.16f,catalog==null?"Search":"Searching...",StartBlueprintSearch);
-                int pages=Math.Max(1,(localFiles.Length+3)/4);browsePage=Math.Max(0,Math.Min(browsePage,pages-1));
-                for(int row=0;row<4;row++)
+                blueprintSearchBox=new MyGuiControlTextbox(new Vector2(-.10f,-.16f),searchText,maxLength:100,textScale:.65f){Size=new Vector2(.56f,.04f)};Controls.Add(blueprintSearchBox);blueprintSearchBox.TextChanged+=box=>searchText=box.Text;blueprintSearchBox.EnterPressed+=SearchBlueprints;
+                Button(.32f,-.16f,catalog==null?"Search":"Searching...",()=>StartBlueprintSearch(blueprintSearchBox));
+                blueprintResultButtons=new MyGuiControlButton[BlueprintCatalog.ResultsPerPage];
+                for(int row=0;row<BlueprintCatalog.ResultsPerPage;row++)
                 {
-                    int i=browsePage*4+row;if(i>=localFiles.Length)break;
-                    Button(0,-.07f+row*.055f,localNames[i],()=>{path=localFiles[i];Run("blueprint load \""+path+"\"");Switch(2);},.76f);
+                    int resultRow=row;
+                    var result=new MyGuiControlButton(new Vector2(0,-.07f+row*.055f),size:new Vector2(.76f,.042f),text:new StringBuilder(),textScale:.62f,onButtonClick:b=>LoadBlueprintResult(resultRow));
+                    Controls.Add(result);blueprintResultButtons[row]=result;
                 }
-                if(localFiles.Length==0)Label(-.39f,-.04f,"Select any sources and Search. Leave the text blank to list all.");
-                Button(-.28f,.18f,"Previous",()=>{browsePage=Math.Max(0,browsePage-1);RecreateControls(false);});
-                Label(-.11f,.18f,(browsePage+1)+" / "+pages+" ("+localFiles.Length+")");
-                Button(.28f,.18f,"Next",()=>{browsePage=Math.Min(pages-1,browsePage+1);RecreateControls(false);});
+                if(localFiles.Length==0)Label(-.39f,-.04f,"Select sources, enter a search, then press Enter or Search.");
+                Button(-.28f,.18f,"Previous",()=>ChangeBlueprintPage(-1),.24f);
+                blueprintPageLabel=new MyGuiControlLabel(new Vector2(-.11f,.18f),text:"",textScale:.65f);Controls.Add(blueprintPageLabel);
+                Button(.28f,.18f,"Next",()=>ChangeBlueprintPage(1),.24f);
+                UpdateBlueprintPage();
             }
-            private void StartBlueprintSearch()
+            private void ChangeBlueprintPage(int offset)
+            {
+                browsePage=BlueprintCatalog.ClampPage(browsePage+offset,localFiles.Length);
+                UpdateBlueprintPage();
+            }
+            private void UpdateBlueprintPage()
+            {
+                if(blueprintResultButtons==null)return;
+                browsePage=BlueprintCatalog.ClampPage(browsePage,localFiles.Length);
+                int pageStart=BlueprintCatalog.PageStart(browsePage,localFiles.Length);
+                for(int row=0;row<blueprintResultButtons.Length;row++)
+                {
+                    int index=pageStart+row;bool visible=index<localFiles.Length;
+                    blueprintResultButtons[row].Visible=visible;
+                    blueprintResultButtons[row].Text=visible?localNames[index]:"";
+                }
+                if(blueprintPageLabel!=null)blueprintPageLabel.Text=(browsePage+1)+" / "+BlueprintCatalog.PageCount(localFiles.Length)+" ("+localFiles.Length+")";
+            }
+            private void LoadBlueprintResult(int row)
+            {
+                int index=BlueprintCatalog.PageStart(browsePage,localFiles.Length)+row;
+                if(index<0 || index>=localFiles.Length)return;
+                path=localFiles[index];Run("blueprint load \""+path+"\"");Switch(2);
+            }
+            private void SearchBlueprints(MyGuiControlTextbox searchBox){StartBlueprintSearch(searchBox);}
+            private void StartBlueprintSearch(MyGuiControlTextbox searchBox)
             {
                 if(catalog!=null)return;
+                searchText=searchBox.Text;
+                if(string.IsNullOrWhiteSpace(searchText))
+                {
+                    Status("Search can't be empty. Enter a blueprint name or part of a name and try again.");
+                    FocusedControl=searchBox;
+                    return;
+                }
                 if(!browseLocal && !browseWorkshop && !browseCloud){Status("Select at least one source.");return;}
                 bool local=browseLocal,workshop=browseWorkshop;string query=searchText;
                 var cloud=browseCloud?CloudBlueprints.List():new string[0];

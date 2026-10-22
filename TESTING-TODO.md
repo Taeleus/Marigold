@@ -259,8 +259,13 @@ User feedback: Local and Workshop entries show the player name instead of the bl
 ## 0.12.2 - Blueprint browser fixes
 
 - [x] Baseline > Import blueprint > Find blueprint: Local and Workshop display blueprint titles (or grid-name fallback), not the author. Cloud displays just the blueprint name.
-- [x] Toggle any combination of Local, Workshop and Cloud, then Search. Empty search lists all; partial titles match regardless of case. No sources selected should explain what to do.
-- [with just local selected, previous and next dont display. it stays on the first page of 3. When selecting all 3 and searching next/previous worked until I hit page 5 and it couldnt go further. could go previous, but not next. also a blank search just shows everything. blank should error out to prevent from pulling too much data at once. hitting enter from the search bar doesnt hit the search button. have to click it manually.] Browse Previous/Next result pages and select a title near the end. It must load the exact selected file without jumping back. The file dropdown has been replaced with stable paginated results.
+- [x] Toggle any combination of Local, Workshop and Cloud, then search a non-empty title or partial title. Matching is case-insensitive. No sources selected should explain what to do.
+- [x] Submit an empty or whitespace-only search using Enter and Search. It must say the search can't be empty, preserve the text/caret and keep focus in the search box so another query can be entered.
+- [x] Search from the text box using Enter, then repeat with the Search button. Both should return the same matching results.
+- [x] Browse Previous/Next with Local-only results spanning at least three pages and mixed sources spanning at least six pages. Reach the last result, return to the first, and select a title near the end. Paging must not stop early, wrap, or load a different file.
+- [working now] Latest retest: Next still stops at page 5 of 20. Pagination now updates the existing result buttons and counter in place instead of rebuilding controls during navigation; verify Previous/Next through all 20 pages in-game.
 - [x] Load/prepare/preview/accept/cancel for each source. Recheck a blueprint with a blank title, malformed XML and duplicate names across sources. Original files must remain untouched.
 
-when deleting baselines it doesnt delete from the dropdown after deleted until you go to another page and come back.
+- [x] In Baseline > Saved ships, confirm deletion of a profile and verify the dropdown refreshes immediately without navigating away. The deleted profile must no longer be selectable.
+
+another note. Mechanical view doesnt need to be a thing. itd probably work fine under Utility.. Gas can be called Tanks.

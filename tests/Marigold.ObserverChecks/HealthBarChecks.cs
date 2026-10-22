@@ -39,6 +39,15 @@ internal static class HealthBarChecks
             File.WriteAllText(blueprint,"<Definitions><ShipBlueprint><DisplayName>Author Name</DisplayName><CubeGrids><CubeGrid><CubeBlocks/><DisplayName>Actual Ship</DisplayName></CubeGrid></CubeGrids></ShipBlueprint></Definitions>");Check(BlueprintCatalog.DisplayName(blueprint)=="Actual Ship [Workshop 12345]","Grid name fallback ignores author");
             Check(BlueprintCatalog.CloudName("cloud:Blueprints/cloud/My Cruiser/bp.sbc")=="My Cruiser","Cloud label removes storage path");
             var merged=BlueprintCatalog.Merge(new[]{new BlueprintCatalog.Listing{Paths=new[]{"local","workshop"},Names=new[]{"Cruiser","Miner"}},new BlueprintCatalog.Listing{Paths=new[]{"cloud"},Names=new[]{"CRUISER Two"}}},"cruiser");Check(merged.Paths.Length==2 && merged.Paths[0]=="local" && merged.Paths[1]=="cloud","Combined sources search titles case insensitively");
+            bool emptySearchRejected=false;try{BlueprintCatalog.Merge(new[]{new BlueprintCatalog.Listing{Paths=new[]{"local"},Names=new[]{"Cruiser"}}},"  ");}catch(ArgumentException){emptySearchRejected=true;}Check(emptySearchRejected,"Empty blueprint searches are rejected");
+            foreach(int resultCount in new[]{9,21,24})
+            {
+                int page=0,pages=BlueprintCatalog.PageCount(resultCount);Check(pages==(resultCount+BlueprintCatalog.ResultsPerPage-1)/BlueprintCatalog.ResultsPerPage,"Blueprint page count");
+                for(int expected=1;expected<pages;expected++){page=BlueprintCatalog.ClampPage(page+1,resultCount);Check(page==expected,"Next advances one result page");}
+                int pageStart=BlueprintCatalog.PageStart(page,resultCount);Check(page==pages-1 && pageStart<resultCount && pageStart+BlueprintCatalog.ResultsPerPage>=resultCount,"Next reaches the last result page");
+                for(int expected=pages-2;expected>=0;expected--){page=BlueprintCatalog.ClampPage(page-1,resultCount);Check(page==expected,"Previous returns one result page");}
+                Check(page==0 && BlueprintCatalog.ClampPage(-1,resultCount)==0 && BlueprintCatalog.ClampPage(pages,resultCount)==pages-1,"Previous and page bounds");
+            }
             File.WriteAllText(blueprint,"<broken>");Check(BlueprintCatalog.DisplayName(blueprint)=="12345 [Workshop 12345]","Malformed Workshop XML uses folder fallback");
             File.WriteAllText(blueprint,"<!DOCTYPE x [<!ENTITY unsafe SYSTEM 'file:///not-allowed'>]><x>&unsafe;</x>");Check(BlueprintCatalog.DisplayName(blueprint)=="12345 [Workshop 12345]","Catalog refuses DTD entities");
             string path=Path.Combine(dir,"display.txt");var c=new SchematicControls{HealthBars=settings,Category="tools"};DisplaySettings.Save(path,c);var loaded=new SchematicControls();DisplaySettings.Load(path,loaded);Check(loaded.HealthBars.Bars[2].Enabled && loaded.HealthBars.Bars[2].X==0 && loaded.Category=="tools","Bars share global/profile/preset persistence");
