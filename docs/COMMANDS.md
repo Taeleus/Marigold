@@ -1,4 +1,4 @@
-# Marigold commands — 0.6
+# Marigold commands — 0.7
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -6,9 +6,9 @@ All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Comma
 
 Sit in the cockpit you want as the permanent alignment anchor. Run `/mg anchor`, then `/mg capture`. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline.
 
-After reconnect or world transfer, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile select ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. No automatic Nexus reassociation is enabled.
+Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold searches up to 16 cockpit candidates for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile select ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 90% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must be unchanged, and the current sample is rechecked before acceptance. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
 
-`/mg clear` removes the selected baseline but keeps its profile/anchor. `/mg profile detach` only unbinds the live ship. `/mg profile delete ID` deletes that saved profile. `/mg recover` explicitly restores the database backup after a load problem; it clears live bindings so you can reselect.
+`/mg clear` removes the selected baseline but keeps its profile/anchor. `/mg profile detach` unbinds the live ship and suppresses automatic selection for it until session unload or `/mg auto retry`. `/mg profile delete ID` deletes that saved profile. `/mg recover` explicitly restores the database backup after a load problem; it clears live bindings so you can reselect.
 
 ## Import a blueprint baseline
 
@@ -25,7 +25,7 @@ Import uses installed block definitions for exact multi-cell bounds and cockpit 
 
 | Command | Result |
 | --- | --- |
-| `/mg show`, `hide` | Show/hide schematic; hiding pauses observation |
+| `/mg show`, `hide` | Show/hide schematic; hiding pauses diagram observation; automatic matching still runs |
 | `/mg spin`, `reset` | Toggle rotation; restore default rotating view |
 | `/mg left`, `right`, `top`, `bottom` | Snap relative to the active cockpit |
 | `/mg zoom 0.25..3`, `in`, `out` | Set/change scale |
@@ -47,3 +47,11 @@ States: `all faults missing damaged broken added replaced unknown`. `broken` mea
 Yellow is faint damage, orange is non-functional, pulsing red is absent from the observed grid, green is added, purple is replaced, and gray is unreadable integrity data. Reference/preview data never changes the game world.
 
 Preferences live in `%APPDATA%/Marigold/display.txt`; saving retains the previous file as `.bak`. Corrupt preferences are preserved and logged, with defaults used at startup. Saving is explicit. View orientation/spin and marker page are transient so each launch starts with the familiar default orientation.
+
+## Station mode and automatic association
+
+`/mg station on|off|status` controls connector context. It defaults OFF. Locked connectors are followed recursively, with cycles removed; rotor/hinge/piston-only links are excluded. Connected grids are drawn at their relative position/rotation and grid scale, using bounded low-detail outlines. They are context only: capture, blueprint baselines, filters' comparison totals and damage markers still refer to the controlled grid. Context is refreshed about once per second while visible. Limits are 8 additional grids and 100,000 context blocks, flagged in `/mg report`. In reference mode the controlled outline is saved data but station context is still live.
+
+`/mg auto on|off|status|retry` controls automatic profile reassociation. ON is the default. Matching is retried while an unbound controlled grid loads, including after world reload/login. It never captures, overwrites or deletes a baseline, never overrides an existing selection, and refuses to reuse a profile still bound to another live grid. Low-confidence, ambiguous, missing-cockpit and heavily altered ships remain manual. `retry` clears this ship's manual-detach suppression; it does not turn a disabled matcher on or replace a current binding.
+
+Station and auto on/off commands save the current display preferences immediately, including any other unsaved display choices. Older preferences migrate with station OFF and automatic matching ON. `/mg settings reset` returns to those defaults in memory. `/mg auto off` persists across logouts and restarts; it retains any existing binding, which you can separately detach.

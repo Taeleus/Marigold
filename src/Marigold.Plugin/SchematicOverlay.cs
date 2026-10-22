@@ -51,6 +51,7 @@ namespace Marigold
         private void ClearReferences()
         {
             CancelBlueprintPreview();
+            manualDetached.Clear();ResetAssociation();
             foreach(var pair in references) pair.Key.OnGridSplit-=OnSplit;
             references.Clear(); generation++; comparisonReport="No reference captured.";
         }
@@ -99,6 +100,16 @@ namespace Marigold
         }
         private string ReferenceCommand(string action)
         {
+            if(action.StartsWith("auto ",StringComparison.Ordinal))return AutomationCommand(action.Substring(5));
+            if(action.StartsWith("station ",StringComparison.Ordinal))
+            {
+                if(action!="station status")
+                {
+                    bool previous=controls.Station;controls.Station=action=="station on";
+                    try{DisplaySettings.Save(settingsPath,controls);}catch{controls.Station=previous;throw;}
+                }
+                return "Station mode "+(controls.Station?"on":"off")+". "+stationStatus;
+            }
             if(action.StartsWith("settings ",StringComparison.Ordinal))
             {
                 if(action=="settings save")DisplaySettings.Save(settingsPath,controls);
@@ -127,7 +138,7 @@ namespace Marigold
             if(grid==null || grid.Closed || grid.MarkedForClose) return "Control a ship first.";
             Reference selected;references.TryGetValue(grid,out selected);
             if(action=="report") return (previewBlocks==null?"":"UNSAVED blueprint preview. ")+(selected==null?"No profile selected. Use /mg profiles or /mg anchor. ":"Profile "+selected.ProfileId.Substring(0,8)+". ")+
-                (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending!=null ? "Refresh pending. " : "")+comparisonReport;
+                (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending!=null ? "Refresh pending. " : "")+comparisonReport+" "+stationStatus;
             if(action=="profile suggest")
             {
                 var anchor=SeatedAnchor();var current=ProfileAlignment.Transform(Sample(grid),anchor,true);
@@ -142,7 +153,7 @@ namespace Marigold
                 var lines=new List<string>();foreach(var suggestion in suggestions)lines.Add(suggestion.Item2);
                 return lines.Count==0?"No compatible saved baselines. Sit in the original anchor cockpit or its equivalent.":string.Join("\n",lines)+"\nSuggestions are not identity checks. Choose with /mg profile select ID; identical ships can tie.";
             }
-            if(action=="profile detach") { Detach(grid);RefreshReference("No profile selected.");return "Detached this ship from its profile; saved data is unchanged."; }
+            if(action=="profile detach") { manualDetached.Add(grid);matchStability.Reset();associationStatus="Manually detached for this session. /mg auto retry to allow matching again.";Detach(grid);RefreshReference("No profile selected.");return "Detached this ship from its profile; saved data is unchanged."; }
             if(action=="profile select")
             {
                 var profile=profileStore.Find(controls.ProfileArgument);var anchor=SeatedAnchor();
@@ -208,7 +219,7 @@ namespace Marigold
             public string Report;
         }
 
-        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview)
+        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station)
         {
             var timer=Stopwatch.StartNew();
             var result=new BuildResult { Generation=version, Count=snapshot.Length };
@@ -218,12 +229,19 @@ namespace Marigold
                 Box3? frame=null;
                 foreach(var block in snapshot)frame=frame.HasValue?SchematicGeometry.Union(frame.Value,block.Bounds):block.Bounds;
                 if(reference!=null)foreach(var block in reference)frame=frame.HasValue?SchematicGeometry.Union(frame.Value,block.Bounds):block.Bounds;
+                foreach(var connected in station)foreach(var block in connected.Blocks)
+                {var bounds=connected.Bounds(block.Bounds);frame=frame.HasValue?SchematicGeometry.Union(frame.Value,bounds):bounds;}
                 var outlineSource=mode=="reference" && !preview?(reference??new BlockSample[0]):snapshot;
                 foreach(var block in outlineSource)if(DisplayFilter.CategoryMatches(block.Definition,category))boxes.Add(block.Bounds);
                 var model=OutlineGeometry.Build(boxes,detail,frame);
                 var geometry=new List<Point3>(model.Points);
                 var kinds=new List<ChangeKind>();var shaded=new List<int>();
                 for(int i=0;i<model.Points.Length/2;i++)kinds.Add(ChangeKind.Hull);
+                if(frame.HasValue)foreach(var connected in station)
+                {
+                    var context=StationGeometry.Build(connected,category,frame.Value);geometry.AddRange(context);
+                    for(int i=0;i<context.Length/2;i++)kinds.Add(ChangeKind.Hull);
+                }
                 result.Report="No reference captured.";
                 if(reference!=null)
                 {
@@ -289,6 +307,7 @@ namespace Marigold
             if (ReferenceEquals(grid,next)) return;
             if (grid != null) { grid.OnBlockAdded -= Changed; grid.OnBlockRemoved -= Changed; }
             CancelBlueprintPreview();
+            ResetAssociation();stationStatus="";
             lastObservation=null;lastObservationGeneration=-1;
             grid=next;
             generation++;
@@ -335,10 +354,11 @@ namespace Marigold
         {
             SetGrid(current);
             UpdateBlueprint();
+            UpdateAssociation();
             if (grid==null || faulted) return;
             try
             {
-                caption=(string.IsNullOrWhiteSpace(grid.DisplayName) ? "Unnamed ship" : grid.DisplayName)+(previewBlocks==null?"":" [blueprint preview]");
+                caption=(string.IsNullOrWhiteSpace(grid.DisplayName) ? "Unnamed ship" : grid.DisplayName)+(previewBlocks==null?"":" [blueprint preview]")+(controls.Station?" [station]":"");
                 Matrix orientation;
                 controller.Orientation.GetMatrix(out orientation);
                 cockpitRight = new Point3(orientation.Right.X,orientation.Right.Y,orientation.Right.Z);
@@ -363,7 +383,7 @@ namespace Marigold
                         MyLog.Default.WriteLine("[Marigold] Schematic worker: "+result.Count+" blocks, "+result.Cells+" cells, "+result.Milliseconds.ToString("F1")+" ms.");
                     }
                 }
-                if(++reconcile>=(references.ContainsKey(grid)?60:600)) { dirty=true; reconcile=0; }
+                if(++reconcile>=(references.ContainsKey(grid) || controls.Station?60:600)) { dirty=true; reconcile=0; }
                 if(cooldown>0) cooldown--;
                 if(dirty && cooldown==0 && pending==null)
                 {
@@ -372,12 +392,13 @@ namespace Marigold
                     Reference reference;
                     references.TryGetValue(grid,out reference);
                     var baseline=previewBlocks??(reference==null?null:reference.Blocks);
-                    if(lastObservationGeneration==generation && ObservationCache.Same(lastObservation,snapshot))
+                    var station=SampleStation();
+                    if(!controls.Station && lastObservationGeneration==generation && ObservationCache.Same(lastObservation,snapshot))
                     { dirty=false;cooldown=30;snapshotMs=timer.Elapsed.TotalMilliseconds;return; }
                     lastObservation=snapshot;lastObservationGeneration=generation;
                     int version=generation, detail=controls.Detail,page=controls.Page;
                     string mode=controls.Mode,category=controls.Category,stateFilter=controls.StateFilter;bool preview=previewBlocks!=null;
-                    pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview));
+                    pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station));
                     snapshotMs=timer.Elapsed.TotalMilliseconds;
                     dirty=false; cooldown=30;
                     MyLog.Default.WriteLine("[Marigold] Schematic snapshot: "+snapshot.Length+" blocks, "+timer.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");

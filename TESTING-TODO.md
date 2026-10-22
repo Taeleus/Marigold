@@ -59,3 +59,31 @@ Notes:
 - [ ] Hide the display, alter the ship, then show it. Comparison must catch up. Switch ships and exit/reload to check stale results are discarded.
 
 Notes:
+
+## 0.7 — Connector station view (pending)
+
+- [ ] With fresh settings, confirm station mode is OFF. Dock a second grid using locked connectors; it stays hidden until `/mg station on`.
+- [ ] With station mode ON, check the docked outline's position, orientation and scale. Include small-grid/large-grid connections and a connector mounted at an angle.
+- [ ] Connect a chain of ships and a cycle of connectors; each grid should appear once. Merely yellow/connectable connectors must not include a ship.
+- [ ] Unlock a connector: the detached branch disappears within roughly one second of active observation. A ship still linked through a second locked connector remains visible.
+- [ ] Capture or import a baseline while docked, then undock. Docked context must not become missing-red baseline blocks; report counts remain controlled-grid-only.
+- [ ] Rotor/hinge/piston-only attachments remain excluded. A connector on such an excluded grid does not extend station traversal.
+- [ ] `/mg station off` restores the single-grid framing. Restart and confirm the chosen station setting persists. Run `/mg station status` and `/mg report` for context/limit information.
+- [ ] Test a large dock: up to 8 additional grids/100,000 context blocks are displayed; the report flags truncation. Record `/mg stats` and any stutter.
+
+Notes:
+
+## 0.7 — Automatic reconnect/Nexus reassociation (pending)
+
+- [ ] Anchor and capture a distinctive ship with at least 8 blocks. Quit/rejoin the server, control that ship, wait several seconds: Marigold should announce the profile it automatically selected without a new capture.
+- [ ] Repeat after fully restarting the game and after a Nexus sector transfer. Verify the saved damage/missing state and cockpit orientation remain correct. This is the actual Nexus acceptance test, not yet established by compilation.
+- [ ] Rename the ship and use another cockpit. Matching searches cockpit candidates and must retain the correct saved anchor alignment; active-seat view direction may change normally.
+- [ ] Remove a small number of blocks before reconnecting. Matching should tolerate modest loss and retain the missing-red baseline positions. Large layout changes should leave it unbound for manual selection.
+- [ ] Make two saved profiles of identical/near-identical ships: automatic matching must refuse the tie. `/mg auto status` explains it; `/mg profile select ID` resolves it.
+- [ ] Test delayed streaming after reconnect: the matcher waits/retries without taking a new baseline. Inspect `/mg auto status` if unbound.
+- [ ] `/mg profile detach` must remain detached even after waiting or switching seats/ships in that session. `/mg auto retry` allows matching again. Detach suppression ends on session unload; use auto off for a persistent opt-out.
+- [ ] `/mg auto off`, restart/rejoin, and confirm nothing auto-binds. `/mg auto on` persists and resumes matching. Turning it off leaves an already selected profile attached; detach separately if desired.
+- [ ] Switch ships or select/delete a profile while matching is running; an old worker result must not override that action. A profile already attached to another live ship must not be automatically reused.
+- [ ] An unsaved identical copy can structurally match the same profile; this is layout recognition, not proof of identity. Check manual override behavior for your fleet and use auto off if copies need distinct identities.
+
+Notes:

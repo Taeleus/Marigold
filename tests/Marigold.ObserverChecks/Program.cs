@@ -70,6 +70,7 @@ internal static class Program
         Console.WriteLine("PASS: " + checks + " observer lifecycle checks (API doubles, not in-game validation).");
         BlueprintChecks.Run();
         DisplayChecks.Run();
+        AssociationStationChecks.Run();
         ProfileChecks.Run();
         FillChecks.Run();
         SnapshotChecks.Run();

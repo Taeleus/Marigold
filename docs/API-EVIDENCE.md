@@ -41,3 +41,12 @@ MyCubeGrid.OnGridSplit is Action<MyCubeGrid,MyCubeGrid> (line 3878); split creat
 ## Profiles 0.5
 
 MyCockpit in Sandbox.Game.Entities provides Position, Orientation, BlockDefinition and CustomName; these accesses compile against the installed assemblies. MyBlockOrientation.GetMatrix provides the anchor's discrete axes. Verified Base6Directions.Direction order in installed VRage.Math: Forward, Backward, Left, Right, Up, Down. Profile alignment transforms these directions and all envelope corners. No world IDs, grid names or runtime entity IDs are used as automatic persistent identity. Explicit profile selection pairs the cockpit after reload.
+
+
+## 0.7 station and reconnect implementation
+
+The installed `Sandbox.ModAPI.IMyShipConnector` exposes `OtherConnector`; its ingame base exposes `Status` with `MyShipConnectorStatus.Connected`. Station traversal reads only these locked links, never the logical/physical group that could include unintended mechanical attachments. A visited set prevents cycles. Local cell coordinates use each grid's `WorldMatrix`, the controlled grid's `WorldMatrixNormalizedInv`, and the ratio of grid sizes. Connected-grid geometry is normalized independently before conversion into the shared controlled-grid frame; no block positions are used as cross-grid comparison keys.
+
+Reassociation uses existing `MyCockpit` local Position/Orientation/definition and immutable block samples. All game entities are read on the update thread; the worker matches copied values and receives no game objects. Candidate results carry the display generation and are discarded across grid/session changes or intervening profile operations. Automatic binding changes only the in-memory reference; `ProfileStore.Put` is never called by matching. The source-build assembly version and startup log were updated to 0.7.0 alongside the binary project version.
+
+Nexus primary reference: https://github.com/SE-Nexus/SeamlessClient describes post-transfer entity synchronization delays. Marigold does not hook Nexus or claim a cluster identity token. Repeated stable snapshots and retries are a client-side compatibility strategy that still requires the queued Nexus test.

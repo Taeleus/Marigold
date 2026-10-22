@@ -19,14 +19,15 @@ namespace Marigold
         public int Detail = 1;
         public string Mode="compare", Category="all", StateFilter="all";
         public bool Expanded;
+        public bool Station=false,AutoAssociate=true;
         public int Page=1;
-        public string GeometryOptions { get { return Detail+"/"+Mode+"/"+Category+"/"+StateFilter+"/"+Page; } }
+        public string GeometryOptions { get { return Detail+"/"+Mode+"/"+Category+"/"+StateFilter+"/"+Page+"/"+Station; } }
         public bool StatsRequested;
         public string ReferenceAction, ProfileArgument;
         public string DetailName { get { return Detail == 0 ? "low" : Detail == 1 ? "medium" : "high"; } }
         public const double DefaultYaw = 0;
         public double Yaw = DefaultYaw, Pitch = -0.4, Zoom = 0.85;
-        public const string Help = "/mg show|hide|spin|reset|left|right|top|bottom|in|out. Help: /mg help display, /mg help profiles, /mg help blueprint. Diagnostics: /mg report or /mg stats.";
+        public const string Help = "/mg show|hide|spin|reset|left|right|top|bottom|in|out. Help: /mg help display, /mg help profiles, /mg help blueprint. Diagnostics: /mg report or /mg stats. /mg station on|off; /mg auto on|off|status|retry.";
 
         public static bool Owns(string text)
         {
@@ -62,7 +63,7 @@ namespace Marigold
                 switch(args[2].ToLowerInvariant())
                 {
                     case "display":return "Display: /mg mode live|reference|compare; /mg layout compact|expanded; /mg zoom 0.25..3; /mg detail low|medium|high.\n/mg isolate "+DisplayFilter.Categories+".\n/mg filter "+DisplayFilter.States+"; /mg page next|prev|N; /mg settings save|load|reset.";
-                    case "profiles":return "Sit in the anchor cockpit: /mg anchor, then /mg capture. /mg profiles lists IDs.\nAfter reconnect: /mg profile suggest, then /mg profile select ID.\n/mg clear clears the baseline; /mg profile detach keeps saved data; /mg profile delete ID removes it. /mg recover restores the database backup.";
+                    case "profiles":return "Sit in the anchor cockpit: /mg anchor, then /mg capture. /mg profiles lists IDs.\nAutomatic matching is on by default. /mg auto status|on|off|retry. Manual fallback: /mg profile suggest, then /mg profile select ID.\n/mg clear clears the baseline; /mg profile detach keeps saved data; /mg profile delete ID removes it. /mg recover restores the database backup.";
                     case "blueprint":return "Import: /mg blueprint load \"full path to bp.sbc\"; grids; grid N; anchors; preview N; accept or cancel. Repeat /mg blueprint before each step. Preview is unsaved until accept.";
                     default:return Help;
                 }
@@ -76,6 +77,8 @@ namespace Marigold
             if(args.Length==3)
             {
                 string verb=args[1].ToLowerInvariant(),value=args[2].ToLowerInvariant();
+                if(verb=="station" && (value=="on" || value=="off" || value=="status")) { ReferenceAction="station "+value;return "Station mode requested."; }
+                if(verb=="auto" && (value=="on" || value=="off" || value=="status" || value=="retry")) { ReferenceAction="auto "+value;return "Reassociation requested."; }
                 if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode=value;Page=1;return "View mode: "+value; }
                 if(verb=="isolate") { if(!DisplayFilter.Contains(DisplayFilter.Categories,value))return "Categories: "+DisplayFilter.Categories;Category=value;Page=1;return "Visible system: "+value; }
                 if(verb=="filter") { if(!DisplayFilter.Contains(DisplayFilter.States,value))return "States: "+DisplayFilter.States;StateFilter=value;Page=1;return "Marker filter: "+value; }

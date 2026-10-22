@@ -4,11 +4,11 @@ Space Engineers 1 client engineering HUD prototype. Start with [ROADMAP.md](ROAD
 
 ## Current implementation
 
-Version 0.6.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
+Version 0.7.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the local SE 1.210.014 assemblies. While controlling a ship controller, the schematic shows only the live grid name beneath the outline. The old observer notification, block/line counts, detail label and chat hint have been removed. Diagnostics remain available with `/mg stats`; help remains available with `/mg`.
 
 Controller changes, closed grids, session unload and disposal clear the schematic. Grid name changes update without waiting for geometry rebuilding. The view defaults and cockpit-relative view commands are unchanged.
 
-A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). Local blueprint import with an explicit alignment preview, system/state filters, live/reference/compare modes, expanded layout and saved display preferences are included. See [current commands](docs/COMMANDS.md) and the editable [testing to-do](TESTING-TODO.md). Full block meshes, a graphical settings editor, mechanical construct comparison and automatic Nexus reassociation are not implemented. No custom networking or world edits. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
+A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). Local blueprint import with an explicit alignment preview, system/state filters, live/reference/compare modes, expanded layout and saved display preferences are included. See [current commands](docs/COMMANDS.md) and the editable [testing to-do](TESTING-TODO.md). Full block meshes, a graphical settings editor, and mechanical construct comparison are not implemented. Connector-only station context and conservative automatic layout reassociation are implemented in 0.7; actual Nexus behavior remains unverified. No custom networking or world edits. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
 
 ## Build and checks
 
@@ -121,3 +121,13 @@ Adds bounded plain/gzip SBC import, explicit grid/cockpit pairing, unsaved align
 Release build passed with zero warnings/errors. Automated checks: 12 observer lifecycle, 16 blueprint parser/command, 45 display/settings/suggestion, 119 profile persistence/alignment, 5 fill, 29 snapshot comparison, 6,973 geometry and 403 command/orientation checks. Pure checks and API doubles do not validate the live renderer, imported game definition conversion, multiplayer replication or Nexus transfers. User testing is deferred in [TESTING-TODO.md](TESTING-TODO.md); no unchecked item is considered validated.
 
 Installed assembly 0.6.0.0 into the authorized Pulsar `Legacy/Local/MarigoldDev` folder. DLL, PDB and metadata SHA-256 hashes match the built package. The previous package is preserved under `artifacts/backup-before-0.6.0`. Restart the game to load the new version.
+
+## 0.7.0 — Connector station context and automatic reassociation
+
+Station mode defaults off and follows locked connector links only. It renders up to 8 additional grids/100,000 context blocks at their relative transforms and sizes; captures and comparison counts remain controlled-grid-only. Mechanical subgrids are excluded at the user's request.
+
+Automatic reassociation defaults on and persists its opt-out. It searches cockpit-relative layouts, requires >=90% overlap with an >=8-point lead over alternatives, waits for repeated unchanged samples, and never recaptures the baseline. Manual bindings win; detach suppresses matching for that grid until session unload/retry. Matching includes login/logout/restart and transfer scenarios without depending on world IDs, names or a Nexus API. Actual multiplayer/Nexus validation remains pending. Identical unsaved copies cannot be distinguished by this heuristic.
+
+50 new pure association/station assertions cover rotation/translation, damage, lost blocks, ambiguous profiles/anchors, stable observations, mixed grid scales, settings migration and profile disk reload. Existing suites also pass. See TESTING-TODO.md for the required live reconnect/docking checks. Nexus research: https://github.com/SE-Nexus/SeamlessClient describes entity synchronization delays after transfers, motivating delayed/repeated matching.
+
+0.7.0 Release build: zero warnings/errors; all automated suites passed. Installed assembly 0.7.0.0 in Pulsar `Legacy/Local/MarigoldDev`; all three package hashes match. Previous package retained at `artifacts/backup-before-0.7.0`. Restart required; live acceptance tests remain unchecked.
