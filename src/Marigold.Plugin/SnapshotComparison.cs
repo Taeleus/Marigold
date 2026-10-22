@@ -28,6 +28,8 @@ namespace Marigold
     }
     internal static class SnapshotComparison
     {
+        public static BlockSample[] HealthyBaseline(BlockSample[] source)
+        {var result=(BlockSample[])source.Clone();for(int i=0;i<result.Length;i++){result[i].Integrity=result[i].MaxIntegrity;result[i].BuildIntegrity=result[i].MaxIntegrity;result[i].IsFunctional=true;}return result;}
         public static Comparison Compare(BlockSample[] reference,BlockSample[] current)
         {
             var result=new Comparison();
@@ -48,7 +50,7 @@ namespace Marigold
                 {
                     double tolerance=Math.Max(0.001,now.MaxIntegrity*0.0001);
                     if(now.Integrity+tolerance<old.Integrity || now.BuildIntegrity+tolerance<old.BuildIntegrity ||
-                        now.Integrity+tolerance<now.BuildIntegrity) result.Add(now.Bounds,ChangeKind.Damaged,now.Definition);
+                        now.Integrity+tolerance<now.MaxIntegrity || now.BuildIntegrity+tolerance<now.MaxIntegrity) result.Add(now.Bounds,ChangeKind.Damaged,now.Definition);
                 }
             }
             foreach(var pair in observed) result.Add(pair.Value.Bounds,ChangeKind.Added,pair.Value.Definition);

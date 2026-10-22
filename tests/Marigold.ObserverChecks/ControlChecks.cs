@@ -95,7 +95,7 @@ internal static class ControlChecks
         }
         var beforePause=c.Project(new Point3(-2,-1,3));
         c.Execute("/mg spin");
-        check(c.Project(new Point3(-2,-1,3)).Equals(beforePause));
+        check(!c.Spin && Math.Abs(c.Yaw-Math.PI/4)<1e-9 && Math.Abs(c.Pitch+Math.Atan(1/Math.Sqrt(2)))<1e-9);
         c.Execute("/mg top");
         check(c.Project(new Point3(-2,-1,3)).X==-2);
         c.Execute("/mg spin");

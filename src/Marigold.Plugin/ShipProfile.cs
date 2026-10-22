@@ -16,6 +16,8 @@ namespace Marigold
     internal sealed class ShipProfile
     {
         public string Id, Name;
+        public int Number;
+        public bool Station;
         public double GridSize;
         public AnchorFrame Anchor;
         // Baseline coordinates and orientations are relative to Anchor, not world/grid IDs.

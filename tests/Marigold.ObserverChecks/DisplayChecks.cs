@@ -21,14 +21,14 @@ internal static class DisplayChecks
         Check(ProfileSuggestions.Score(original,new BlockSample[0])==0,"Empty suggestion");
         Check(!ObservationCache.Same(original,new BlockSample[0]),"Removal invalidates cache");
         var c=new SchematicControls();c.Execute("/mg isolate tools");c.Execute("/mg filter broken");c.Execute("/mg layout expanded");c.Execute("/mg mode reference");c.Execute("/mg zoom 2");
-        Check(c.Category=="tools" && c.StateFilter=="broken" && c.Expanded && c.Mode=="reference" && c.Zoom==2,"Display commands applied");
+        Check(c.Category=="tools" && c.StateFilter=="broken" && c.Expanded && c.Mode=="compare" && c.Zoom==2,"Display commands applied");
         c.Execute("/mg page next");Check(c.Page==2,"Next page");c.Execute("/mg filter all");Check(c.Page==1,"Filter resets page");
         c.Execute("/mg profile suggest");Check(c.ReferenceAction=="profile suggest","Suggestion command routed");
         string folder=Path.Combine(Directory.GetCurrentDirectory(),".cache","DisplayTests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
         try
         {
             string file=Path.Combine(folder,"display.txt");DisplaySettings.Save(file,c);var restored=new SchematicControls();DisplaySettings.Load(file,restored);
-            Check(restored.Category=="tools" && restored.Expanded && restored.Zoom==2 && restored.Mode=="reference","Saved display round trip");
+            Check(restored.Category=="tools" && restored.Expanded && restored.Zoom==2 && restored.Mode=="compare","Saved display round trip");
             c.Zoom=1;DisplaySettings.Save(file,c);Check(File.Exists(file+".bak"),"Previous settings backed up");
             File.WriteAllText(file,"broken");bool rejected=false;try{DisplaySettings.Load(file,restored);}catch(InvalidDataException){rejected=true;}
             Check(rejected && restored.Zoom==2 && restored.Category=="tools","Invalid file preserves all current options");

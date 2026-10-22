@@ -4,22 +4,22 @@ All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Comma
 
 ## Start and save a baseline
 
-Sit in the cockpit you want as the permanent alignment anchor. Run `/mg anchor`, then `/mg capture`. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline.
+Sit in the cockpit you want as the permanent alignment anchor. Run `/mg capture`; it creates the cockpit anchor automatically and assumes full health. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline.
 
-Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold searches up to 16 cockpit candidates for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile select ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 90% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must be unchanged, and the current sample is rechecked before acceptance. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
+Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold searches up to 16 cockpit candidates for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile load ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 90% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must be unchanged, and the current sample is rechecked before acceptance. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
 
 `/mg clear` removes the selected baseline but keeps its profile/anchor. `/mg profile detach` unbinds the live ship and suppresses automatic selection for it until session unload or `/mg auto retry`. `/mg profile delete ID` deletes that saved profile. `/mg recover` explicitly restores the database backup after a load problem; it clears live bindings so you can reselect.
 
 ## Import a blueprint baseline
 
-1. Select or create the live ship's profile while in its intended anchor cockpit.
+1. Sit in the intended live anchor cockpit. A prior profile or capture is optional.
 2. `/mg blueprint load "C:\full path\bp.sbc"`
 3. `/mg blueprint grids`, then `/mg blueprint grid N` for the intended grid.
 4. `/mg blueprint anchors`, then `/mg blueprint preview N` for the matching cockpit.
 5. Inspect top, bottom and reset views and `/mg report`. The preview has a purple reference outline and an explicit unsaved caption.
-6. `/mg blueprint accept` saves the intended layout. `/mg blueprint cancel` leaves the original baseline intact. After cancel, select the blueprint grid again to prepare another preview.
+6. `/mg blueprint accept` saves the intended layout. `/mg blueprint cancel` leaves the original baseline intact. After cancel, the prepared grid remains available for another preview.
 
-Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; attached grids need future construct support. Missing mods, compound blocks, legacy quaternion-only orientations and supergrids are rejected instead of silently approximated. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
+Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; attached grids need future construct support. Unavailable mod definitions are skipped with an explicit count. Compound blocks, legacy quaternion-only orientations and supergrids remain unsupported. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
 
 ## Display and diagnostics
 
@@ -29,7 +29,7 @@ Import uses installed block definitions for exact multi-cell bounds and cockpit 
 | `/mg spin`, `reset` | Toggle rotation; restore default rotating view |
 | `/mg left`, `right`, `top`, `bottom` | Snap relative to the active cockpit |
 | `/mg zoom 0.25..3`, `in`, `out` | Set/change scale |
-| `/mg mode live`, `reference`, `compare` | Current outline, saved outline, or change markers |
+| `/mg mode compare` | Comparison is always enabled; old live/reference commands also resolve to compare |
 | `/mg isolate CATEGORY` | Select a system, retaining whole-ship scale |
 | `/mg filter STATE` | Limit markers; report totals still cover the entire grid |
 | `/mg page next`, `prev`, `N` | Browse up to 128 filtered markers per page, highest severity first |
@@ -50,16 +50,22 @@ Preferences live in `%APPDATA%/Marigold/display.txt`; saving retains the previou
 
 ## Station mode and automatic association
 
-`/mg station on|off|status` controls connector context. It defaults OFF. Locked connectors are followed recursively, with cycles removed; rotor/hinge/piston-only links are excluded. Connected grids are drawn at their relative position/rotation and grid scale, using bounded low-detail outlines. They are context only: capture, blueprint baselines, filters' comparison totals and damage markers still refer to the controlled grid. Context is refreshed about once per second while visible. Limits are 8 additional grids and 100,000 context blocks, flagged in `/mg report`. In reference mode the controlled outline is saved data but station context is still live.
+`/mg station on|off|status` enables connector-linked grids for this ship/profile, off by default. Locked connector chains are followed without cycles; rotor/hinge/piston-only links are excluded. Docked ships use their own uniquely matched saved baselines for damage outlines and separate report counts. Matches are retained during the session, so later damage does not erase a matched baseline. Unmatched ships remain context only. Capture always covers just the controlled grid. Limits: 8 additional grids and 100,000 context blocks.
 
 `/mg auto on|off|status|retry` controls automatic profile reassociation. ON is the default. Matching is retried while an unbound controlled grid loads, including after world reload/login. It never captures, overwrites or deletes a baseline, never overrides an existing selection, and refuses to reuse a profile still bound to another live grid. Low-confidence, ambiguous, missing-cockpit and heavily altered ships remain manual. `retry` clears this ship's manual-detach suppression; it does not turn a disabled matcher on or replace a current binding.
 
-Station and auto on/off commands save the current display preferences immediately, including any other unsaved display choices. Older preferences migrate with station OFF and automatic matching ON. `/mg settings reset` returns to those defaults in memory. `/mg auto off` persists across logouts and restarts; it retains any existing binding, which you can separately detach.
+Station changes save to the selected ship profile, or remain session-local until capture creates one. Auto and language changes save display preferences. Station is never restored from global display settings. `/mg auto off` persists and retains an existing binding.
 
-## Graphical interface (0.8)
+## Graphical interface (0.9)
 
-Use `/mg ui` for native Display, Profiles, Blueprints and Views tabs. The panel uses the same handlers as chat commands. Blueprint discovery scans only immediate local blueprint folders (up to 500 results/2,000 folders), skips linked folders and reads no blueprint content until Load. Paste a full SBC path for other locations. After loading/preparing, Refresh lists shows the grids and cockpits. Preview closes the panel so you can inspect the HUD; reopen the Blueprints tab to accept or cancel.
+Use `/mg ui` for Display, Profiles, Blueprints and Views. Capture creates an anchor and full-health baseline in one step. Profiles have stable numeric IDs; old GUIDs and `profile select` remain accepted. Clear removes only the baseline; Delete removes the profile.
 
-Panel actions that capture/clear/delete/recover or accept a baseline require a second identical click. Chat commands retain their existing explicit-action behavior. The panel closes on ship changes or session teardown.
+Local discovery includes nested folders (depth 16, 2,000 folders, 500 results) and skips linked folders. Cloud lists game-service XML `bp.sbc` files, including gzip; protobuf-only and Workshop downloads are not supported. Choose Load, a grid if needed, a matching cockpit, Preview, then Save profile. Lists update after preparation and a small live schematic stays visible beside the panel.
 
-`/mg language en|es` changes and saves UI label language. Runtime diagnostics and command responses remain English. Ordinary settings require Save; station, auto and language toggles save all current preferences immediately.
+Capture/clear/delete/recover and blueprint acceptance require a second identical panel click. Chat commands execute directly. Ship changes close the panel.
+
+Views lets you assign shortcuts for cycle-system, cycle-marker and expanded layout. Enter a key name such as `Ctrl+Shift+F6`, or blank to unbind. Defaults are unbound; Marigold does not consume the game's bindings. Shortcuts are saved separately in `%APPDATA%/Marigold/hotkeys.txt` and ignored while chat or a menu is open.
+
+Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regions remain outlined regardless of individual marker pagination; category/state filters still apply.
+
+`/mg language en|es` changes UI label language. Newly added and diagnostic messages may remain English.

@@ -29,11 +29,20 @@ namespace Marigold
             if(path.StartsWith(@"\\",StringComparison.Ordinal) || !Path.GetExtension(path).Equals(".sbc",StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Choose a local .sbc blueprint file (usually bp.sbc).");
             if(new FileInfo(path).Length>32*1024*1024)throw new InvalidDataException("Blueprint file exceeds 32 MB.");
+            return Parse(()=>Open(path));
+        }
+        public static BlueprintDocument FromBytes(byte[] data)
+        {
+            if(data==null || data.Length==0 || data.Length>32*1024*1024)throw new InvalidDataException("Cloud blueprint is empty or exceeds 32 MB.");
+            return Parse(()=>{var stream=new MemoryStream(data,false);return data.Length>1 && data[0]==31 && data[1]==139?(Stream)new GZipStream(stream,CompressionMode.Decompress):stream;});
+        }
+        private static BlueprintDocument Parse(Func<Stream> open)
+        {
             // Validate depth separately: XElement would otherwise read arbitrarily deep content.
-            using(var stream=Open(path))using(var reader=Reader(stream))
+            using(var stream=open())using(var reader=Reader(stream))
                 while(reader.Read())if(reader.Depth>64)throw new InvalidDataException("Blueprint XML is too deeply nested.");
             XDocument xml;
-            using(var stream=Open(path))using(var reader=Reader(stream))xml=XDocument.Load(reader,LoadOptions.None);
+            using(var stream=open())using(var reader=Reader(stream))xml=XDocument.Load(reader,LoadOptions.None);
             var result=new BlueprintDocument();int count=0;
             var collection=Child(xml.Root,"ShipBlueprints");
             if(collection!=null && collection.Elements().Count(n=>n.Name.LocalName=="ShipBlueprint")!=1)throw new InvalidDataException("Choose a file containing exactly one ship blueprint.");

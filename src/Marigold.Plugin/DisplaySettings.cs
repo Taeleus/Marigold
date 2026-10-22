@@ -19,7 +19,7 @@ namespace Marigold
                 !DisplayFilter.Contains(DisplayFilter.States,a[4]) || !bool.TryParse(a[5],out expanded) ||
                 !double.TryParse(a[6],NumberStyles.Float,CultureInfo.InvariantCulture,out zoom) || double.IsNaN(zoom) || zoom<.25 || zoom>3 || !bool.TryParse(a[7],out visible) || ((version2 || version3) && (!bool.TryParse(a[8],out station) || !bool.TryParse(a[9],out auto))) || (version3 && a[10]!="en" && a[10]!="es"))
                 throw new InvalidDataException("Invalid display settings; existing settings were kept.");
-            c.Detail=detail;c.Mode=a[2];c.Category=a[3];c.StateFilter=a[4];c.Expanded=expanded;c.Zoom=zoom;c.Visible=visible;c.Page=1;c.Station=station;c.AutoAssociate=auto;c.Language=version3?a[10]:"en";
+            c.Detail=detail;c.Mode="compare";c.Category=a[3];c.StateFilter=a[4];c.Expanded=expanded;c.Zoom=zoom;c.Visible=visible;c.Page=1;c.Station=false;c.AutoAssociate=auto;c.Language=version3?a[10]:"en";
         }
         public static void Save(string path,SchematicControls c)
         {

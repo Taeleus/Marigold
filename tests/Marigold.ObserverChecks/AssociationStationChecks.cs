@@ -51,7 +51,7 @@ internal static class AssociationStationChecks
         {
             string path=Path.Combine(folder,"display.txt");File.WriteAllLines(path,new[]{"Marigold display 1","1","compare","all","all","False","0.85","True"});
             DisplaySettings.Load(path,controls);Check(!controls.Station && controls.AutoAssociate,"Old preferences migrate with safe station default");
-            controls.Station=true;controls.AutoAssociate=false;DisplaySettings.Save(path,controls);var loaded=new SchematicControls();DisplaySettings.Load(path,loaded);Check(loaded.Station && !loaded.AutoAssociate,"New preferences survive restart");
+            controls.Station=true;controls.AutoAssociate=false;DisplaySettings.Save(path,controls);var loaded=new SchematicControls();DisplaySettings.Load(path,loaded);Check(!loaded.Station && !loaded.AutoAssociate,"Global settings do not enable station mode on every ship");
             var store=new ProfileStore(folder);store.Put(profile);var reloaded=new ProfileStore(folder);
             Check(AutoMatcher.Find(rotated,new[]{moved},reloaded.Profiles,2.5).ProfileId==profile.Id,"Disk reload can automatically match a transformed ship");
             Check(reloaded.Find(profile.Id).Blocks[3].Integrity==100,"Matching does not recapture baseline");

@@ -6,13 +6,13 @@
   <Tooltip>See your ship's layout and spot damaged or missing blocks.</Tooltip>
   <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui to open display controls, saved profiles and blueprint import.
 
-Start with /mg anchor, then /mg capture to save a reference. Or import a blueprint, preview the alignment and accept it. Profiles persist locally across sessions; automatic matching tries to reconnect them when you return.
+Use /mg capture to save a full-health reference and cockpit anchor in one step. Or import a blueprint, preview the alignment and accept it. Profiles persist locally across sessions; automatic matching tries to reconnect them when you return.
 
 Yellow means damaged, orange means non-functional, and pulsing red means missing from the saved layout. Green marks additions, purple replacements, and gray unreadable data.
 
-Station mode shows connector-docked grids as context and is off by default. Rotor/piston subgrids are excluded. Use /mg auto off to disable automatic matching; identical copies may need manual selection.
+Station mode shows connector-docked grids and their matched profiles; it is off by default for each ship. Rotor/piston subgrids are excluded. Use /mg auto off to disable automatic matching; identical copies may need manual selection.
 
-Prototype: the new UI, performance and Nexus behavior still need in-game validation. /marigold is an alias for /mg.</Description>
+Prototype: feedback fixes and large-grid performance still need in-game validation. /marigold is an alias for /mg.</Description>
   <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>
   <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
 </PluginData>

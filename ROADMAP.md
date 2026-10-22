@@ -1,10 +1,12 @@
 # Marigold roadmap
 
-## Current position — 0.8.0
+## Current position — 0.9.0 feedback pass
 
-The single-grid engineering HUD now includes persistent cockpit-anchored profiles, capture and blueprint baselines, damage comparison, system/state filters, marker pagination, display modes, a larger display layout, saved preferences and manual profile suggestions. Source is published at https://github.com/Taeleus/Marigold on master.
+The latest user testing confirmed reconnect/Nexus reassociation, orientation, repairs/colors, filters and core station traversal. Their original notes remain in TESTING-TODO.md.
 
-The user confirmed earlier orientation and missing-marker fixes. Versions 0.5–0.8 still need in-game testing. Development proceeds independently of that backlog: append checks to [TESTING-TODO.md](TESTING-TODO.md) without overwriting user notes. Automated checks do not complete in-game checkboxes.
+This pass addresses one-step capture, numeric profile IDs, full-health baselines, comparison-only display, static isometric view, per-profile station settings, docked-ship damage outlines, configurable shortcuts, nested/cloud blueprint discovery, easier blueprint profile creation, panel preview and missing-section visibility after heavy damage. New runtime checks are appended, not marked complete by automated tests.
+
+Still pending: collision/split retests, cloud/UI/shortcut checks, ambiguous-profile cases, large-grid performance, source-package loading and release acceptance. No PluginHub submission has been made.
 
 ## Scope and guardrails
 

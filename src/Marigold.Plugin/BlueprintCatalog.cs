@@ -8,11 +8,15 @@ namespace Marigold
         public static string[] Find(string root)
         {
             var files=new List<string>();if(!Directory.Exists(root))return files.ToArray();int inspected=0;
-            foreach(var folder in Directory.EnumerateDirectories(root))
+            var pending=new Stack<Tuple<string,int>>();pending.Push(Tuple.Create(root,0));
+            while(pending.Count>0 && inspected<2000 && files.Count<500)
             {
-                if(++inspected>2000 || files.Count>=500)break;
-                if((File.GetAttributes(folder)&FileAttributes.ReparsePoint)!=0)continue;
-                string file=Path.Combine(folder,"bp.sbc");if(File.Exists(file))files.Add(file);
+                var item=pending.Pop();inspected++;
+                if((File.GetAttributes(item.Item1)&FileAttributes.ReparsePoint)!=0)continue;
+                string file=Path.Combine(item.Item1,"bp.sbc");if(File.Exists(file))files.Add(file);
+                if(item.Item2>=16)continue;
+                try {foreach(var folder in Directory.EnumerateDirectories(item.Item1)){if(pending.Count>=2000)break;pending.Push(Tuple.Create(folder,item.Item2+1));}}
+                catch(UnauthorizedAccessException){} catch(IOException){}
             }
             files.Sort(StringComparer.OrdinalIgnoreCase);return files.ToArray();
         }

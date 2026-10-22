@@ -25,10 +25,10 @@ namespace Marigold
             if(action=="status")
             {
                 Reference selected;string state=associationStatus;
-                if(grid!=null && references.TryGetValue(grid,out selected))state="Profile "+selected.ProfileId.Substring(0,8)+" is selected. Existing selections are never automatically replaced.";
+                if(grid!=null && references.TryGetValue(grid,out selected))state="Profile "+profileStore.Find(selected.ProfileId).Number.ToString()+" is selected. Existing selections are never automatically replaced.";
                 else if(grid!=null && manualDetached.Contains(grid))state="Manually detached for this session. /mg auto retry allows matching again.";
                 else if(profileStore.Warning!=null)state="Disabled while profile database recovery is pending. "+profileStore.Warning;
-                else if(profileStore.Profiles.Count==0)state="No saved profiles. Use /mg anchor and /mg capture once.";
+                else if(profileStore.Profiles.Count==0)state="No saved profiles. Use /mg capture once from the intended cockpit.";
                 return "Auto reassociation: "+(controls.AutoAssociate?"on. ":"off. ")+state;
             }
             if(action=="retry") { if(grid!=null)manualDetached.Remove(grid);ResetAssociation();return "Automatic matching will retry if enabled; any selected profile is retained."; }
@@ -60,7 +60,7 @@ namespace Marigold
                             {
                                 var profile=profileStore.Find(match.ProfileId);
                                 BindProfile(profile,result.Anchors[match.AnchorIndex]);
-                                associationStatus="Automatically selected "+profile.Name+" ("+profile.Id.Substring(0,8)+") at "+match.Score.ToString("P0")+" layout overlap.";
+                                associationStatus="Automatically selected "+profile.Name+" ("+profile.Number.ToString()+") at "+match.Score.ToString("P0")+" layout overlap.";
                                 commandUtilities?.ShowMessage("Marigold",associationStatus+" /mg profile detach to undo; /mg auto off to disable.");
                             }
                         }

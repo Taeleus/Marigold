@@ -34,11 +34,18 @@ internal static class ProfileChecks
             var anchor=Anchor(axes[0],axes[2],axes[4]);
             var first=new ShipProfile { Id=Guid.NewGuid().ToString("N"),Name="Twin ship",GridSize=2.5,Anchor=anchor,Blocks=local };
             store.Put(first);
+            Check(first.Number==1 && store.Find("1").Id==first.Id,"Short numeric ID assigned");
+            var legacyDir=Path.Combine(directory,"legacy");Directory.CreateDirectory(legacyDir);
+            var bytes=File.ReadAllBytes(Path.Combine(directory,"profiles.bin"));
+            using(var w=new BinaryWriter(File.Create(Path.Combine(legacyDir,"profiles.bin")))){w.Write(0x4D475046);w.Write(1);w.Write(1);w.Write(bytes,21,bytes.Length-21);}
+            var legacy=new ProfileStore(legacyDir);Check(legacy.Warning==null && legacy.Find("1").Id==first.Id,"Version 1 migrates to numeric identity");
+            legacy.Put(legacy.Find("1"));Check(new ProfileStore(legacyDir).Find("1").Blocks[0].Integrity==80,"Migrated profile survives version 2 save");
             var loaded=new ProfileStore(directory);var saved=loaded.Find(first.Id.Substring(0,8));
             Check(saved.Name==first.Name && saved.Blocks.Length==1 && saved.Anchor.Name=="Bridge" && saved.GridSize==2.5,"Disk roundtrip");
             Check(saved.Blocks[0].Integrity==80 && saved.Blocks[0].HasFunctionalState && saved.Blocks[0].IsFunctional,"Block state roundtrip");
             var second=new ShipProfile { Id=Guid.NewGuid().ToString("N"),Name=first.Name,GridSize=2.5,Anchor=anchor,Blocks=null };
             store.Put(second);
+            Check(second.Number==2,"Second numeric ID assigned");
             Check(new ProfileStore(directory).Profiles.Count==2,"Identical names retain distinct IDs");
             Check(File.Exists(Path.Combine(directory,"profiles.bin.bak")),"Atomic replacement keeps backup");
             var invalid=new ShipProfile { Id=Guid.NewGuid().ToString("N"),Name="bad",GridSize=2.5,Anchor=anchor,Blocks=local };
@@ -49,6 +56,7 @@ internal static class ProfileChecks
             Check(store.Find(first.Id).Blocks==null && store.Profiles.Count==2,"Clear baseline preserves profile");
             store.Delete(second.Id);
             Check(new ProfileStore(directory).Profiles.Count==1,"Delete persists");
+            Check(new ProfileStore(directory).Find("1").Blocks==null,"Clear retains numeric identity");
             File.WriteAllBytes(Path.Combine(directory,"profiles.bin"),new byte[]{1,2,3});
             var damaged=new ProfileStore(directory);
             Check(damaged.Warning!=null && damaged.Profiles.Count==2,"Corrupt primary loads prior backup read-only");
@@ -68,6 +76,12 @@ internal static class ProfileChecks
             var missingPrimary=new ProfileStore(missingDir);
             Check(missingPrimary.Warning!=null && missingPrimary.Profiles.Count==2,"Missing primary offers backup recovery");
             missingPrimary.Recover();Check(new ProfileStore(missingDir).Warning==null,"Missing primary recovered atomically");
+            var separate=Path.Combine(directory,"counter");var counter=new ProfileStore(separate);
+            var numbered=new ShipProfile {Id=Guid.NewGuid().ToString("N"),Name="Station",GridSize=2.5,Anchor=anchor,Blocks=local,Station=true};counter.Put(numbered);counter.Delete(numbered.Id);counter=new ProfileStore(separate);
+            var nextProfile=new ShipProfile {Id=Guid.NewGuid().ToString("N"),Name="Ship",GridSize=2.5,Anchor=anchor,Blocks=local};counter.Put(nextProfile);
+            Check(nextProfile.Number==2,"Deleted highest ID is not reused after restart");
+            nextProfile.Station=true;counter.Put(nextProfile,true);Check(new ProfileStore(separate).Find("2").Station,"Station flag persists per profile");
+            var healthy=SnapshotComparison.HealthyBaseline(local);Check(healthy[0].Integrity==100 && healthy[0].BuildIntegrity==100 && local[0].Integrity==80,"Capture normalizes health without mutating observations");
             var controls=new SchematicControls();bool send=true;string response;
             Check(controls.TryHandle("/mg anchor",ref send,out response) && !send && controls.ReferenceAction=="anchor","Anchor command local");
             controls.Execute("/mg profile select abcdef12");Check(controls.ReferenceAction=="profile select" && controls.ProfileArgument=="abcdef12","Profile selection parsed");

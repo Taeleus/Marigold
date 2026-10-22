@@ -63,8 +63,8 @@ namespace Marigold
             {
                 switch(args[2].ToLowerInvariant())
                 {
-                    case "display":return "Display: /mg mode live|reference|compare; /mg layout compact|expanded; /mg zoom 0.25..3; /mg detail low|medium|high.\n/mg isolate "+DisplayFilter.Categories+".\n/mg filter "+DisplayFilter.States+"; /mg page next|prev|N; /mg settings save|load|reset.";
-                    case "profiles":return "Sit in the anchor cockpit: /mg anchor, then /mg capture. /mg profiles lists IDs.\nAutomatic matching is on by default. /mg auto status|on|off|retry. Manual fallback: /mg profile suggest, then /mg profile select ID.\n/mg clear clears the baseline; /mg profile detach keeps saved data; /mg profile delete ID removes it. /mg recover restores the database backup.";
+                    case "display":return "Display (comparison always on): /mg layout compact|expanded; /mg zoom 0.25..3; /mg detail low|medium|high.\n/mg isolate "+DisplayFilter.Categories+".\n/mg filter "+DisplayFilter.States+"; /mg page next|prev|N; /mg settings save|load|reset.";
+                    case "profiles":return "Sit in the anchor cockpit and /mg capture. /mg profiles lists profile numbers.\nAutomatic matching is on by default. /mg auto status|on|off|retry. Manual fallback: /mg profile suggest, then /mg profile load NUMBER.\n/mg clear clears the baseline; /mg profile detach keeps saved data; /mg profile delete ID removes it. /mg recover restores the database backup.";
                     case "blueprint":return "Import: /mg blueprint load \"full path to bp.sbc\"; grids; grid N; anchors; preview N; accept or cancel. Repeat /mg blueprint before each step. Preview is unsaved until accept.";
                     default:return Help;
                 }
@@ -81,7 +81,7 @@ namespace Marigold
                 if(verb=="language" && (value=="en" || value=="es")){ReferenceAction="language "+value;return "Language requested.";}
                 if(verb=="station" && (value=="on" || value=="off" || value=="status")) { ReferenceAction="station "+value;return "Station mode requested."; }
                 if(verb=="auto" && (value=="on" || value=="off" || value=="status" || value=="retry")) { ReferenceAction="auto "+value;return "Reassociation requested."; }
-                if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode=value;Page=1;return "View mode: "+value; }
+                if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode="compare";Page=1;return "Damage comparison is always enabled."; }
                 if(verb=="isolate") { if(!DisplayFilter.Contains(DisplayFilter.Categories,value))return "Categories: "+DisplayFilter.Categories;Category=value;Page=1;return "Visible system: "+value; }
                 if(verb=="filter") { if(!DisplayFilter.Contains(DisplayFilter.States,value))return "States: "+DisplayFilter.States;StateFilter=value;Page=1;return "Marker filter: "+value; }
                 if(verb=="layout") { if(value!="compact" && value!="expanded")return "Layout: compact or expanded.";Expanded=value=="expanded";return "Layout: "+value; }
@@ -122,8 +122,8 @@ namespace Marigold
                 return "Detail: " + DetailName + " (rebuilding outline).";
             }
             if(args.Length==4 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) &&
-                (args[2].Equals("select",StringComparison.OrdinalIgnoreCase) || args[2].Equals("delete",StringComparison.OrdinalIgnoreCase)))
-            { ReferenceAction="profile "+args[2].ToLowerInvariant(); ProfileArgument=args[3]; return "Profile command requested."; }
+                (args[2].Equals("select",StringComparison.OrdinalIgnoreCase) || args[2].Equals("load",StringComparison.OrdinalIgnoreCase) || args[2].Equals("delete",StringComparison.OrdinalIgnoreCase)))
+            { ReferenceAction="profile "+(args[2].Equals("load",StringComparison.OrdinalIgnoreCase)?"select":args[2].ToLowerInvariant()); ProfileArgument=args[3]; return "Profile command requested."; }
             if(args.Length==3 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) && (args[2].Equals("detach",StringComparison.OrdinalIgnoreCase) || args[2].Equals("suggest",StringComparison.OrdinalIgnoreCase)))
             { ReferenceAction="profile "+args[2].ToLowerInvariant(); return "Profile command requested."; }
             if (args.Length != 2) return Help;
@@ -136,7 +136,7 @@ namespace Marigold
                 case "stats": StatsRequested=true; return "Statistics requested.";
                 case "show": Visible = true; return "Schematic shown.";
                 case "hide": Visible = false; return "Schematic hidden.";
-                case "spin": Spin = !Spin; if(Spin) { planView=false; rotatingView=true; } return Spin ? "Automatic rotation on." : "Automatic rotation off.";
+                case "spin": Spin = !Spin; planView=false;rotatingView=true;if(!Spin){Yaw=Math.PI/4;Pitch=-Math.Atan(1/Math.Sqrt(2));} return Spin ? "Automatic rotation on." : "Static isometric view.";
                 case "reset": rotatingView=true; planView=false; Yaw = DefaultYaw; Pitch = -0.4; Zoom = 0.85; Spin = true; return "Default view and automatic rotation restored.";
                 case "left": rotatingView=false; planView=false; Yaw = Math.PI / 2; Pitch = 0; Spin = false; return "Cockpit-relative left view.";
                 case "right": rotatingView=false; planView=false; Yaw = -Math.PI / 2; Pitch = 0; Spin = false; return "Cockpit-relative right view.";

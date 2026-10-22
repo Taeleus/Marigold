@@ -20,6 +20,10 @@ internal static class BlueprintChecks
             Check(File.ReadAllText(file)==xml,"Import never modifies source");
             using(var stream=File.Create(file))using(var gzip=new GZipStream(stream,CompressionMode.Compress))using(var w=new StreamWriter(gzip))w.Write(xml);
             Check(BlueprintDocument.Load(file).Grids[0].Blocks.Count==2,"Gzip blueprint");
+            Check(BlueprintDocument.FromBytes(File.ReadAllBytes(file)).Grids[0].Blocks.Count==2,"Cloud gzip bytes");
+            Check(BlueprintDocument.FromBytes(System.Text.Encoding.UTF8.GetBytes(xml)).Grids[0].Blocks.Count==2,"Cloud XML bytes");
+            var nested=Path.Combine(folder,"Fleet","Miners","Ship");Directory.CreateDirectory(nested);File.WriteAllText(Path.Combine(nested,"bp.sbc"),xml);
+            Check(Array.IndexOf(BlueprintCatalog.Find(folder),Path.Combine(nested,"bp.sbc"))>=0,"Nested local blueprints discovered");
             foreach(string invalid in new[]{"<!DOCTYPE Definitions [<!ENTITY x SYSTEM 'file:///secret'>]><Definitions>&x;</Definitions>",xml.Replace("GridSizeEnum>Large","GridSizeEnum>Huge"),xml.Replace("Forward='Left'","Forward='Diagonal'"),xml.Replace("x='-3'","x='NaN'"),xml.Replace("MyObjectBuilder_Cockpit","MyObjectBuilder_CompoundCubeBlock"),xml.Replace("<BlockOrientation Forward='Left' Up='Up'/>","<Orientation><W>1</W></Orientation>"),"<Definitions/>"})
             {
                 File.WriteAllText(file,invalid);bool rejected=false;try{BlueprintDocument.Load(file);}catch(Exception){rejected=true;}Check(rejected,"Malformed/unsupported XML rejected");
