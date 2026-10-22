@@ -53,13 +53,14 @@ namespace Marigold
         private string comparisonReport="No reference captured.";
         private void ClearReferences()
         {
-            CancelBlueprintPreview();blueprintLoad=null;blueprint=null;converted=null;blueprintAnchors.Clear();blueprintGrid=-1;
+            CancelRecovery();CancelBlueprintPreview();blueprintLoad=null;blueprint=null;converted=null;blueprintAnchors.Clear();blueprintGrid=-1;
             manualDetached.Clear();ResetAssociation();
             foreach(var pair in references) pair.Key.OnGridSplit-=OnSplit;
             references.Clear();stationByGrid.Clear();stationBaselines.Clear(); generation++; comparisonReport="No reference captured.";
         }
         private void OnSplit(MyCubeGrid original,MyCubeGrid detached)
         {
+            CancelRecovery();
             CancelBlueprintPreview();
             Reference reference;
             var controlled=Sandbox.Game.World.MySession.Static?.ControlledEntity?.Entity as IMyShipController;
@@ -80,16 +81,17 @@ namespace Marigold
         private void RefreshReference(string message)
         { generation++;dirty=true;cooldown=0;comparisonReport=message; }
         private void Detach(MyCubeGrid target)
-        { if(target==grid)CancelBlueprintPreview(); if(references.Remove(target)) target.OnGridSplit-=OnSplit; }
+        { if(target==grid){CancelRecovery();CancelBlueprintPreview();} if(references.Remove(target)) target.OnGridSplit-=OnSplit; }
         private void BindProfile(ShipProfile profile,AnchorFrame anchor)
         {
+            CancelRecovery();
             stationBaselines.Clear();
             var closed=new List<MyCubeGrid>();
             foreach(var pair in references)if(pair.Key.Closed || pair.Key.MarkedForClose)closed.Add(pair.Key);
             foreach(var old in closed)Detach(old);
             CancelBlueprintPreview();
             if(!references.ContainsKey(grid))grid.OnGridSplit+=OnSplit;
-            controls.Station=profile.Station;stationByGrid[grid]=profile.Station;
+            controls.Station=profile.Station;stationByGrid[grid]=profile.Station;LoadShipSettings(profile.Id);
             references[grid]=new Reference { ProfileId=profile.Id,Anchor=anchor,Blocks=ProfileAlignment.Transform(profile.Blocks,anchor,false) };
             RefreshReference(profile.Blocks==null?"Profile anchored; use /mg capture.":"Comparison pending.");
         }
@@ -104,6 +106,9 @@ namespace Marigold
         }
         private string ReferenceCommand(string action)
         {
+            if(action=="profile force")return RecoveryCommand("force");
+            if(action.StartsWith("recovery ",StringComparison.Ordinal))return RecoveryCommand(action.Substring(9));
+            if(DisplayFilter.Contains("capture clear anchor",action) || action=="profile delete")CancelRecovery();
             if(action.StartsWith("language ",StringComparison.Ordinal))
             {
                 string previous=controls.Language;controls.Language=action.Substring(9);
@@ -155,7 +160,7 @@ namespace Marigold
             }
             if(grid==null || grid.Closed || grid.MarkedForClose) return "Control a ship first.";
             Reference selected;references.TryGetValue(grid,out selected);
-            if(action=="report") return (previewBlocks==null?"":"UNSAVED blueprint preview. ")+(selected==null?"No profile selected. Use /mg profiles or /mg anchor. ":"Profile "+profileStore.Find(selected.ProfileId).Number+". ")+
+            if(action=="report") return (recoveryPreview!=null?"UNSAVED recovery preview. ":previewBlocks==null?"":"UNSAVED blueprint preview. ")+(selected==null?"No profile selected. Use /mg profiles or /mg anchor. ":"Profile "+profileStore.Find(selected.ProfileId).Number+". ")+
                 (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending!=null ? "Refresh pending. " : "")+comparisonReport+" "+stationStatus;
             if(action=="profile suggest")
             {
@@ -207,19 +212,14 @@ namespace Marigold
             }
             return SchematicControls.Help;
         }
-        private static Color LineColor(ChangeKind kind, byte missingAlpha)
+        private Color LineColor(ChangeKind kind, byte missingAlpha,byte weight=100)
         {
-            switch(kind)
-            {
-                case ChangeKind.Missing:return new Color(255,55,55,missingAlpha);
-                case ChangeKind.Damaged:return new Color(220,205,65,150);
-                case ChangeKind.NonFunctional:return new Color(255,130,20,240);
-                case ChangeKind.Replaced:return new Color(220,100,255,240);
-                case ChangeKind.Added:return new Color(90,255,120,240);
-                case ChangeKind.Unknown:return new Color(190,190,190,220);
-                default:return new Color(80,220,220,110);
-            }
+            uint rgb=controls.Appearance.Color((int)kind);
+            int alpha=kind==ChangeKind.Missing?missingAlpha:kind==ChangeKind.Damaged?150:kind==ChangeKind.Hull?110:kind==ChangeKind.Unknown?220:240;
+            return new Color((byte)(rgb>>16),(byte)(rgb>>8),(byte)rgb,(byte)Math.Min(255,alpha*controls.Appearance.Outline*weight/100));
         }
+
+        private byte[] lineWeights=new byte[0];
         private double buildMs, snapshotMs, drawTotalMs, drawMaxMs, cellSize;
         private int drawSamples;
         private string Statistics()
@@ -239,17 +239,18 @@ namespace Marigold
             public Exception Error;
             public ChangeKind[] Kinds;
             public int[] ShadedMarkers;
+            public byte[] Weights;
             public string Report;
             public StationGrid[] Station;
         }
 
-        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station)
+        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station,string styles)
         {
             var timer=Stopwatch.StartNew();
             var result=new BuildResult { Generation=version, Count=snapshot.Length, Station=station };
             try
             {
-                var boxes=new List<Box3>();
+                var boxes=new List<Box3>();var faded=new List<Box3>();var highlighted=new List<Box3>();category=DisplayFilter.VisibleCategories(category,styles);
                 Box3? frame=null;
                 foreach(var block in snapshot)frame=frame.HasValue?SchematicGeometry.Union(frame.Value,block.Bounds):block.Bounds;
                 if(reference!=null)foreach(var block in reference)frame=frame.HasValue?SchematicGeometry.Union(frame.Value,block.Bounds):block.Bounds;
@@ -266,11 +267,12 @@ namespace Marigold
                 foreach(var connected in station)foreach(var block in connected.Blocks)
                 {var bounds=connected.Bounds(block.Bounds);frame=frame.HasValue?SchematicGeometry.Union(frame.Value,bounds):bounds;}
                 mode="compare";var outlineSource=snapshot;
-                foreach(var block in outlineSource)if(DisplayFilter.CategoryMatches(block.Definition,category))boxes.Add(block.Bounds);
+                foreach(var block in outlineSource)if(DisplayFilter.CategoryMatches(block.Definition,category)){char style=DisplayFilter.Style(block.Definition,styles);(style=='2'?faded:style=='3'?highlighted:boxes).Add(block.Bounds);}
                 var model=OutlineGeometry.Build(boxes,detail,frame);
                 var geometry=new List<Point3>(model.Points);
                 var kinds=new List<ChangeKind>();var shaded=new List<int>();
-                for(int i=0;i<model.Points.Length/2;i++)kinds.Add(ChangeKind.Hull);
+                var weights=new List<byte>();for(int i=0;i<model.Points.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(100);}
+                for(int group=0;group<2;group++){var styled=OutlineGeometry.Build(group==0?faded:highlighted,detail,frame);geometry.AddRange(styled.Points);for(int i=0;i<styled.Points.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(group==0?(byte)25:(byte)230);}}
                 if(frame.HasValue)foreach(var connected in station)
                 {
                     var context=StationGeometry.Build(connected,category,frame.Value);geometry.AddRange(context);
@@ -312,6 +314,7 @@ namespace Marigold
                     result.Report=comparison.Summary+". All matching missing regions outlined. Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
+                while(weights.Count<kinds.Count)weights.Add(100);result.Weights=weights.ToArray();
                 result.Points=geometry.ToArray(); result.Kinds=kinds.ToArray(); result.ShadedMarkers=shaded.ToArray();
                 result.Cells=model.Cells; result.CellSize=model.CellSize;
             }
@@ -357,9 +360,12 @@ namespace Marigold
             observation?.Dispose();observation=null;observationRevision=-1;
             ClearStationObservers();
             CancelBlueprintPreview();
-            ResetAssociation();stationStatus="";
+            ResetAssociation();CancelRecovery();stationStatus="";
             lastObservation=null;lastObservationGeneration=-1;
             grid=next;
+            bool auto=controls.AutoAssociate;string language=controls.Language;
+            try{DisplaySettings.Reset(controls);DisplaySettings.Load(settingsPath,controls);}catch(Exception e){MyLog.Default.WriteLine("[Marigold] Display defaults: "+e.Message);}controls.AutoAssociate=auto;controls.Language=language;
+            Reference savedBinding;if(grid!=null && references.TryGetValue(grid,out savedBinding))LoadShipSettings(savedBinding.ProfileId);
             bool station;controls.Station=grid!=null && stationByGrid.TryGetValue(grid,out station) && station;
             generation++;
             points=new Point3[0]; rotated=new Point3[0]; lineKinds=new ChangeKind[0]; shadedMarkers=new int[0]; fillBands.Clear();
@@ -405,7 +411,7 @@ namespace Marigold
         public void Update(MyCubeGrid current, IMyShipController controller)
         {
             SetGrid(current);
-            UpdateBlueprint();
+            UpdateBlueprint();UpdateRecovery();
             UpdateHotkeys();
             if(observation!=null && (controls.Visible || controls.AutoAssociate))
             {
@@ -417,7 +423,7 @@ namespace Marigold
             if (grid==null || faulted) return;
             try
             {
-                caption=(string.IsNullOrWhiteSpace(grid.DisplayName) ? "Unnamed ship" : grid.DisplayName)+(previewBlocks==null?"":" [blueprint preview]")+(controls.Station?" [station]":"");
+                caption=(string.IsNullOrWhiteSpace(grid.DisplayName) ? "Unnamed ship" : grid.DisplayName)+(recoveryPreview!=null?" [recovery preview]":previewBlocks==null?"":" [blueprint preview]")+(controls.Station?" [station]":"");
                 Matrix orientation;
                 controller.Orientation.GetMatrix(out orientation);
                 cockpitRight = new Point3(orientation.Right.X,orientation.Right.Y,orientation.Right.Z);
@@ -437,7 +443,7 @@ namespace Marigold
                         if(stationBaselines.Count>128)stationBaselines.Clear();
                         foreach(var docked in result.Station)if(docked.MatchedProfile!=null)stationBaselines[docked.EntityId]=new StationGrid {Baseline=docked.Baseline,MatchedProfile=docked.MatchedProfile};
                         controls.Page=result.Page;
-                        points=result.Points; lineKinds=result.Kinds; shadedMarkers=result.ShadedMarkers; comparisonReport=result.Report;
+                        points=result.Points; lineWeights=result.Weights;lineKinds=result.Kinds; shadedMarkers=result.ShadedMarkers; comparisonReport=result.Report;
                         rotated=new Point3[points.Length];
                         buildMs=result.Milliseconds; cellSize=result.CellSize;
                         drawSamples=0; drawTotalMs=drawMaxMs=0;
@@ -452,14 +458,14 @@ namespace Marigold
                     var snapshot=observation.Snapshot();
                     Reference reference;
                     references.TryGetValue(grid,out reference);
-                    var baseline=previewBlocks??(reference==null?null:reference.Blocks);
+                    var baseline=recoveryPreview??previewBlocks??(reference==null?null:reference.Blocks);
                     var station=SampleStation();
                     if(!controls.Station && lastObservationGeneration==generation && ObservationCache.Same(lastObservation,snapshot))
                     { dirty=false;cooldown=30;snapshotMs=timer.Elapsed.TotalMilliseconds;return; }
                     lastObservation=snapshot;lastObservationGeneration=generation;
                     int version=generation, detail=controls.Detail,page=controls.Page;
-                    string mode=controls.Mode,category=controls.Category,stateFilter=controls.StateFilter;bool preview=previewBlocks!=null;
-                    pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station));
+                    string mode=controls.Mode,category=controls.Category,stateFilter=controls.StateFilter;bool preview=recoveryPreview!=null || previewBlocks!=null;
+                    string styles=controls.SystemStyles;pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station,styles));
                     snapshotMs=timer.Elapsed.TotalMilliseconds;
                     dirty=false; cooldown=30;
                     MyLog.Default.WriteLine("[Marigold] Schematic snapshot: "+snapshot.Length+" blocks, "+timer.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");
@@ -476,14 +482,14 @@ namespace Marigold
             {
                 long drawStart=Stopwatch.GetTimestamp();
                 Vector2 screen=MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One,true);
-                float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f):Math.Min(screen.X*.25f,screen.Y*.32f);
-                float left=panel!=null?8:controls.Expanded?(screen.X-side)/2:screen.X-side-24, top=panel!=null?screen.Y*.76f:screen.Y*0.12f;
+                float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f):Math.Min(screen.X*.6f,screen.Y*(float)controls.Appearance.Size);
+                float left=panel!=null?8:controls.Expanded?(screen.X-side)/2:8+(screen.X-side-24)*(float)controls.Appearance.X, top=panel!=null?(screen.Y-side)/2:8+(screen.Y-side-65)*(float)controls.Appearance.Y;
                 var panelRect=new RectangleF(left-8,top-8,side+16,side+16);
-                MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,190),0,false,false);
+                MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,(byte)(255*controls.Appearance.Background)),0,false,false);
                 float half=side/2;
                 for(int i=0;i<points.Length;i++)
                     rotated[i]=controls.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
-                byte missingAlpha=(byte)(205+35*Math.Sin(clock.Elapsed.TotalSeconds*Math.PI));
+                byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*Math.Sin(clock.Elapsed.TotalSeconds*Math.PI));
                 MarkerFill.Build(rotated,shadedMarkers,controls.Zoom,side,fillBands);
                 foreach(var band in fillBands)
                 {
@@ -491,7 +497,7 @@ namespace Marigold
                         (float)band.Width*half,(float)band.Height*half);
                     var kind=lineKinds[band.MarkerStart/2];
                     var shade=LineColor(kind,missingAlpha);
-                    shade.A=kind==ChangeKind.Missing?(byte)(missingAlpha/4):kind==ChangeKind.Damaged?(byte)25:(byte)60;
+                    shade.A=(byte)((kind==ChangeKind.Missing?missingAlpha/4:kind==ChangeKind.Damaged?25:60)*controls.Appearance.Fill);
                     MyRenderProxy.DrawSprite(Texture,ref fill,null,shade,0,false,false);
                 }
                 for(int b=0;b<points.Length;b+=2)
@@ -503,7 +509,7 @@ namespace Marigold
                         var to=new Vector2(left+half+(float)x1*half,top+half+(float)y1*half);
                         var delta=to-from; float length=delta.Length(); if(length<0.25f)continue;
                         var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y)/2-0.5f,length,1);
-                        MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha),(float)Math.Atan2(delta.Y,delta.X),false,false);
+                        MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]),(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
                 MyGuiManager.DrawString("White",caption,new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
                     useFullClientArea:true,maxTextWidth:controls.Expanded?.65f:.28f);

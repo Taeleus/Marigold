@@ -4,7 +4,7 @@ A ship schematic and damage display for **Space Engineers 1**, built for **Pulsa
 
 Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
 
-**Current version: 0.9.0 prototype.** Reconnects, Nexus transfers, orientation and core controls passed the latest user testing. This feedback release needs fresh in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
+**Current version: 0.10.0 prototype.** The 0.9 workflows passed the latest user testing. Recovery, customization and library additions in 0.10 need the newly appended checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
 
 ## Get started
 
@@ -38,7 +38,17 @@ A detached block counts as missing from the observed grid, even if it still exis
 - **Blueprints:** browse nested local folders or cloud XML blueprints, load one, choose its grid, then its matching cockpit. A single grid prepares automatically. Preview the alignment, then choose **Save profile**. No prior capture is needed. Unavailable mod blocks are omitted with a count; a usable matching cockpit is still required.
 - **Views:** snap to a side, zoom, rotate, browse marker pages, or assign shortcuts to cycle systems, cycle markers and toggle expanded view. Shortcuts start unbound.
 
-The interface has English and Spanish labels. Diagnostic messages remain in English. Use **Save settings** to keep ordinary display changes; automatic matching and language choices save immediately. Station mode saves with the ship profile. The panel has a small live schematic preview.
+New in 0.10:
+
+- **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Force apply may be needed again after reconnect.
+- **Appearance:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
+- **Systems:** combine categories and choose hidden, wireframe, faint or highlighted hull outlines. Damage markers retain state colors; station context follows visibility.
+- **Library:** rename profiles and save/load/delete named baselines. Captures/imports do not change named copies. Revision loading requires the same saved anchor and archives the previous active baseline when needed. Limits are 16 revisions and 250,000 total blocks per library.
+- **Views:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
+- **Blueprints:** locally cached Workshop XML discovery and a list of omitted definition names/counts. Protobuf-only and archived entries remain unsupported.
+- **Reports:** structural completeness and expected/observed/matching counts, distinct from health.
+
+The interface has English and Spanish labels; new controls may fall back to English. Diagnostic messages remain in English. Use **Save settings** to keep ordinary display changes; automatic matching and language choices save immediately. Station mode saves with the ship profile. The panel has a small live schematic preview.
 
 ## Returning to your ship
 

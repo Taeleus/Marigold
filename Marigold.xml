@@ -1,19 +1,25 @@
 <?xml version="1.0"?>
+
 <PluginData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="GitHubPlugin">
+
   <Id>7db0d53e-7572-4cbc-911e-25fa26ef182c</Id>
+
   <FriendlyName>Marigold (prototype)</FriendlyName>
+
   <Author>Taeleus</Author>
+
   <Tooltip>See your ship's layout and spot damaged or missing blocks.</Tooltip>
-  <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui to open display controls, saved profiles and blueprint import.
 
-Use /mg capture to save a full-health reference and cockpit anchor in one step. Or import a blueprint, preview the alignment and accept it. Profiles persist locally across sessions; automatic matching tries to reconnect them when you return.
+  <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture saves a full-health baseline and anchor; local/cloud blueprints can also supply the expected layout.
 
-Yellow means damaged, orange means non-functional, and pulsing red means missing from the saved layout. Green marks additions, purple replacements, and gray unreadable data.
+Yellow means damaged, orange non-functional and pulsing red missing. Customize the HUD, combine system filters, assign shortcuts and save per-ship displays or named baseline revisions.
 
-Station mode shows connector-docked grids and their matched profiles; it is off by default for each ship. Rotor/piston subgrids are excluded. Use /mg auto off to disable automatic matching; identical copies may need manual selection.
+If the original cockpit is destroyed, Force apply searches surviving blocks and previews an alignment for you to accept. Baselines never update automatically. Reconnect matching is conservative; ambiguous ships may need manual selection.
 
-Prototype: feedback fixes and large-grid performance still need in-game validation. /marigold is an alias for /mg.</Description>
+Station mode is off by default and shows connector-docked grids with matched profiles. Rotor/piston subgrids are excluded. Prototype: new features need in-game testing. /marigold is an alias for /mg.</Description>
+
   <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>
-  <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
-</PluginData>
 
+  <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
+
+</PluginData>

@@ -1,4 +1,4 @@
-# Release preparation — 0.8.0
+# Release preparation
 
 This is a testable prototype, not a validated public release. No PluginHub submission has been made.
 
@@ -27,3 +27,10 @@ Localization covers built-in control labels/options in English and Spanish. Diag
 
 
 October 22, 2026 validation: release binary and 23-file source-only builds passed with zero warnings/errors. Automated assertions passed: 12 lifecycle, 16 blueprint, 45 display/settings, 50 association/station, 216 interface/observation, 119 profile, 5 fill, 29 comparison, 6,973 geometry and 403 command/orientation checks. These are development checks; the testing checklist remains unchecked for user validation.
+
+
+## 0.10 validation
+
+Binary build, automated suites and the 30-file manifest-selected source compilation pass. The new feedback suite adds 68 checks covering recovery rotations, missing structure, ambiguity, cancellation, key aliases, category styles and settings migration. A sandboxed repeat emitted NU1900 when the NuGet audit service was unreachable; the network-enabled dependency restore/build completed without warnings. Actual Pulsar source loading remains a user acceptance check.
+
+The 0.9 runtime passes are recorded in TESTING-TODO.md. The new 0.10 section covers recovery, customization, reference libraries, imports and performance; none are marked passed by compilation. See ROADMAP.md for outstanding recovery/revision/import limitations. No PluginHub submission has been made.

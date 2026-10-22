@@ -21,7 +21,13 @@ namespace Marigold
             if(type=="cubeblock")return "armor";
             return "other";
         }
-        public static bool CategoryMatches(string definition,string category){return category=="all" || Category(definition)==category;}
+        public static string DefaultStyles {get{return new string('1',Categories.Split(' ').Length);}}
+        public static bool ValidStyles(string styles){if(styles==null || styles.Length!=DefaultStyles.Length)return false;foreach(char c in styles)if(c<'0' || c>'3')return false;return true;}
+        public static char Style(string definition,string styles){int index=Array.IndexOf(Categories.Split(' '),Category(definition));return styles[index<0?0:index];}
+        public static string VisibleCategories(string selected,string styles){var result=new System.Collections.Generic.List<string>();var names=Categories.Split(' ');for(int i=1;i<names.Length;i++)if(styles[i]!='0' && (selected=="all" || Array.IndexOf(selected.Split(','),names[i])>=0))result.Add(names[i]);return result.Count==0?"none":string.Join(",",result);}
+        public static bool ValidCategories(string value)
+        {if(value=="all" || value=="none")return true;if(string.IsNullOrWhiteSpace(value))return false;foreach(var part in value.Split(','))if(part=="all" || !Contains(Categories,part))return false;return true;}
+        public static bool CategoryMatches(string definition,string category){return category=="all" || Array.IndexOf(category.Split(','),Category(definition))>=0;}
         public static bool StateMatches(ChangeKind kind,string state)
         {
             switch(state)

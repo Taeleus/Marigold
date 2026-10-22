@@ -1,4 +1,4 @@
-# Marigold commands — 0.8
+# Marigold commands â€” 0.8
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -13,10 +13,15 @@ Automatic matching is enabled by default. After reconnect or world transfer, con
 ## Import a blueprint baseline
 
 1. Sit in the intended live anchor cockpit. A prior profile or capture is optional.
+
 2. `/mg blueprint load "C:\full path\bp.sbc"`
+
 3. `/mg blueprint grids`, then `/mg blueprint grid N` for the intended grid.
+
 4. `/mg blueprint anchors`, then `/mg blueprint preview N` for the matching cockpit.
+
 5. Inspect top, bottom and reset views and `/mg report`. The preview has a purple reference outline and an explicit unsaved caption.
+
 6. `/mg blueprint accept` saves the intended layout. `/mg blueprint cancel` leaves the original baseline intact. After cancel, the prepared grid remains available for another preview.
 
 Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; attached grids need future construct support. Unavailable mod definitions are skipped with an explicit count. Compound blocks, legacy quaternion-only orientations and supergrids remain unsupported. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
@@ -24,20 +29,35 @@ Import uses installed block definitions for exact multi-cell bounds and cockpit 
 ## Display and diagnostics
 
 | Command | Result |
+
 | --- | --- |
+
 | `/mg show`, `hide` | Show/hide schematic; hiding pauses diagram observation; automatic matching still runs |
+
 | `/mg spin`, `reset` | Toggle rotation; restore default rotating view |
+
 | `/mg left`, `right`, `top`, `bottom` | Snap relative to the active cockpit |
+
 | `/mg zoom 0.25..3`, `in`, `out` | Set/change scale |
+
 | `/mg mode compare` | Comparison is always enabled; old live/reference commands also resolve to compare |
+
 | `/mg isolate CATEGORY` | Select a system, retaining whole-ship scale |
+
 | `/mg filter STATE` | Limit markers; report totals still cover the entire grid |
+
 | `/mg page next`, `prev`, `N` | Browse up to 128 filtered markers per page, highest severity first |
+
 | `/mg layout compact`, `expanded` | Small side panel or larger centered panel |
+
 | `/mg detail low`, `medium`, `high` | Outline geometry budget |
+
 | `/mg report` | Baseline status, all change counts and visible marker page |
+
 | `/mg stats` | Sample, worker and HUD CPU timing; excludes GPU cost |
+
 | `/mg settings save`, `load`, `reset` | Explicitly save/reload preferences, or reset in-memory defaults |
+
 | `/mg help display`, `profiles`, `blueprint` | Topic-specific help |
 
 Categories: `all armor conveyors thrusters weapons power gas mechanical production cargo control tools other`. Classification uses block types; unusual/modded definitions may fall back to `other`. `mechanical` isolates rotor/piston blocks on the observed grid, not their attached grids.
@@ -69,3 +89,17 @@ Views lets you assign shortcuts for cycle-system, cycle-marker and expanded layo
 Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regions remain outlined regardless of individual marker pagination; category/state filters still apply.
 
 `/mg language en|es` changes UI label language. Newly added and diagnostic messages may remain English.
+
+## 0.10 additions
+
+`/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells, not screen directions. Acceptance requires three exact matches and never recaptures the baseline. Recovery is session-local and may need repeating after reconnect.
+
+`/mg isolate thrusters,power,gas` combines categories; `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
+
+Appearance accepts normalized X/Y (0-1), size (0.12-0.7 of screen height), opacity/pulse (0-1), and seven comma-separated RRGGBB colors: hull, missing, damage, replaced, added, unknown, non-functional. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
+
+Library saves independent named baselines. Capture/import do not update those copies. Loading archives the previous active baseline when needed; deleting a revision leaves the active baseline intact. Cross-anchor restore is refused. Limits: 16 revisions and 250,000 total blocks per library.
+
+Views accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
+
+Workshop cache reads local bp.sbc files in the current Steam library without downloading; PB-only/archived items are unsupported. Omitted blocks lists unavailable definitions. Structural completeness measures matching expected structure, not health. New labels may remain English.

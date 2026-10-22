@@ -38,6 +38,7 @@ namespace Marigold
         }
         private void UpdateAssociation()
         {
+            if(recoveryProfile!=null)return;
             // Observe completion even after disabling; no unobserved task exceptions.
             if(associationTask!=null && associationTask.IsCompleted)
             {

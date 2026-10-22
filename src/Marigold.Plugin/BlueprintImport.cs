@@ -19,6 +19,8 @@ namespace Marigold
         private string previewProfile;
         private ShipProfile previewCandidate;
         private int skippedDefinitions,blueprintRevision;
+        private readonly Dictionary<string,int> omittedDefinitions=new Dictionary<string,int>();
+        private string OmittedReport(){var lines=new List<string>();foreach(var p in omittedDefinitions)lines.Add(p.Value+" x "+p.Key);return lines.Count==0?"No unavailable definitions omitted.":string.Join("\n",lines);}
         private string blueprintStatus="Choose a local or cloud blueprint, then Load.";
         private void BlueprintNotice(string message){blueprintStatus=message;blueprintRevision++;if(panel!=null)panel.NotifyBlueprint(message);else commandUtilities?.ShowMessage("Marigold",message);}
         private void CancelBlueprintPreview()
@@ -27,6 +29,7 @@ namespace Marigold
         }
         private string BlueprintCommand(string verb)
         {
+            CancelRecovery();
             if(verb=="cancel") { CancelBlueprintPreview();RefreshReference("Blueprint preview canceled; saved baseline unchanged.");return comparisonReport; }
             if(verb=="load")
             {
@@ -46,7 +49,7 @@ namespace Marigold
             if(verb=="grid")
             {
                 int number;if(!int.TryParse(controls.ProfileArgument,out number) || number<1 || number>blueprint.Grids.Count)return "Choose a grid number from /mg blueprint grids.";
-                CancelBlueprintPreview();blueprintGrid=number-1;conversionIndex=0;skippedDefinitions=0;converted=new List<BlockSample>();blueprintAnchors.Clear();
+                CancelBlueprintPreview();blueprintGrid=number-1;conversionIndex=0;skippedDefinitions=0;omittedDefinitions.Clear();converted=new List<BlockSample>();blueprintAnchors.Clear();
                 RefreshReference("Resolving blueprint definitions.");return "Resolving the selected grid against installed block definitions.";
             }
             if(blueprintGrid<0)return "Choose a grid with /mg blueprint grid N.";
@@ -98,7 +101,7 @@ namespace Marigold
                 for(;conversionIndex<end;conversionIndex++)
                 {
                     var raw=source.Blocks[conversionIndex];MyDefinitionId id;MyCubeBlockDefinition def;
-                    if(!MyDefinitionId.TryParse(raw.Type,raw.Subtype,out id) || !MyDefinitionManager.Static.TryGetCubeBlockDefinition(id,out def)){skippedDefinitions++;continue;}
+                    if(!MyDefinitionId.TryParse(raw.Type,raw.Subtype,out id) || !MyDefinitionManager.Static.TryGetCubeBlockDefinition(id,out def)){skippedDefinitions++;string name=raw.Type+"/"+raw.Subtype;int count;omittedDefinitions.TryGetValue(name,out count);omittedDefinitions[name]=count+1;continue;}
                     if((def.CubeSize==MyCubeSize.Large?2.5:.5)!=source.GridSize)throw new InvalidOperationException("Mixed-size/supergrid blueprints are unsupported.");
                     var orientation=new MyBlockOrientation((Base6Directions.Direction)raw.Forward,(Base6Directions.Direction)raw.Up);
                     if(!orientation.IsValid)throw new InvalidOperationException("Invalid block orientation.");

@@ -16,13 +16,16 @@ namespace Marigold
             else if(rotatingView) result.X=-result.X;
             return result;
         }
+        public HudAppearance Appearance=new HudAppearance();
+        public void RotateView(double yaw,double pitch){Spin=false;planView=false;rotatingView=true;Yaw+=yaw;Pitch=Math.Max(-Math.PI/2,Math.Min(Math.PI/2,Pitch+pitch));}
         public int Detail = 1;
         public string Language="en";
+        public string SystemStyles=DisplayFilter.DefaultStyles;
         public string Mode="compare", Category="all", StateFilter="all";
         public bool Expanded;
         public bool Station=false,AutoAssociate=true;
         public int Page=1;
-        public string GeometryOptions { get { return Detail+"/"+Mode+"/"+Category+"/"+StateFilter+"/"+Page+"/"+Station; } }
+        public string GeometryOptions { get { return Detail+"/"+Mode+"/"+Category+"/"+StateFilter+"/"+Page+"/"+Station+"/"+SystemStyles; } }
         public bool StatsRequested;
         public string ReferenceAction, ProfileArgument;
         public string DetailName { get { return Detail == 0 ? "low" : Detail == 1 ? "medium" : "high"; } }
@@ -69,6 +72,7 @@ namespace Marigold
                     default:return Help;
                 }
             }
+            if(args.Length==3 && args[1].Equals("recovery",StringComparison.OrdinalIgnoreCase) && DisplayFilter.Contains("next accept cancel",args[2].ToLowerInvariant())){ReferenceAction="recovery "+args[2].ToLowerInvariant();return "Recovery requested.";}
             if(args.Length==3 && args[1].Equals("settings",StringComparison.OrdinalIgnoreCase))
             {
                 string action=args[2].ToLowerInvariant();
@@ -82,7 +86,7 @@ namespace Marigold
                 if(verb=="station" && (value=="on" || value=="off" || value=="status")) { ReferenceAction="station "+value;return "Station mode requested."; }
                 if(verb=="auto" && (value=="on" || value=="off" || value=="status" || value=="retry")) { ReferenceAction="auto "+value;return "Reassociation requested."; }
                 if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode="compare";Page=1;return "Damage comparison is always enabled."; }
-                if(verb=="isolate") { if(!DisplayFilter.Contains(DisplayFilter.Categories,value))return "Categories: "+DisplayFilter.Categories;Category=value;Page=1;return "Visible system: "+value; }
+                if(verb=="isolate") { if(!DisplayFilter.ValidCategories(value))return "Categories: "+DisplayFilter.Categories;Category=value;Page=1;return "Visible system: "+value; }
                 if(verb=="filter") { if(!DisplayFilter.Contains(DisplayFilter.States,value))return "States: "+DisplayFilter.States;StateFilter=value;Page=1;return "Marker filter: "+value; }
                 if(verb=="layout") { if(value!="compact" && value!="expanded")return "Layout: compact or expanded.";Expanded=value=="expanded";return "Layout: "+value; }
                 if(verb=="page")
@@ -122,7 +126,7 @@ namespace Marigold
                 return "Detail: " + DetailName + " (rebuilding outline).";
             }
             if(args.Length==4 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) &&
-                (args[2].Equals("select",StringComparison.OrdinalIgnoreCase) || args[2].Equals("load",StringComparison.OrdinalIgnoreCase) || args[2].Equals("delete",StringComparison.OrdinalIgnoreCase)))
+                (args[2].Equals("select",StringComparison.OrdinalIgnoreCase) || args[2].Equals("load",StringComparison.OrdinalIgnoreCase) || args[2].Equals("force",StringComparison.OrdinalIgnoreCase) || args[2].Equals("delete",StringComparison.OrdinalIgnoreCase)))
             { ReferenceAction="profile "+(args[2].Equals("load",StringComparison.OrdinalIgnoreCase)?"select":args[2].ToLowerInvariant()); ProfileArgument=args[3]; return "Profile command requested."; }
             if(args.Length==3 && args[1].Equals("profile",StringComparison.OrdinalIgnoreCase) && (args[2].Equals("detach",StringComparison.OrdinalIgnoreCase) || args[2].Equals("suggest",StringComparison.OrdinalIgnoreCase)))
             { ReferenceAction="profile "+args[2].ToLowerInvariant(); return "Profile command requested."; }

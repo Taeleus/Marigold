@@ -128,21 +128,68 @@ Notes:
 
 Your notes above are preserved. These checks cover the changes made in response.
 
-- [ ] With no profile selected, sit in a cockpit and `/mg capture`. It should create the anchor and baseline together. Capture a damaged/unfinished ship: damage should remain visible because the baseline assumes full health.
-- [ ] `/mg profiles` shows short numbers; `/mg profile load 1` loads the chosen ship. Existing profiles migrate without losing their layouts. Delete a profile, restart, and create another: its number should not reuse the deleted number.
-- [ ] `/mg clear` keeps the profile, cockpit anchor and number but removes its baseline. Capture again to restore comparison. Do not confuse Clear with Delete.
-- [ ] Disable spin from several angles. It should snap to the same centered isometric view. Reset should restore the familiar rotating orientation; verify left/right remains correct.
-- [ ] Save settings, restart and reconnect. Comparison should remain enabled and automatic association should still work. Old live/reference settings must not hide damage.
-- [ ] Crash/remove more than 128 blocks, including whole sections. Their entire missing footprint should stay red on every marker page (subject to filters and outline detail). Individual shaded markers remain paginated. Check totals with `/mg report`.
-- [ ] Split a ship so the piloted cockpit ends up on the smaller/new grid. Its saved baseline should follow, showing the other section as missing. Repeat with the cockpit remaining on the original grid.
-- [ ] Enable station mode for a saved station, switch to another ship, and restart. The station should remember its setting; other ships should default off.
-- [ ] Dock ships with uniquely matching saved profiles. They should show their own damage outlines and separate report counts. Damage them heavily after matching: their baseline should stay. Ambiguous/unmatched ships should remain context only. Rotor/piston/hinge-only subgrids remain excluded.
-- [ ] In Views, assign shortcuts for cycle-system, cycle-marker and expanded layout. Try Ctrl+Shift+F6/F7/F8 only if those combinations are free in your setup. Confirm save/restart, blank-to-unbind, duplicate rejection, and no activation while typing chat or using menus. The game still receives keys.
-- [ ] Browse nested local blueprint folders. Load a single-grid blueprint and verify the cockpit list fills automatically; multi-grid blueprints should prepare when selected.
-- [ ] Use Cloud with Steam cloud blueprints available. Select an XML blueprint, Load, pick its cockpit and Preview. Test a failed/offline load too. Protobuf-only and Workshop downloads are not supported by this browser yet.
-- [ ] On a ship without a profile, Preview a blueprint and Save profile. No capture or anchor command should be required first. Cancel and preview again without reloading.
-- [ ] Import a blueprint with unavailable mod blocks. It should report how many were omitted and allow the remaining layout, provided a matching cockpit exists. Review carefully before saving: omitted blocks are not part of the baseline.
-- [ ] Keep the panel open and change views/filters/zoom or preview a blueprint. The small schematic at the bottom-left should update without obstructing controls. Check at your normal resolution and UI scale.
-- [ ] Repeat earlier large-grid/station performance checks. Docked damage outlines and full missing footprints add rendering work; record `/mg stats` and frame smoothness.
+- [x] With no profile selected, sit in a cockpit and `/mg capture`. It should create the anchor and baseline together. Capture a damaged/unfinished ship: damage should remain visible because the baseline assumes full health.
+- [x] `/mg profiles` shows short numbers; `/mg profile load 1` loads the chosen ship. Existing profiles migrate without losing their layouts. Delete a profile, restart, and create another: its number should not reuse the deleted number.
+- [x] `/mg clear` keeps the profile, cockpit anchor and number but removes its baseline. Capture again to restore comparison. Do not confuse Clear with Delete.
+- [x] Disable spin from several angles. It should snap to the same centered isometric view. Reset should restore the familiar rotating orientation; verify left/right remains correct.
+- [x] Save settings, restart and reconnect. Comparison should remain enabled and automatic association should still work. Old live/reference settings must not hide damage.
+- [x worked like a charm this time] Crash/remove more than 128 blocks, including whole sections. Their entire missing footprint should stay red on every marker page (subject to filters and outline detail). Individual shaded markers remain paginated. Check totals with `/mg report`.
+- [x] Split a ship so the piloted cockpit ends up on the smaller/new grid. Its saved baseline should follow, showing the other section as missing. Repeat with the cockpit remaining on the original grid.
+- [x] Enable station mode for a saved station, switch to another ship, and restart. The station should remember its setting; other ships should default off.
+- [x] Dock ships with uniquely matching saved profiles. They should show their own damage outlines and separate report counts. Damage them heavily after matching: their baseline should stay. Ambiguous/unmatched ships should remain context only. Rotor/piston/hinge-only subgrids remain excluded.
+- [ worked but wouldnt let me set it to odd things like "'"] In Views, assign shortcuts for cycle-system, cycle-marker and expanded layout. Try Ctrl+Shift+F6/F7/F8 only if those combinations are free in your setup. Confirm save/restart, blank-to-unbind, duplicate rejection, and no activation while typing chat or using menus. The game still receives keys.
+- [x] Browse nested local blueprint folders. Load a single-grid blueprint and verify the cockpit list fills automatically; multi-grid blueprints should prepare when selected.
+- [x] Use Cloud with Steam cloud blueprints available. Select an XML blueprint, Load, pick its cockpit and Preview. Test a failed/offline load too. Protobuf-only and Workshop downloads are not supported by this browser yet.
+- [x] On a ship without a profile, Preview a blueprint and Save profile. No capture or anchor command should be required first. Cancel and preview again without reloading.
+- [x] Import a blueprint with unavailable mod blocks. It should report how many were omitted and allow the remaining layout, provided a matching cockpit exists. Review carefully before saving: omitted blocks are not part of the baseline.
+- [x] Keep the panel open and change views/filters/zoom or preview a blueprint. The small schematic at the bottom-left should update without obstructing controls. Check at your normal resolution and UI scale.
+- [x] Repeat earlier large-grid/station performance checks. Docked damage outlines and full missing footprints add rendering work; record `/mg stats` and frame smoothness.
+
+Notes: in the blueprint menu, the preview is on the correct side of the screen, however it should be in the middle left to make it not occlude other things on the HUD. also, if a grid gets blown up so bad the main cockpit is gone, it cant seem to let me load the profile from another seat. There should be some kinda force apply profile option and it does its best to match up whats left with what was.
+
+
+## 0.10 - Recovery, customization and reference library (pending in-game)
+
+Your previous results are unchanged. These are new checks, not automated passes.
+
+### Recovery and the latest fixes
+
+- [ ] Restart into 0.10.0 and open `/mg ui`. Check the middle-left miniature and its caption at your resolution/UI scale; neither should obscure controls.
+- [ ] Bind apostrophe (`'`), another punctuation key and a digit. Test modifiers, duplicates, blank-to-unbind and restart persistence. Existing three shortcuts must migrate.
+- [ ] Use Press a key in Views. Modifiers alone must not complete capture; Escape cancels. No shortcuts should activate in chat or while editing the panel. Test new Show/hide and Open panel actions too.
+- [ ] Capture a ship, destroy the original cockpit and substantial hull, then sit in a different seat. Select its profile and Force apply. Inspect the candidate preview, then accept. Lost blocks must remain missing; the saved baseline must not change.
+- [ ] Repeat with a differently oriented/different-type seat and a split remnant. Match counts must describe surviving structure rather than treating the new seat as the old cockpit.
+- [ ] Try symmetric wreckage and a wrong profile. Inspect Next alignment and the match counts. Fewer than three exact matches must be refused. Do not accept visibly wrong candidates.
+- [ ] In Alignment tools, shift by X/Y/Z grid cells, watch the match count change, and return the preview to the correct position. These axes are grid-relative, not screen-relative.
+- [ ] Cancel, switch ships/profiles, split the ship or disconnect during recovery. No stale result may attach to the next ship. Prior saved baselines must remain intact.
+- [ ] After accepting recovery, switch seats and repair blocks. After reconnect, Force apply may be needed again when the original anchor is gone; automatic persistence of recovery is a remaining feature.
+
+### Appearance, systems and saved displays
+
+- [ ] Move/resize the HUD to the screen edges. Check caption visibility, compact/expanded layout and Reset HUD. Check normal and larger/wider resolutions if available.
+- [ ] Change background/outline/fill opacity, disable/re-enable pulse, and edit the seven colors in their listed order. Invalid numbers/colors and out-of-range values must leave the previous settings intact.
+- [ ] Use Turn left/right and Tilt up/down; rotation should stop and orientation remain correct. Reset restores the familiar spinning view.
+- [ ] Combine categories, add/remove systems, choose All/No systems and return to damage overview. Missing blocks must follow their original category.
+- [ ] Set armor faint, another category highlighted and another hidden. Hull presentation should change while damage markers retain state colors. Station context follows visibility but not category brightness yet.
+- [ ] Save/load a named preset with custom appearance, filters and styles. Empty/invalid names must be rejected. Loading must not change auto-match, language or station choices.
+- [ ] Save different displays for two profiles using Save ship. Switch ships and restart/reconnect. Each should restore its own display; a new unbound ship should use global defaults. Unsaved edits may be lost on switches.
+- [ ] Upgrade from the previous settings file. Verify language, visibility, zoom and filters survive, and existing profile numbers/baselines are intact.
+
+### Named baselines and diagnostics
+
+- [ ] Rename a profile in Library. Its numeric ID and baseline must remain unchanged even if the grid name differs.
+- [ ] Save Original and Retrofit revisions around a layout change. Load each and verify comparison, restart persistence and that capture/import never change saved named copies.
+- [ ] Load a revision and verify the previous active baseline is archived when needed. Verify the second-click prompt and deletion of only the selected revision.
+- [ ] Change the saved anchor and try an older revision. Cross-anchor loading must be refused clearly; this remains a follow-up feature.
+- [ ] On disposable data, reach a revision limit (16 entries or 250,000 total blocks). It must report the limit without silently deleting history or changing the active baseline.
+- [ ] Compare expected/observed/matching counts on a small known layout with damaged, missing, replaced and added blocks. Structural completeness counts present matching structure, not health. Docked reports remain separate.
+
+### Blueprint, performance and release checks
+
+- [ ] Use Workshop cache with an already-downloaded XML blueprint. It must remain read-only and initiate no download. Missing cache/unsupported archived or PB-only items must not crash the panel.
+- [ ] Import missing mod definitions and open Omitted blocks. Check names/counts before accepting the partial baseline.
+- [ ] Recheck cloud/local preview, cancellation and acceptance, including switching grids during preview.
+- [ ] Measure recovery time and frame smoothness on a large ship. Compare default and mixed-style rendering with station mode on/off. Record `/mg stats`; matching can still be expensive on complicated wrecks.
+- [ ] Load the 0.10 source package through Pulsar with the binary copy disabled. Verify dependencies, controls and unload. Compilation alone does not complete this check.
 
 Notes:

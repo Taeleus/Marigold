@@ -77,6 +77,7 @@ internal static class Program
         SnapshotChecks.Run();
         GeometryChecks.Run();
         ControlChecks.Run();
+        FeedbackChecks.Run();
     }
 }
 

@@ -21,10 +21,12 @@ namespace Marigold
     }
     internal sealed class Comparison
     {
+        public int Expected,Observed;
+        public int Matching { get { return Expected-Counts[(int)ChangeKind.Missing]-Counts[(int)ChangeKind.Replaced]; } }
         public readonly List<BlockChange> Changes=new List<BlockChange>();
         public readonly int[] Counts=new int[7];
         public void Add(Box3 bounds,ChangeKind kind,string definition) { Changes.Add(new BlockChange { Bounds=bounds,Kind=kind,Definition=definition }); Counts[(int)kind]++; }
-        public string Summary { get { return Counts[1]+" missing, "+Counts[2]+" damaged/degraded, "+Counts[6]+" non-functional, "+Counts[3]+" replaced, "+Counts[4]+" added, "+Counts[5]+" unknown"; } }
+        public string Summary { get { return Expected+" expected, "+Observed+" observed, "+Matching+" matching ("+(Expected==0?"n/a":(100.0*Matching/Expected).ToString("F1")+"% structurally complete; not health")+"); "+Counts[1]+" missing, "+Counts[2]+" damaged/degraded, "+Counts[6]+" non-functional, "+Counts[3]+" replaced, "+Counts[4]+" added, "+Counts[5]+" unknown"; } }
     }
     internal static class SnapshotComparison
     {
@@ -32,7 +34,7 @@ namespace Marigold
         {var result=(BlockSample[])source.Clone();for(int i=0;i<result.Length;i++){result[i].Integrity=result[i].MaxIntegrity;result[i].BuildIntegrity=result[i].MaxIntegrity;result[i].IsFunctional=true;}return result;}
         public static Comparison Compare(BlockSample[] reference,BlockSample[] current)
         {
-            var result=new Comparison();
+            var result=new Comparison {Expected=reference.Length,Observed=current.Length};
             var observed=new Dictionary<Point3,BlockSample>();
             foreach(var block in current) observed.Add(block.Position,block);
             foreach(var old in reference)
