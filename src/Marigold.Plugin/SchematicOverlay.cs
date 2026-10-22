@@ -22,6 +22,8 @@ namespace Marigold
         private static SchematicOverlay active;
         private Harmony harmony;
         private MyCubeGrid grid;
+        private GridObservation observation;
+        private int observationRevision=-1;
         private Point3[] points = new Point3[0];
         private int[] shadedMarkers=new int[0];
         private readonly List<FillBand> fillBands=new List<FillBand>();
@@ -63,16 +65,7 @@ namespace Marigold
         private static BlockSample[] Sample(MyCubeGrid source)
         {
             var result=new List<BlockSample>();
-            foreach(var block in source.GetBlocks())
-                result.Add(new BlockSample {
-                    Position=new Point3(block.Position.X,block.Position.Y,block.Position.Z),
-                    Bounds=new Box3(new Point3(block.Min.X-.5,block.Min.Y-.5,block.Min.Z-.5),
-                        new Point3(block.Max.X+.5,block.Max.Y+.5,block.Max.Z+.5)),
-                    Definition=block.BlockDefinition.Id.ToString(),Forward=(int)block.Orientation.Forward,Up=(int)block.Orientation.Up,
-                    HasFunctionalState=block.FatBlock is Sandbox.ModAPI.IMyFunctionalBlock,
-                    IsFunctional=block.FatBlock==null || block.FatBlock.IsFunctional,
-                    Integrity=block.Integrity,BuildIntegrity=block.BuildIntegrity,MaxIntegrity=block.MaxIntegrity
-                });
+            foreach(var block in source.GetBlocks())result.Add(GridObservation.Read(block));
             return result.ToArray();
         }
         private void RefreshReference(string message)
@@ -100,6 +93,12 @@ namespace Marigold
         }
         private string ReferenceCommand(string action)
         {
+            if(action.StartsWith("language ",StringComparison.Ordinal))
+            {
+                string previous=controls.Language;controls.Language=action.Substring(9);
+                try{DisplaySettings.Save(settingsPath,controls);}catch{controls.Language=previous;throw;}
+                return "Interface language saved. Diagnostic messages remain in English.";
+            }
             if(action.StartsWith("auto ",StringComparison.Ordinal))return AutomationCommand(action.Substring(5));
             if(action.StartsWith("station ",StringComparison.Ordinal))
             {
@@ -305,7 +304,9 @@ namespace Marigold
         public void SetGrid(MyCubeGrid next)
         {
             if (ReferenceEquals(grid,next)) return;
-            if (grid != null) { grid.OnBlockAdded -= Changed; grid.OnBlockRemoved -= Changed; }
+            ClosePanel();
+            observation?.Dispose();observation=null;observationRevision=-1;
+            ClearStationObservers();
             CancelBlueprintPreview();
             ResetAssociation();stationStatus="";
             lastObservation=null;lastObservationGeneration=-1;
@@ -315,9 +316,8 @@ namespace Marigold
             comparisonReport=grid!=null && references.ContainsKey(grid)?"Comparison pending.":"No reference captured.";
             drawSamples=0; drawTotalMs=drawMaxMs=buildMs=snapshotMs=cellSize=0;
             dirty=grid!=null; cooldown=0; reconcile=0; faulted=false;
-            if (grid != null) { grid.OnBlockAdded += Changed; grid.OnBlockRemoved += Changed; }
+            if(grid!=null)observation=new GridObservation(grid);
         }
-        private void Changed(MySlimBlock block) { dirty=true; }
 
         private void BindCommands(IMyUtilities utilities)
         {
@@ -329,6 +329,7 @@ namespace Marigold
 
         public void BindSessionCommands(bool available)
         {
+            if(!available)ClosePanel();
             if(!available && references.Count>0) ClearReferences();
             BindCommands(available ? MyAPIGateway.Utilities : null);
         }
@@ -341,7 +342,8 @@ namespace Marigold
                 string before=controls.GeometryOptions;
                 if (controls.TryHandle(text, ref sendToOthers, out response))
                 {
-                    if(controls.ReferenceAction!=null) response=ReferenceCommand(controls.ReferenceAction);
+                    if(controls.ReferenceAction=="ui") { OpenPanel();response="Marigold controls opened."; }
+                    else if(controls.ReferenceAction!=null) response=ReferenceCommand(controls.ReferenceAction);
                     if(controls.StatsRequested) { response=Statistics(); MyLog.Default.WriteLine("[Marigold] " + response); }
                     if(before!=controls.GeometryOptions) { generation++; dirty=true; cooldown=0; }
                     commandUtilities?.ShowMessage("Marigold", response);
@@ -354,6 +356,12 @@ namespace Marigold
         {
             SetGrid(current);
             UpdateBlueprint();
+            if(observation!=null && (controls.Visible || controls.AutoAssociate))
+            {
+                var sampling=Stopwatch.StartNew();observation.Step(512);snapshotMs=sampling.Elapsed.TotalMilliseconds;
+                if(observation.Revision!=observationRevision){observationRevision=observation.Revision;dirty=true;}
+            }
+            UpdateStationObservers();
             UpdateAssociation();
             if (grid==null || faulted) return;
             try
@@ -385,10 +393,10 @@ namespace Marigold
                 }
                 if(++reconcile>=(references.ContainsKey(grid) || controls.Station?60:600)) { dirty=true; reconcile=0; }
                 if(cooldown>0) cooldown--;
-                if(dirty && cooldown==0 && pending==null)
+                if(dirty && cooldown==0 && pending==null && observation.Ready)
                 {
                     var timer=Stopwatch.StartNew();
-                    var snapshot=Sample(grid);
+                    var snapshot=observation.Snapshot();
                     Reference reference;
                     references.TryGetValue(grid,out reference);
                     var baseline=previewBlocks??(reference==null?null:reference.Blocks);

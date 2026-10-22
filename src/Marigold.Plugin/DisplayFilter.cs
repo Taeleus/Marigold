@@ -41,14 +41,15 @@ namespace Marigold
     }
     internal static class ObservationCache
     {
+        public static bool Equal(BlockSample x,BlockSample y)
+        { return x.Position.Equals(y.Position) && x.Bounds.Min.Equals(y.Bounds.Min) && x.Bounds.Max.Equals(y.Bounds.Max) && x.Definition==y.Definition && x.Forward==y.Forward && x.Up==y.Up && x.Integrity==y.Integrity && x.BuildIntegrity==y.BuildIntegrity && x.MaxIntegrity==y.MaxIntegrity && x.HasFunctionalState==y.HasFunctionalState && x.IsFunctional==y.IsFunctional; }
         // Collection order changes may cause an extra rebuild, never a missed change.
         public static bool Same(BlockSample[] a,BlockSample[] b)
         {
             if(a==null || b==null || a.Length!=b.Length)return false;
             for(int i=0;i<a.Length;i++)
             {
-                var x=a[i];var y=b[i];
-                if(!x.Position.Equals(y.Position) || !x.Bounds.Min.Equals(y.Bounds.Min) || !x.Bounds.Max.Equals(y.Bounds.Max) || x.Definition!=y.Definition || x.Forward!=y.Forward || x.Up!=y.Up || x.Integrity!=y.Integrity || x.BuildIntegrity!=y.BuildIntegrity || x.MaxIntegrity!=y.MaxIntegrity || x.HasFunctionalState!=y.HasFunctionalState || x.IsFunctional!=y.IsFunctional)return false;
+                if(!Equal(a[i],b[i]))return false;
             }
             return true;
         }

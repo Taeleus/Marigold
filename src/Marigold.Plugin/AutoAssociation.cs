@@ -50,7 +50,7 @@ namespace Marigold
                         associationStatus=result.Match.Message;
                         var match=result.Match;
                         string key=match.ProfileId==null?null:match.ProfileId+"/"+match.AnchorIndex;
-                        if(!ObservationCache.Same(result.Sample,Sample(grid))) { matchStability.Reset();associationStatus="Ship changed during matching; waiting for it to settle."; }
+                        if(!ObservationCache.Same(result.Sample,observation.Snapshot())) { matchStability.Reset();associationStatus="Ship changed during matching; waiting for it to settle."; }
                         else if(matchStability.Observe(key,result.Sample) && match.ProfileId!=null)
                         {
                             bool used=false;
@@ -69,14 +69,14 @@ namespace Marigold
                 catch(Exception e){associationStatus="Matching failed: "+e.Message;}
             }
             if(!controls.AutoAssociate || grid==null || references.ContainsKey(grid) || manualDetached.Contains(grid) || profileStore.Warning!=null || profileStore.Profiles.Count==0)return;
-            if(associationTask!=null || --associationCooldown>0)return;
+            if(observation==null || !observation.Ready || associationTask!=null || --associationCooldown>0)return;
             associationCooldown=180;
             try
             {
                 var anchors=new List<AnchorFrame>();
                 foreach(var block in grid.GetBlocks())if(block.FatBlock is MyCockpit) { anchors.Add(CockpitAnchor((MyCockpit)block.FatBlock));if(anchors.Count>16)break; }
                 if(anchors.Count==0){associationStatus="No anchor cockpit is currently visible on this grid.";matchStability.Reset();return;}
-                var snapshot=Sample(grid);var candidates=anchors.ToArray();var profiles=new List<ShipProfile>(profileStore.Profiles);int version=generation;double size=grid.GridSize;
+                var snapshot=observation.Snapshot();var candidates=anchors.ToArray();var profiles=new List<ShipProfile>(profileStore.Profiles);int version=generation;double size=grid.GridSize;
                 associationTask=Task.Run(()=>new AssociationResult { Generation=version,Sample=snapshot,Anchors=candidates,Match=AutoMatcher.Find(snapshot,candidates,profiles,size) });
             }
             catch(Exception e){associationStatus="Waiting for ship data: "+e.Message;}

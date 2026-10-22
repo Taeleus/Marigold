@@ -87,3 +87,38 @@ Notes:
 - [ ] An unsaved identical copy can structurally match the same profile; this is layout recognition, not proof of identity. Check manual override behavior for your fleet and use auto off if copies need distinct identities.
 
 Notes:
+
+## 0.8 — Native controls and local blueprint picker (pending)
+
+- [ ] Open `/mg ui` from a cockpit. Visit Display, Profiles, Blueprints and Views. Escape/Close must restore normal game input; reopening must not duplicate screens.
+- [ ] Test 1080p, your usual resolution and UI scale. Check dropdown scrolling, long profile/blueprint names, status text wrapping and Spanish labels for clipping.
+- [ ] Display controls must match their chat equivalents: modes, categories, marker filters, detail, compact/expanded, station and auto. Save, change, then load settings.
+- [ ] Switch English/Spanish and restart. Labels should persist; command responses/diagnostics intentionally remain English. Existing 0.5–0.7 preferences must load normally.
+- [ ] In Profiles, anchor/capture/select/detach a test ship. Capture, clear, delete, recovery and blueprint acceptance require a second identical click before changing saved data. Switching profiles/actions must not confirm the previous action.
+- [ ] In Blueprints, Find local, select a blueprint or paste a path, Load, Refresh lists, choose/Prepare grid, Refresh lists, then select a cockpit and Preview. Close/reopen the panel to inspect and accept/cancel. Source blueprints remain unchanged.
+- [ ] Try an empty blueprint directory, invalid path, missing mods, spaces/non-English names and a blueprint still loading. Errors should stay in the panel/chat without disabling Marigold.
+- [ ] Leave the cockpit, switch ships, disconnect or unload with the panel open. It should close cleanly; stale actions/previews must not affect another ship.
+- [ ] Use Views for left/right/top/bottom, zoom, rotation, reset and marker pages. Existing asymmetric orientation checks still pass.
+
+Notes:
+
+## 0.8 — Incremental observation and performance (pending)
+
+- [ ] Load a large ship. No partial initial scan should produce a flood of false missing markers; the model appears once the initial scan completes.
+- [ ] Damage, weld, remove and replace blocks rapidly. Event updates should refresh nearby changes; periodic sweeps must eventually catch changes not reported by events.
+- [ ] Repeat while hidden, then show again. Turn auto on/off too; check observation resumes and the reference remains intact.
+- [ ] Dock multiple large ships in station mode. Newly loaded context may take time to appear; undocking removes it and does not leave old subscriptions or outlines.
+- [ ] Record `/mg stats` on approximately 1k, 10k and 50k-block ships, with station mode on/off. Watch actual frame smoothness during initial enumeration, captures, imports and automatic matching. Read budgets are not a guaranteed millisecond frame budget.
+- [ ] Repeat ship switches, world reloads and reconnects several times. Check logs for errors and watch for steadily increasing memory or CPU use.
+
+Notes:
+
+## 0.8 — Release acceptance (pending; no PluginHub submission yet)
+
+- [ ] Load the source version through Pulsar Legacy with the binary version disabled. Confirm version 0.8.0, Harmony dependency resolution and `/mg ui` work.
+- [ ] Test the prepared pinned manifest against the intended commit. Keep source and binary installations mutually exclusive.
+- [ ] Run the earlier remote-control, multiplayer, damaged/unfinished block, blueprint, persistence and Nexus checklists. Record actual pass/fail rather than assuming build success verifies runtime behavior.
+- [ ] Review the new README as a first-time user: install, open controls, capture a baseline, import a blueprint, reconnect and disable automatic matching.
+- [ ] Resolve runtime failures before submitting the prepared manifest to PluginHub. Hub acceptance and in-game validation remain release gates.
+
+Notes:

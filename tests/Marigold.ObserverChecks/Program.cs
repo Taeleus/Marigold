@@ -71,6 +71,7 @@ internal static class Program
         BlueprintChecks.Run();
         DisplayChecks.Run();
         AssociationStationChecks.Run();
+        InterfaceObservationChecks.Run();
         ProfileChecks.Run();
         FillChecks.Run();
         SnapshotChecks.Run();
@@ -105,7 +106,7 @@ namespace VRage.Utils
 }
 namespace Sandbox.Game.Entities
 {
-    public sealed class MyCubeGrid { public string DisplayName; public int BlocksCount; public bool Closed; public bool MarkedForClose; }
+    public sealed partial class MyCubeGrid { public string DisplayName; public int BlocksCount; public bool Closed; public bool MarkedForClose; }
 }
 namespace Sandbox.Game.World
 {

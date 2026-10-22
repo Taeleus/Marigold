@@ -1,4 +1,4 @@
-# Marigold commands — 0.7
+# Marigold commands — 0.8
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -55,3 +55,11 @@ Preferences live in `%APPDATA%/Marigold/display.txt`; saving retains the previou
 `/mg auto on|off|status|retry` controls automatic profile reassociation. ON is the default. Matching is retried while an unbound controlled grid loads, including after world reload/login. It never captures, overwrites or deletes a baseline, never overrides an existing selection, and refuses to reuse a profile still bound to another live grid. Low-confidence, ambiguous, missing-cockpit and heavily altered ships remain manual. `retry` clears this ship's manual-detach suppression; it does not turn a disabled matcher on or replace a current binding.
 
 Station and auto on/off commands save the current display preferences immediately, including any other unsaved display choices. Older preferences migrate with station OFF and automatic matching ON. `/mg settings reset` returns to those defaults in memory. `/mg auto off` persists across logouts and restarts; it retains any existing binding, which you can separately detach.
+
+## Graphical interface (0.8)
+
+Use `/mg ui` for native Display, Profiles, Blueprints and Views tabs. The panel uses the same handlers as chat commands. Blueprint discovery scans only immediate local blueprint folders (up to 500 results/2,000 folders), skips linked folders and reads no blueprint content until Load. Paste a full SBC path for other locations. After loading/preparing, Refresh lists shows the grids and cockpits. Preview closes the panel so you can inspect the HUD; reopen the Blueprints tab to accept or cancel.
+
+Panel actions that capture/clear/delete/recover or accept a baseline require a second identical click. Chat commands retain their existing explicit-action behavior. The panel closes on ship changes or session teardown.
+
+`/mg language en|es` changes and saves UI label language. Runtime diagnostics and command responses remain English. Ordinary settings require Save; station, auto and language toggles save all current preferences immediately.

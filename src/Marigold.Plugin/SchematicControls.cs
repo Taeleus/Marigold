@@ -17,6 +17,7 @@ namespace Marigold
             return result;
         }
         public int Detail = 1;
+        public string Language="en";
         public string Mode="compare", Category="all", StateFilter="all";
         public bool Expanded;
         public bool Station=false,AutoAssociate=true;
@@ -27,7 +28,7 @@ namespace Marigold
         public string DetailName { get { return Detail == 0 ? "low" : Detail == 1 ? "medium" : "high"; } }
         public const double DefaultYaw = 0;
         public double Yaw = DefaultYaw, Pitch = -0.4, Zoom = 0.85;
-        public const string Help = "/mg show|hide|spin|reset|left|right|top|bottom|in|out. Help: /mg help display, /mg help profiles, /mg help blueprint. Diagnostics: /mg report or /mg stats. /mg station on|off; /mg auto on|off|status|retry.";
+        public const string Help = "/mg ui opens graphical controls. /mg show|hide|spin|reset|left|right|top|bottom|in|out. Help: /mg help display, /mg help profiles, /mg help blueprint. Diagnostics: /mg report or /mg stats. /mg station on|off; /mg auto on|off|status|retry.";
 
         public static bool Owns(string text)
         {
@@ -77,6 +78,7 @@ namespace Marigold
             if(args.Length==3)
             {
                 string verb=args[1].ToLowerInvariant(),value=args[2].ToLowerInvariant();
+                if(verb=="language" && (value=="en" || value=="es")){ReferenceAction="language "+value;return "Language requested.";}
                 if(verb=="station" && (value=="on" || value=="off" || value=="status")) { ReferenceAction="station "+value;return "Station mode requested."; }
                 if(verb=="auto" && (value=="on" || value=="off" || value=="status" || value=="retry")) { ReferenceAction="auto "+value;return "Reassociation requested."; }
                 if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode=value;Page=1;return "View mode: "+value; }
@@ -127,6 +129,7 @@ namespace Marigold
             if (args.Length != 2) return Help;
             switch (args[1].ToLowerInvariant())
             {
+                case "ui": ReferenceAction="ui";return "Open controls.";
                 case "anchor": case "claim": ReferenceAction="anchor"; return "Anchor requested.";
                 case "profiles": case "recover": ReferenceAction=args[1].ToLowerInvariant(); return "Profile command requested.";
                 case "capture": case "clear": case "report": ReferenceAction=args[1].ToLowerInvariant(); return "Reference command requested.";

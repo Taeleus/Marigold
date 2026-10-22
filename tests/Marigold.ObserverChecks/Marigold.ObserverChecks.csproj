@@ -20,5 +20,9 @@
     <Compile Include="../../src/Marigold.Plugin/ProfileSuggestions.cs" Link="ProfileSuggestions.cs" />
     <Compile Include="../../src/Marigold.Plugin/AutoMatcher.cs" Link="AutoMatcher.cs" />
     <Compile Include="../../src/Marigold.Plugin/StationGeometry.cs" Link="StationGeometry.cs" />
+    <Compile Include="../../src/Marigold.Plugin/ObservationSchedule.cs" Link="ObservationSchedule.cs" />
+    <Compile Include="../../src/Marigold.Plugin/GridObservation.cs" Link="GridObservation.cs" />
+    <Compile Include="../../src/Marigold.Plugin/BlueprintCatalog.cs" Link="BlueprintCatalog.cs" />
+    <Compile Include="../../src/Marigold.Plugin/UiText.cs" Link="UiText.cs" />
   </ItemGroup>
 </Project>
