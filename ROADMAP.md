@@ -2,6 +2,10 @@
 
 Updated October 22, 2026, after the latest 0.9 testing notes.
 
+## 0.11 health-bar update
+
+Implemented optional stacked health bars for Overall, Armor, Power, Thrust, Utility, Cargo and Offensive. All default off. Each has independent placement, dimensions, opacity and labels, saved globally/per profile/in presets. Bars count baseline block states independently of schematic filtering; unknown health remains gray. New in-game checks are appended. Drag positioning and configurable group membership are not implemented; numeric/movement controls and fixed groups are available.
+
 ## 0.10 implementation update
 
 Implemented; runtime checks are appended to TESTING-TODO.md:
@@ -201,4 +205,12 @@ Current supported target remains Pulsar Legacy / .NET Framework 4.8. A .NET 10/I
 
 5. Remaining hardening, source-loader acceptance and release packaging.
 
-Current build: 0.10.0 prototype. New runtime acceptance is pending.
+Current build: 0.12.2 prototype. New runtime acceptance is pending.
+
+0.11 user acceptance: all health-bar checks passed. 0.11.1 adds a separate Offensive bar, active-filter captions, panel spacing fixes and readable Workshop labels. New checks are in TESTING-TODO.md; unchecked recovery edge cases remain open.
+
+0.11.2: Offensive classification now reads loaded weapon definitions and the game Weapons targeting group (excluding vanilla tools/decoys), plus the optional local WeaponCore GetCoreWeapons registry. Immutable definition-ID snapshots support saved/missing blocks and refresh rendering when late registration arrives. Runtime checks remain pending.
+
+0.12.0: Reorganized the native control panel into Ship, Baseline and Customize, with focused subpages, Back navigation, a shared save screen, progressive blueprint steps, readable choice labels and individual color editing. Runtime layout/navigation acceptance is pending in TESTING-TODO.md.
+
+0.12.0 user acceptance: navigation, viewing, profiles, recovery, customization, shortcuts and saving passed. Blueprint browsing needed fixes. 0.12.2 uses blueprint IDs/grid titles instead of author names, cleans Cloud labels, and adds combined-source search with paginated results. Retests are in TESTING-TODO.md; 0.12.1 checklist retained.

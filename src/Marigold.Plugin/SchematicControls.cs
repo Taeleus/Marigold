@@ -5,7 +5,7 @@ namespace Marigold
 {
     internal sealed class SchematicControls
     {
-        public bool Visible = true, Spin = true;
+        public bool Visible = true, SchematicVisible = true, Spin = true;
         private bool planView;
         private bool rotatingView = true;
         public Point3 Project(Point3 cockpitPoint)
@@ -16,6 +16,7 @@ namespace Marigold
             else if(rotatingView) result.X=-result.X;
             return result;
         }
+        public HealthBarSettings HealthBars=new HealthBarSettings();
         public HudAppearance Appearance=new HudAppearance();
         public void RotateView(double yaw,double pitch){Spin=false;planView=false;rotatingView=true;Yaw+=yaw;Pitch=Math.Max(-Math.PI/2,Math.Min(Math.PI/2,Pitch+pitch));}
         public int Detail = 1;

@@ -34,3 +34,8 @@ October 22, 2026 validation: release binary and 23-file source-only builds passe
 Binary build, automated suites and the 30-file manifest-selected source compilation pass. The new feedback suite adds 68 checks covering recovery rotations, missing structure, ambiguity, cancellation, key aliases, category styles and settings migration. A sandboxed repeat emitted NU1900 when the NuGet audit service was unreachable; the network-enabled dependency restore/build completed without warnings. Actual Pulsar source loading remains a user acceptance check.
 
 The 0.9 runtime passes are recorded in TESTING-TODO.md. The new 0.10 section covers recovery, customization, reference libraries, imports and performance; none are marked passed by compilation. See ROADMAP.md for outstanding recovery/revision/import limitations. No PluginHub submission has been made.
+
+
+## 0.11 validation scope
+
+Health bars add pure classification and settings checks, with existing comparison tests retained after sharing the classifier. Runtime appearance, positioning, persistence and large-grid refresh behavior remain in the 0.11 user checklist. No PluginHub submission is made by this update.

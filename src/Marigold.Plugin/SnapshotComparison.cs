@@ -43,17 +43,8 @@ namespace Marigold
                 if(!observed.TryGetValue(old.Position,out now))
                 { result.Add(old.Bounds,ChangeKind.Missing,old.Definition); continue; }
                 observed.Remove(old.Position);
-                if(old.Definition!=now.Definition || old.Forward!=now.Forward || old.Up!=now.Up ||
-                    !old.Bounds.Min.Equals(now.Bounds.Min) || !old.Bounds.Max.Equals(now.Bounds.Max))
-                    result.Add(SchematicGeometry.Union(old.Bounds,now.Bounds),ChangeKind.Replaced,now.Definition);
-                else if(!Valid(now) || !Valid(old)) result.Add(now.Bounds,ChangeKind.Unknown,now.Definition);
-                else if(now.HasFunctionalState && !now.IsFunctional) result.Add(now.Bounds,ChangeKind.NonFunctional,now.Definition);
-                else
-                {
-                    double tolerance=Math.Max(0.001,now.MaxIntegrity*0.0001);
-                    if(now.Integrity+tolerance<old.Integrity || now.BuildIntegrity+tolerance<old.BuildIntegrity ||
-                        now.Integrity+tolerance<now.MaxIntegrity || now.BuildIntegrity+tolerance<now.MaxIntegrity) result.Add(now.Bounds,ChangeKind.Damaged,now.Definition);
-                }
+                var kind=Classify(old,now);
+                if(kind!=ChangeKind.Hull)result.Add(kind==ChangeKind.Replaced?SchematicGeometry.Union(old.Bounds,now.Bounds):now.Bounds,kind,now.Definition);
             }
             foreach(var pair in observed) result.Add(pair.Value.Bounds,ChangeKind.Added,pair.Value.Definition);
             result.Changes.Sort((a,b)=>
@@ -63,6 +54,16 @@ namespace Marigold
                 c=a.Bounds.Min.Y.CompareTo(b.Bounds.Min.Y);return c!=0?c:a.Bounds.Min.Z.CompareTo(b.Bounds.Min.Z);
             });
             return result;
+        }
+        public static ChangeKind Classify(BlockSample expected,BlockSample? observed)
+        {
+            if(!observed.HasValue)return ChangeKind.Missing;
+            var now=observed.Value;
+            if(expected.Definition!=now.Definition || expected.Forward!=now.Forward || expected.Up!=now.Up || !expected.Bounds.Min.Equals(now.Bounds.Min) || !expected.Bounds.Max.Equals(now.Bounds.Max))return ChangeKind.Replaced;
+            if(!Valid(now) || !Valid(expected))return ChangeKind.Unknown;
+            if(now.HasFunctionalState && !now.IsFunctional)return ChangeKind.NonFunctional;
+            double tolerance=Math.Max(.001,now.MaxIntegrity*.0001);
+            return now.Integrity+tolerance<expected.Integrity || now.BuildIntegrity+tolerance<expected.BuildIntegrity || now.Integrity+tolerance<now.MaxIntegrity || now.BuildIntegrity+tolerance<now.MaxIntegrity?ChangeKind.Damaged:ChangeKind.Hull;
         }
         private static int Priority(ChangeKind kind) { return kind==ChangeKind.NonFunctional?2:kind>=ChangeKind.Damaged?(int)kind+1:(int)kind; }
         private static bool Valid(BlockSample b)

@@ -78,6 +78,8 @@ internal static class Program
         GeometryChecks.Run();
         ControlChecks.Run();
         FeedbackChecks.Run();
+        HealthBarChecks.Run();
+        OffensiveChecks.Run();
     }
 }
 
@@ -130,7 +132,7 @@ namespace Sandbox.ModAPI
     public interface IMyShipController { MyCubeGrid CubeGrid { get; } }
     public sealed class Controller : IMyShipController { public MyCubeGrid CubeGrid { get; set; } }
     public static class MyAPIGateway { public static Utilities Utilities = new Utilities(); }
-    public sealed class Utilities
+    public sealed partial class Utilities : VRage.Game.ModAPI.IMyUtilities
     {
         public int Created;
         public Notification Last;

@@ -7,14 +7,15 @@ using VRage.Plugins;
 using VRage.Utils;
 
 #if !LOCAL_BUILD
-[assembly: AssemblyVersion("0.10.0.0")]
-[assembly: AssemblyFileVersion("0.10.0.0")]
+[assembly: AssemblyVersion("0.12.2.0")]
+[assembly: AssemblyFileVersion("0.12.2.0")]
 #endif
 
 namespace Marigold
 {
     public sealed class Plugin : IPlugin
     {
+        private readonly OffensiveDefinitions offensiveDefinitions=new OffensiveDefinitions();
         private MySession session;
         private MySession unloadingSession;
         private MyCubeGrid grid;
@@ -40,7 +41,7 @@ namespace Marigold
                 schematic = null;
                 MyLog.Default.WriteLineAndConsole("[Marigold] Schematic initialization failed: " + exception);
             }
-            MyLog.Default.WriteLineAndConsole("[Marigold] Ship observer initialized (0.10.0).");
+            MyLog.Default.WriteLineAndConsole("[Marigold] Ship observer initialized (0.12.2).");
         }
 
         public void Update()
@@ -58,6 +59,7 @@ namespace Marigold
                 {
                     schematic?.BindSessionCommands(false);
                     ClearDisplay();
+                    offensiveDefinitions.Dispose();
                     session = currentSession;
                     schematic?.BindSessionCommands(currentSession != null && !ReferenceEquals(currentSession, unloadingSession));
                     failed = false;
@@ -66,6 +68,7 @@ namespace Marigold
                 if (session == null || ReferenceEquals(session, unloadingSession) || failed)
                     return;
 
+                offensiveDefinitions.Update();
                 var controller = session.ControlledEntity?.Entity as IMyShipController;
                 var currentGrid = controller?.CubeGrid as MyCubeGrid;
                 if (currentGrid == null || currentGrid.Closed || currentGrid.MarkedForClose)
@@ -95,6 +98,7 @@ namespace Marigold
         private void OnUnloading()
         {
             schematic?.BindSessionCommands(false);
+            offensiveDefinitions.Dispose();
             unloadingSession = MySession.Static;
             ClearDisplay();
             session = null;
@@ -113,6 +117,7 @@ namespace Marigold
 
             initialized = false;
             MySession.OnUnloading -= OnUnloading;
+            offensiveDefinitions.Dispose();
             ClearDisplay();
             schematic?.Dispose();
             schematic = null;

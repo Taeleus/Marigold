@@ -1,12 +1,23 @@
 using System;
+using System.Collections.Generic;
 namespace Marigold
 {
     internal static class DisplayFilter
     {
         public const string Categories="all armor conveyors thrusters weapons power gas mechanical production cargo control tools other";
         public const string States="all faults missing damaged broken added replaced unknown";
+        private static volatile HashSet<string> offensive=new HashSet<string>(StringComparer.Ordinal);
+        public static int ClassificationRevision {get;private set;}
+        // Publish a new, immutable snapshot; geometry workers never query game/mod APIs.
+        public static void SetOffensiveDefinitions(IEnumerable<string> definitions)
+        {
+            var next=new HashSet<string>(definitions,StringComparer.Ordinal);
+            if(offensive.SetEquals(next))return;
+            offensive=next;ClassificationRevision++;
+        }
         public static string Category(string definition)
         {
+            if(definition!=null && offensive.Contains(definition))return "weapons";
             string type=(definition??"").Split('/')[0].Replace("MyObjectBuilder_","").ToLowerInvariant();
             if(type.Contains("conveyor") || type.Contains("connector"))return "conveyors";
             if(type.Contains("thrust"))return "thrusters";

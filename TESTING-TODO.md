@@ -154,11 +154,11 @@ Your previous results are unchanged. These are new checks, not automated passes.
 
 ### Recovery and the latest fixes
 
-- [ ] Restart into 0.10.0 and open `/mg ui`. Check the middle-left miniature and its caption at your resolution/UI scale; neither should obscure controls.
-- [ ] Bind apostrophe (`'`), another punctuation key and a digit. Test modifiers, duplicates, blank-to-unbind and restart persistence. Existing three shortcuts must migrate.
-- [ ] Use Press a key in Views. Modifiers alone must not complete capture; Escape cancels. No shortcuts should activate in chat or while editing the panel. Test new Show/hide and Open panel actions too.
-- [ ] Capture a ship, destroy the original cockpit and substantial hull, then sit in a different seat. Select its profile and Force apply. Inspect the candidate preview, then accept. Lost blocks must remain missing; the saved baseline must not change.
-- [ ] Repeat with a differently oriented/different-type seat and a split remnant. Match counts must describe surviving structure rather than treating the new seat as the old cockpit.
+- [x] Restart into 0.10.0 and open `/mg ui`. Check the middle-left miniature and its caption at your resolution/UI scale; neither should obscure controls.
+- [x All custom keybinds work now. when switching between views (cycle systems) I Feel it should say under the display what system your looking at next to the ship name. same with faults.] Bind apostrophe (`'`), another punctuation key and a digit. Test modifiers, duplicates, blank-to-unbind and restart persistence. Existing three shortcuts must migrate.
+- [Press a key works. The text "Live preview appears at the middle-left edge" partially covers the button. I dont think this text is needed at all] Use Press a key in Views. Modifiers alone must not complete capture; Escape cancels. No shortcuts should activate in chat or while editing the panel. Test new Show/hide and Open panel actions too.
+- [captured a ship, profile loaded, destroyed a TON of the ship and the cockpit. hopped in a side cockpit that was 90 degrees rotated out, and the profile still works. built a new cockpit and hopped in that, profile still works] Capture a ship, destroy the original cockpit and substantial hull, then sit in a different seat. Select its profile and Force apply. Inspect the candidate preview, then accept. Lost blocks must remain missing; the saved baseline must not change.
+- [split ship in half and built a new bridge. stil works.] Repeat with a differently oriented/different-type seat and a split remnant. Match counts must describe surviving structure rather than treating the new seat as the old cockpit.
 - [ ] Try symmetric wreckage and a wrong profile. Inspect Next alignment and the match counts. Fewer than three exact matches must be refused. Do not accept visibly wrong candidates.
 - [ ] In Alignment tools, shift by X/Y/Z grid cells, watch the match count change, and return the preview to the correct position. These axes are grid-relative, not screen-relative.
 - [ ] Cancel, switch ships/profiles, split the ship or disconnect during recovery. No stale result may attach to the next ship. Prior saved baselines must remain intact.
@@ -166,30 +166,101 @@ Your previous results are unchanged. These are new checks, not automated passes.
 
 ### Appearance, systems and saved displays
 
-- [ ] Move/resize the HUD to the screen edges. Check caption visibility, compact/expanded layout and Reset HUD. Check normal and larger/wider resolutions if available.
-- [ ] Change background/outline/fill opacity, disable/re-enable pulse, and edit the seven colors in their listed order. Invalid numbers/colors and out-of-range values must leave the previous settings intact.
-- [ ] Use Turn left/right and Tilt up/down; rotation should stop and orientation remain correct. Reset restores the familiar spinning view.
-- [ ] Combine categories, add/remove systems, choose All/No systems and return to damage overview. Missing blocks must follow their original category.
-- [ ] Set armor faint, another category highlighted and another hidden. Hull presentation should change while damage markers retain state colors. Station context follows visibility but not category brightness yet.
-- [ ] Save/load a named preset with custom appearance, filters and styles. Empty/invalid names must be rejected. Loading must not change auto-match, language or station choices.
-- [ ] Save different displays for two profiles using Save ship. Switch ships and restart/reconnect. Each should restore its own display; a new unbound ship should use global defaults. Unsaved edits may be lost on switches.
-- [ ] Upgrade from the previous settings file. Verify language, visibility, zoom and filters survive, and existing profile numbers/baselines are intact.
+- [x] Move/resize the HUD to the screen edges. Check caption visibility, compact/expanded layout and Reset HUD. Check normal and larger/wider resolutions if available.
+- [x there were a few bars in the UI in general that were overlapping.] Change background/outline/fill opacity, disable/re-enable pulse, and edit the seven colors in their listed order. Invalid numbers/colors and out-of-range values must leave the previous settings intact.
+- [x] Use Turn left/right and Tilt up/down; rotation should stop and orientation remain correct. Reset restores the familiar spinning view.
+- [x] Combine categories, add/remove systems, choose All/No systems and return to damage overview. Missing blocks must follow their original category.
+- [x] Set armor faint, another category highlighted and another hidden. Hull presentation should change while damage markers retain state colors. Station context follows visibility but not category brightness yet.
+- [x] Save/load a named preset with custom appearance, filters and styles. Empty/invalid names must be rejected. Loading must not change auto-match, language or station choices.
+- [x] Save different displays for two profiles using Save ship. Switch ships and restart/reconnect. Each should restore its own display; a new unbound ship should use global defaults. Unsaved edits may be lost on switches.
+- [x] Upgrade from the previous settings file. Verify language, visibility, zoom and filters survive, and existing profile numbers/baselines are intact.
 
 ### Named baselines and diagnostics
 
-- [ ] Rename a profile in Library. Its numeric ID and baseline must remain unchanged even if the grid name differs.
-- [ ] Save Original and Retrofit revisions around a layout change. Load each and verify comparison, restart persistence and that capture/import never change saved named copies.
-- [ ] Load a revision and verify the previous active baseline is archived when needed. Verify the second-click prompt and deletion of only the selected revision.
-- [ ] Change the saved anchor and try an older revision. Cross-anchor loading must be refused clearly; this remains a follow-up feature.
+- [x] Rename a profile in Library. Its numeric ID and baseline must remain unchanged even if the grid name differs.
+- [x] Save Original and Retrofit revisions around a layout change. Load each and verify comparison, restart persistence and that capture/import never change saved named copies.
+- [x] Load a revision and verify the previous active baseline is archived when needed. Verify the second-click prompt and deletion of only the selected revision.
+- [x] Change the saved anchor and try an older revision. Cross-anchor loading must be refused clearly; this remains a follow-up feature.
 - [ ] On disposable data, reach a revision limit (16 entries or 250,000 total blocks). It must report the limit without silently deleting history or changing the active baseline.
 - [ ] Compare expected/observed/matching counts on a small known layout with damaged, missing, replaced and added blocks. Structural completeness counts present matching structure, not health. Docked reports remain separate.
 
 ### Blueprint, performance and release checks
 
-- [ ] Use Workshop cache with an already-downloaded XML blueprint. It must remain read-only and initiate no download. Missing cache/unsupported archived or PB-only items must not crash the panel.
-- [ ] Import missing mod definitions and open Omitted blocks. Check names/counts before accepting the partial baseline.
-- [ ] Recheck cloud/local preview, cancellation and acceptance, including switching grids during preview.
-- [ ] Measure recovery time and frame smoothness on a large ship. Compare default and mixed-style rendering with station mode on/off. Record `/mg stats`; matching can still be expensive on complicated wrecks.
-- [ ] Load the 0.10 source package through Pulsar with the binary copy disabled. Verify dependencies, controls and unload. Compilation alone does not complete this check.
+- [the workshop cache shows a full path that is cut off so its not readable. "D:\SteamLibrary\steamapps\workshop\content\244..." it gets cut off there and they are all the same to my human eyes] Use Workshop cache with an already-downloaded XML blueprint. It must remain read-only and initiate no download. Missing cache/unsupported archived or PB-only items must not crash the panel.
+- [x] Import missing mod definitions and open Omitted blocks. Check names/counts before accepting the partial baseline.
+- [x] Recheck cloud/local preview, cancellation and acceptance, including switching grids during preview.
+- [x 2606 lines, big grid. snapshot .28ms, worker 70.79ms. 328 draws] Measure recovery time and frame smoothness on a large ship. Compare default and mixed-style rendering with station mode on/off. Record `/mg stats`; matching can still be expensive on complicated wrecks.
+- [x] Load the 0.10 source package through Pulsar with the binary copy disabled. Verify dependencies, controls and unload. Compilation alone does not complete this check.
 
 Notes:
+
+
+## 0.11 - Optional stacked health bars (pending in-game)
+
+- [x] Restart into 0.11.0 with existing settings. All six bars should be hidden by default; previous HUD settings must survive.
+- [x] Open `/mg ui` > Display > Health bars. Enable Overall, then Armor, Power, Thrust, Utility and Cargo individually. Check that blue is leftmost, followed by yellow, orange, red and any gray unknown segment.
+- [x] On a small captured ship, damage, disable structurally, remove and repair known blocks. Segment widths should match counts, with repairs returning to blue. Simply switching a block off/unpowering it must not make it orange.
+- [x] Remove most of a system. Its red segment must grow using the original baseline denominator; the bar must not become healthier merely because blocks disappeared.
+- [x] Add extra blocks and replace an expected block with another type/orientation. Additions should not improve the baseline score; replacements count red in the expected block's original system. The schematic replacement marker stays purple.
+- [x] Confirm Utility covers conveyors, gas, tools, weapons, production, control and other remaining categories. Armor/Power/Thrust/Cargo should not be counted twice. Overall combines every baseline block.
+- [x] Change schematic category/state filters, marker pages and station mode. Health totals should remain for the entire controlled-grid baseline; docked context must not inflate them.
+- [x] Clear/detach the baseline, select a profile with no Cargo or Power blocks, and switch ships. Empty/unavailable bars should explain the state rather than show 100% healthy or another ship's data.
+- [x] Preview a blueprint or forced recovery. Bar labels should say preview. Accept/cancel should return to the correct reference totals. Gray is reserved for unreadable health rather than treating it as blue.
+- [x] Move each bar independently with X/Y or arrow buttons. Resize width/height, toggle labels and adjust opacity. Test screen edges and your UI scale. Invalid/out-of-range values must leave the previous layout intact.
+- [x] Save global, Save ship and a named preset with different enabled bars/layouts. Restart and switch profiles; verify the intended layout returns. Hide all/Reset this bar should not silently erase other bars' layouts.
+- [x] Use Show/hide and normal HUD modes: the whole Marigold HUD, including bars, should hide together. Check bar updates after showing again and monitor performance on a large damaged ship.
+
+Notes: We are missing a healthbar for offensive weapons.
+
+
+## 0.11.1 - Follow-up to your 0.11 results
+
+Your 0.11 passes and original comments above are preserved.
+
+- [ ] Upgrade from 0.11: all six existing bar settings remain unchanged; the new Offensive bar starts hidden. Enable Offensive, damage/remove/repair a weapon, and verify it is counted there and Overall, but no longer in Utility. Save/reload settings.
+- [ ] Cycle systems and faults in compact and expanded views. The current filters should appear beside the ship name; check long names and multiple selected systems at your resolution.
+- [ ] Check Views: the redundant preview hint is gone. Check Health bars value/Apply, Appearance preset controls, and Library name/save controls for overlaps.
+- [ ] Workshop cache should show blueprint names and Workshop IDs instead of full paths. Select two entries and confirm Load opens the correct blueprint. Malformed or nameless XML should have a folder-name fallback.
+
+
+## 0.11.2 - Offensive detection for modded weapons
+
+- [ ] Restart with 0.11.2, keep your existing capture, enable Offensive, and allow up to five seconds for WeaponCore. Your sdx PDCs, railgun and torpedo launchers should count without recapturing.
+- [ ] Damage/remove/repair one of these weapons. Offensive and Overall should change together; missing weapons must stay red and retain their original denominator. Check a weapon already missing before login too.
+- [ ] Select the Offensive schematic filter: the same registered weapons should appear. Ordinary conveyor sorters, cargo weapon racks, railings, vanilla welders/grinders and decoys must not become offensive just because of their names or broad AI target group.
+- [ ] Reconnect or change worlds, including a world without WeaponCore. No prior world registry should leak across sessions; vanilla weapons should still classify correctly.
+- [ ] If a mod uses WeaponCore weapon registrations for utility devices, report any such devices counted as Offensive. This version follows the registry; it does not infer a modded device's purpose from its name.
+
+
+## 0.12.0 - Streamlined control panel
+
+Older checklist page names refer to the previous UI. Ship, Baseline and Customize are now the three main sections.
+
+- [x] Open `/mg ui`. Check the active section, page title, Back, Save display and Close at your usual resolution/UI scale. Check that labels, dropdowns and the preview do not overlap. This layout has compiled but has not been visually verified in-game.
+- [x] Ship: show/hide, rotation, system/state filters (including a saved multi-system selection), View & zoom, and Damage report. Confirm all four cockpit-relative views, fine rotation, reset and marker pages still work.
+- [x] Baseline: capture with confirmation; select/load/detach/delete a saved ship. Saved versions now have separate ship-name and version-name inputs. Rename the active profile, save/use/delete a version, and check confirmations still protect changes.
+- [ ] Import a Local, Workshop and Cloud blueprint. Grid/cockpit steps appear only after loading. Select a grid, prepare it, preview, accept or cancel. Check switching sources selects the correct file; custom XML paths remain available before a blueprint is loaded.
+- [x] Recovery tools: preview recovery for a selected ship, review/adjust alignment, accept/cancel, set main cockpit, retry matching, clear baseline and restore backup. Destructive actions must still require a second click.
+- [x] Customize: HUD layout/detail, individual state colors, missing-block pulse, health bars, system filters and styles. Color editing should change only the selected state; HUD layout reset must retain colors and pulse choice.
+- [x] Shortcuts: press-to-bind, typed shortcuts, remove binding, Escape cancellation and page changes during capture. Preferences: language, auto matching and connector-docked ships.
+- [x] Save display: save/restore defaults, save/restore this ship, and named preset save/load. Restart and confirm settings persist. Close alone does not save display edits.
+
+
+User feedback: Local and Workshop entries show the player name instead of the blueprint title; Cloud shows its storage path. Add searchable results across any combination of all three sources. The file dropdown jumps back to the selected item when scrolling/clicking.
+
+## 0.12.1 - Independent ship display and clipboard config
+
+- [x] Customize > HUD layout: hide the ship display while enabled health bars remain visible and update with damage. Show the display again; test Schematic size in compact and expanded layouts. Global Hide HUD still hides everything.
+- [x] Customize > Share config: Copy config, change bar positions/sizes and display layout, then Paste config. Confirm layouts, colors, filters and ship-display visibility return. Save display and restart to verify persistence. Baselines and shortcuts are excluded.
+- [x] Paste invalid/unrelated clipboard text: existing config must remain unchanged. Check old saved configs keep the ship display visible by default.
+- [x] Confirm the system selector, System filters list and HUD captions all display Offensive.
+
+
+## 0.12.2 - Blueprint browser fixes
+
+- [x] Baseline > Import blueprint > Find blueprint: Local and Workshop display blueprint titles (or grid-name fallback), not the author. Cloud displays just the blueprint name.
+- [x] Toggle any combination of Local, Workshop and Cloud, then Search. Empty search lists all; partial titles match regardless of case. No sources selected should explain what to do.
+- [with just local selected, previous and next dont display. it stays on the first page of 3. When selecting all 3 and searching next/previous worked until I hit page 5 and it couldnt go further. could go previous, but not next. also a blank search just shows everything. blank should error out to prevent from pulling too much data at once. hitting enter from the search bar doesnt hit the search button. have to click it manually.] Browse Previous/Next result pages and select a title near the end. It must load the exact selected file without jumping back. The file dropdown has been replaced with stable paginated results.
+- [x] Load/prepare/preview/accept/cancel for each source. Recheck a blueprint with a blank title, malformed XML and duplicate names across sources. Original files must remain untouched.
+
+when deleting baselines it doesnt delete from the dropdown after deleted until you go to another page and come back.

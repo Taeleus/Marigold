@@ -4,7 +4,7 @@ A ship schematic and damage display for **Space Engineers 1**, built for **Pulsa
 
 Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
 
-**Current version: 0.10.0 prototype.** The 0.9 workflows passed the latest user testing. Recovery, customization and library additions in 0.10 need the newly appended checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
+**Current version: 0.12.2 prototype.** The 0.11 health-bar checks passed user testing. Follow-up fixes and the remaining recovery edge cases still need in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
 
 ## Get started
 
@@ -41,14 +41,22 @@ A detached block counts as missing from the observed grid, even if it still exis
 New in 0.10:
 
 - **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Force apply may be needed again after reconnect.
-- **Appearance:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
+- **Customize / HUD layout and Colors:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
 - **Systems:** combine categories and choose hidden, wireframe, faint or highlighted hull outlines. Damage markers retain state colors; station context follows visibility.
-- **Library:** rename profiles and save/load/delete named baselines. Captures/imports do not change named copies. Revision loading requires the same saved anchor and archives the previous active baseline when needed. Limits are 16 revisions and 250,000 total blocks per library.
-- **Views:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
+- **Baseline / Saved versions:** rename profiles and save/load/delete named baselines. Captures/imports do not change named copies. Revision loading requires the same saved anchor and archives the previous active baseline when needed. Limits are 16 revisions and 250,000 total blocks per library.
+- **Customize / Shortcuts:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
 - **Blueprints:** locally cached Workshop XML discovery and a list of omitted definition names/counts. Protobuf-only and archived entries remain unsupported.
 - **Reports:** structural completeness and expected/observed/matching counts, distinct from health.
 
 The interface has English and Spanish labels; new controls may fall back to English. Diagnostic messages remain in English. Use **Save settings** to keep ordinary display changes; automatic matching and language choices save immediately. Station mode saves with the ship profile. The panel has a small live schematic preview.
+
+## Optional health bars
+
+Open **/mg ui > Customize > Health bars**. Overall, Armor, Power, Thrust, Utility, Cargo and Offensive bars are all hidden by default. Enable the ones you want, then set each bar's position, width, height, opacity and label. Save global or Save ship to keep them; named display presets include them too.
+
+Each bar runs **blue (healthy), yellow (damaged), orange (non-functional), red (missing expected blocks), then gray (unreadable)** from left to right. Segment widths count baseline blocks equally, not hit points. Replacements count red because the expected block is absent; additions do not inflate the denominator. Utility contains the remaining systems, including conveyors, gas, tools, production and controls.
+
+Bars ignore schematic filters, marker pages and docked context. They use the controlled grid's saved reference; recovery/blueprint previews are labeled. No baseline or no blocks in a system shows an empty bar with an explanation. The normal Show/hide command hides the whole Marigold HUD, including bars. Damage colors follow Customize / Colors; healthy is blue.
 
 ## Returning to your ship
 
@@ -87,3 +95,9 @@ Development needs a .NET SDK, .NET Framework 4.8 reference assemblies, and a loc
 The build creates `artifacts/Marigold` with `plugin.dll`, `plugin.pdb` and `plugin.xml`. With the game closed, copy these into a folder such as `%APPDATA%/Pulsar/Legacy/Local/MarigoldDev`, enable the plugin and restart. Avoid enabling duplicate source and binary installations. Building alone never deploys or launches the game.
 
 `verify-source.ps1` also compiles the production source selection without local-build defines. `prepare-release.ps1` prepares a commit-pinned PluginHub manifest after source changes are committed. These checks do not replace loading the source package in Pulsar or completing the in-game checklist.
+
+Offensive recognizes loaded weapon definitions and weapon-targeting metadata, plus WeaponCore registrations when available. This includes weapons built on conveyor-sorter types. Existing captures need no conversion. A mod registering a utility device as a WeaponCore weapon may include that device in Offensive.
+
+The control panel has three sections: **Ship** for everyday viewing and damage reports; **Baseline** for captures, blueprints, saved ships and recovery; **Customize** for layout, colors, health bars, filters, shortcuts and preferences. **Save display** opens the shared save/restore screen for defaults, this ship and named presets. Use **Back** to return to your previous page.
+
+Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud, enter part of its title (or leave blank), and Search. Use Previous/Next and click a result to load it.

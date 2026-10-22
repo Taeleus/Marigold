@@ -78,13 +78,13 @@ Station changes save to the selected ship profile, or remain session-local until
 
 ## Graphical interface (0.9)
 
-Use `/mg ui` for Display, Profiles, Blueprints and Views. Capture creates an anchor and full-health baseline in one step. Profiles have stable numeric IDs; old GUIDs and `profile select` remain accepted. Clear removes only the baseline; Delete removes the profile.
+Use `/mg ui` for Ship, Baseline and Customize. Capture creates an anchor and full-health baseline in one step. Profiles have stable numeric IDs; old GUIDs and `profile select` remain accepted. Clear removes only the baseline; Delete removes the profile.
 
 Local discovery includes nested folders (depth 16, 2,000 folders, 500 results) and skips linked folders. Cloud lists game-service XML `bp.sbc` files, including gzip; protobuf-only and Workshop downloads are not supported. Choose Load, a grid if needed, a matching cockpit, Preview, then Save profile. Lists update after preparation and a small live schematic stays visible beside the panel.
 
 Capture/clear/delete/recover and blueprint acceptance require a second identical panel click. Chat commands execute directly. Ship changes close the panel.
 
-Views lets you assign shortcuts for cycle-system, cycle-marker and expanded layout. Enter a key name such as `Ctrl+Shift+F6`, or blank to unbind. Defaults are unbound; Marigold does not consume the game's bindings. Shortcuts are saved separately in `%APPDATA%/Marigold/hotkeys.txt` and ignored while chat or a menu is open.
+Customize > Shortcuts lets you assign shortcuts for cycle-system, cycle-marker and expanded layout. Enter a key name such as `Ctrl+Shift+F6`, or blank to unbind. Defaults are unbound; Marigold does not consume the game's bindings. Shortcuts are saved separately in `%APPDATA%/Marigold/hotkeys.txt` and ignored while chat or a menu is open.
 
 Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regions remain outlined regardless of individual marker pagination; category/state filters still apply.
 
@@ -96,10 +96,17 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 `/mg isolate thrusters,power,gas` combines categories; `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
 
-Appearance accepts normalized X/Y (0-1), size (0.12-0.7 of screen height), opacity/pulse (0-1), and seven comma-separated RRGGBB colors: hull, missing, damage, replaced, added, unknown, non-functional. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
+Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time and toggles missing-block pulse. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
 Library saves independent named baselines. Capture/import do not update those copies. Loading archives the previous active baseline when needed; deleting a revision leaves the active baseline intact. Cross-anchor restore is refused. Limits: 16 revisions and 250,000 total blocks per library.
 
 Views accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
 
 Workshop cache reads local bp.sbc files in the current Steam library without downloading; PB-only/archived items are unsupported. Omitted blocks lists unavailable definitions. Structural completeness measures matching expected structure, not health. New labels may remain English.
+
+
+## 0.11 health bars
+
+Display > Health bars provides six independent bars: Overall, Armor, Power, Thrust, Utility, Cargo and Offensive. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Old settings migrate with bars off.
+
+Bars count baseline block states: healthy blue, damaged yellow, non-functional orange, missing/replaced expected blocks red, and unreadable gray. This is not summed integrity. New blocks are excluded; replacements retain the original system category. Utility covers all categories other than armor, power, thrusters and cargo. Filters/pagination and docked-grid context do not affect these controlled-grid totals. Preview baselines are labeled. No baseline or an empty system is shown as unavailable, never 100% healthy. Global Show/hide and normal HUD suppression also hide the bars.

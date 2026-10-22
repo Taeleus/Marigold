@@ -36,6 +36,7 @@ namespace Marigold
         private readonly Stopwatch clock = Stopwatch.StartNew();
         private double lastTime;
         private string caption = "";
+        private int classificationRevision=-1;
         private Task<BuildResult> pending;
         private int generation;
         private BlockSample[] lastObservation;
@@ -84,6 +85,7 @@ namespace Marigold
         { if(target==grid){CancelRecovery();CancelBlueprintPreview();} if(references.Remove(target)) target.OnGridSplit-=OnSplit; }
         private void BindProfile(ShipProfile profile,AnchorFrame anchor)
         {
+            health=new ShipHealth();healthPreview=false;
             CancelRecovery();
             stationBaselines.Clear();
             var closed=new List<MyCubeGrid>();
@@ -219,6 +221,8 @@ namespace Marigold
             return new Color((byte)(rgb>>16),(byte)(rgb>>8),(byte)rgb,(byte)Math.Min(255,alpha*controls.Appearance.Outline*weight/100));
         }
 
+        private ShipHealth health=new ShipHealth();
+        private bool healthPreview;
         private byte[] lineWeights=new byte[0];
         private double buildMs, snapshotMs, drawTotalMs, drawMaxMs, cellSize;
         private int drawSamples;
@@ -239,6 +243,8 @@ namespace Marigold
             public Exception Error;
             public ChangeKind[] Kinds;
             public int[] ShadedMarkers;
+            public ShipHealth Health;
+            public bool Preview;
             public byte[] Weights;
             public string Report;
             public StationGrid[] Station;
@@ -247,9 +253,10 @@ namespace Marigold
         private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station,string styles)
         {
             var timer=Stopwatch.StartNew();
-            var result=new BuildResult { Generation=version, Count=snapshot.Length, Station=station };
+            var result=new BuildResult { Generation=version, Count=snapshot.Length, Station=station,Preview=preview };
             try
             {
+                result.Health=ShipHealth.Build(reference,snapshot);
                 var boxes=new List<Box3>();var faded=new List<Box3>();var highlighted=new List<Box3>();category=DisplayFilter.VisibleCategories(category,styles);
                 Box3? frame=null;
                 foreach(var block in snapshot)frame=frame.HasValue?SchematicGeometry.Union(frame.Value,block.Bounds):block.Bounds;
@@ -362,7 +369,7 @@ namespace Marigold
             CancelBlueprintPreview();
             ResetAssociation();CancelRecovery();stationStatus="";
             lastObservation=null;lastObservationGeneration=-1;
-            grid=next;
+            grid=next;health=new ShipHealth();healthPreview=false;
             bool auto=controls.AutoAssociate;string language=controls.Language;
             try{DisplaySettings.Reset(controls);DisplaySettings.Load(settingsPath,controls);}catch(Exception e){MyLog.Default.WriteLine("[Marigold] Display defaults: "+e.Message);}controls.AutoAssociate=auto;controls.Language=language;
             Reference savedBinding;if(grid!=null && references.TryGetValue(grid,out savedBinding))LoadShipSettings(savedBinding.ProfileId);
@@ -411,6 +418,7 @@ namespace Marigold
         public void Update(MyCubeGrid current, IMyShipController controller)
         {
             SetGrid(current);
+            if(classificationRevision!=DisplayFilter.ClassificationRevision){classificationRevision=DisplayFilter.ClassificationRevision;generation++;dirty=true;}
             UpdateBlueprint();UpdateRecovery();
             UpdateHotkeys();
             if(observation!=null && (controls.Visible || controls.AutoAssociate))
@@ -443,6 +451,7 @@ namespace Marigold
                         if(stationBaselines.Count>128)stationBaselines.Clear();
                         foreach(var docked in result.Station)if(docked.MatchedProfile!=null)stationBaselines[docked.EntityId]=new StationGrid {Baseline=docked.Baseline,MatchedProfile=docked.MatchedProfile};
                         controls.Page=result.Page;
+                        health=result.Health;healthPreview=result.Preview;
                         points=result.Points; lineWeights=result.Weights;lineKinds=result.Kinds; shadedMarkers=result.ShadedMarkers; comparisonReport=result.Report;
                         rotated=new Point3[points.Length];
                         buildMs=result.Milliseconds; cellSize=result.CellSize;
@@ -482,7 +491,9 @@ namespace Marigold
             {
                 long drawStart=Stopwatch.GetTimestamp();
                 Vector2 screen=MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One,true);
-                float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f):Math.Min(screen.X*.6f,screen.Y*(float)controls.Appearance.Size);
+                if(controls.SchematicVisible)
+                {
+                float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f*(float)(controls.Appearance.Size/.32)):Math.Min(screen.X*.6f,screen.Y*(float)controls.Appearance.Size);
                 float left=panel!=null?8:controls.Expanded?(screen.X-side)/2:8+(screen.X-side-24)*(float)controls.Appearance.X, top=panel!=null?(screen.Y-side)/2:8+(screen.Y-side-65)*(float)controls.Appearance.Y;
                 var panelRect=new RectangleF(left-8,top-8,side+16,side+16);
                 MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,(byte)(255*controls.Appearance.Background)),0,false,false);
@@ -511,9 +522,11 @@ namespace Marigold
                         var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y)/2-0.5f,length,1);
                         MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]),(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
-                MyGuiManager.DrawString("White",caption,new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
+                MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
                     useFullClientArea:true,maxTextWidth:controls.Expanded?.65f:.28f);
-                if(controls.Expanded && panel==null)MyGuiManager.DrawString("White",controls.Mode+" | "+controls.Category+" | "+controls.StateFilter+" | /mg report for counts",new Vector2((left-8)/screen.X,(top+side+32)/screen.Y),.5f,useFullClientArea:true,maxTextWidth:.65f);
+                if(controls.Expanded && panel==null)MyGuiManager.DrawString("White",controls.Mode+" | "+controls.Category.Replace("weapons","Offensive")+" | "+controls.StateFilter+" | /mg report for counts",new Vector2((left-8)/screen.X,(top+side+32)/screen.Y),.5f,useFullClientArea:true,maxTextWidth:.65f);
+                }
+                DrawHealthBars(screen);
                 double drawMs=(Stopwatch.GetTimestamp()-drawStart)*1000.0/Stopwatch.Frequency;
                 if(drawSamples>=600) { drawSamples=0; drawTotalMs=drawMaxMs=0; }
                 drawSamples++; drawTotalMs+=drawMs; drawMaxMs=Math.Max(drawMaxMs,drawMs);
