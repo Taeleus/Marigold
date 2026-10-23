@@ -5,6 +5,7 @@ research/
 *.user
 *.log
 artifacts/
+.agents/
 
 # Downloaded reference snapshot, not project source
 PluginHub-Plugins.md

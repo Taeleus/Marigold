@@ -11,7 +11,7 @@ namespace Marigold
     internal sealed partial class SchematicOverlay
     {
         private Task<BlueprintDocument> blueprintLoad;
-        private BlueprintDocument blueprint;
+        private BlueprintDocument blueprint;private string blueprintSource="";
         private int blueprintGrid=-1,conversionIndex;
         private List<BlockSample> converted;
         private readonly List<AnchorFrame> blueprintAnchors=new List<AnchorFrame>();
@@ -34,7 +34,7 @@ namespace Marigold
             if(verb=="load")
             {
                 if(blueprintLoad!=null)return "A blueprint is already loading.";
-                string path=controls.ProfileArgument;
+                string path=controls.ProfileArgument;blueprintSource=path;
                 CancelBlueprintPreview();blueprint=null;blueprintGrid=-1;blueprintAnchors.Clear();
                 converted=null;blueprintLoad=path.StartsWith("cloud:",StringComparison.OrdinalIgnoreCase)?CloudBlueprints.Load(path.Substring(6)):Task.Run(()=>BlueprintDocument.Load(path));RefreshReference("Blueprint loading; saved baseline unchanged.");
                 return "Reading blueprint. Its file is read-only; no blocks or scripts will be spawned.";
@@ -70,7 +70,7 @@ namespace Marigold
                 if(anchor.Definition!=target.Definition || Math.Abs(blueprint.Grids[blueprintGrid].GridSize-grid.GridSize)>.001)return "Blueprint cockpit definition or grid size does not match this profile anchor.";
                 var canonical=ProfileAlignment.Transform(converted.ToArray(),anchor,true);
                 // Validate before displaying; accept is the only operation that changes the saved baseline.
-                var candidate=new ShipProfile { Id=selected==null?Guid.NewGuid().ToString("N"):selected.ProfileId,Name=grid.DisplayName??"Ship",GridSize=grid.GridSize,Anchor=target,Blocks=canonical,Station=controls.Station };
+                var candidate=new ShipProfile { Id=selected==null?Guid.NewGuid().ToString("N"):selected.ProfileId,Name=grid.DisplayName??"Ship",GridSize=grid.GridSize,Anchor=target,Blocks=canonical,Station=controls.Station,Source="blueprint",BlueprintIdentity=blueprintSource,ReferenceName=blueprint.Grids[blueprintGrid].Name };
                 ProfileAlignment.Validate(candidate);
                 previewBlocks=ProfileAlignment.Transform(canonical,target,false);previewProfile=candidate.Id;previewCandidate=candidate;
                 RefreshReference("UNSAVED blueprint preview. Inspect views and /mg report; use /mg blueprint accept or cancel. Skipped unavailable blocks: "+skippedDefinitions+".");
@@ -80,7 +80,7 @@ namespace Marigold
             {
                 if(previewBlocks==null || previewCandidate==null)return "Choose the matching cockpit and Preview before accepting.";
                 if(selected!=null && previewCandidate.Id!=selected.ProfileId)return "The selected profile changed; preview again.";
-                var accepted=previewCandidate;profileStore.Put(accepted);BindProfile(accepted,accepted.Anchor);
+                var accepted=previewCandidate;foreach(var previous in profileStore.Profiles)if(previous.Id==accepted.Id){ArchiveBaseline(previous);break;}profileStore.Put(accepted);BindProfile(accepted,accepted.Anchor);
                 return "Blueprint saved as profile "+accepted.Number+". Unavailable blocks omitted: "+skippedDefinitions+".";
             }
             return "Blueprint commands: load, grids, grid, anchors, preview, accept, cancel.";

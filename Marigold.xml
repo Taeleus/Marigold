@@ -4,17 +4,17 @@
 
   <Id>7db0d53e-7572-4cbc-911e-25fa26ef182c</Id>
 
-  <FriendlyName>Marigold 0.12.6 (prototype)</FriendlyName>
+  <FriendlyName>Marigold 0.14.3 (prototype)</FriendlyName>
 
   <Author>Taeleus</Author>
 
   <Tooltip>See your ship's layout and spot damaged or missing blocks.</Tooltip>
 
-  <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture saves a full-health baseline and anchor; local/cloud blueprints can also supply the expected layout.
+  <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture saves a full-health baseline and anchor; local, Workshop and cloud XML blueprints can also supply the expected layout.
 
-Yellow means damaged, orange non-functional and pulsing red missing. Customize the HUD, combine system filters, assign shortcuts and save per-ship displays or named baseline revisions.
+Yellow means damaged, orange non-functional and pulsing red missing. Customize the HUD, combine system filters, assign shortcuts and save per-ship displays or named baseline versions. Save a new version, rename it or replace it while preserving its previous contents.
 
-If the original cockpit is destroyed, Force apply searches surviving blocks and previews an alignment for you to accept. Baselines never update automatically. Reconnect matching is conservative; ambiguous ships may need manual selection.
+If the original cockpit is destroyed, Recovery tools find surviving-block alignments. Rotate or move the preview, then accept to remember it for reconnects. Baselines never update automatically. Reconnect matching is conservative; ambiguous ships may need manual selection.
 
 Station mode is off by default and shows connector-docked grids with matched profiles. Rotor/piston subgrids are excluded. Prototype: new features need in-game testing. /marigold is an alias for /mg.</Description>
 

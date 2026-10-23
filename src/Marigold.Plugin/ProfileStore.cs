@@ -7,7 +7,7 @@ namespace Marigold
 {
     internal sealed class ProfileStore
     {
-        private const int Version=2,MaxProfiles=16,MaxBlocks=250000;
+        private const int Version=3,MaxProfiles=16,MaxBlocks=250000;
         private readonly string path;
         private List<ShipProfile> profiles=new List<ShipProfile>();
         public IList<ShipProfile> Profiles { get { return profiles.AsReadOnly(); } }
@@ -38,7 +38,7 @@ namespace Marigold
         {
             int number;
             if(int.TryParse(id,out number))
-            {foreach(var p in profiles)if(p.Number==number)return p;throw new InvalidOperationException("Profile number not found. Use /mg profiles.");}
+            {foreach(var p in profiles)if(p.Number==number)return p;if(id.Length<8)throw new InvalidOperationException("Profile number not found. Use /mg profiles.");}
             if(string.IsNullOrWhiteSpace(id) || id.Length<8)throw new InvalidOperationException("Use the profile number from /mg profiles (old IDs still work).");
             ShipProfile match=null;
             foreach(var p in profiles)if(p.Id.StartsWith(id,StringComparison.OrdinalIgnoreCase))
@@ -49,6 +49,9 @@ namespace Marigold
         public void Put(ShipProfile profile,bool updateStation=false)
         {
             var existing=profiles.Find(p=>p.Id==profile.Id);
+            if(existing!=null && profile.Blocks==existing.Blocks && string.IsNullOrEmpty(profile.ReferenceId))
+            {profile.ReferenceId=existing.ReferenceId;profile.ReferenceName=existing.ReferenceName;profile.Source=existing.Source;profile.BlueprintIdentity=existing.BlueprintIdentity;profile.CreatedUtcTicks=existing.CreatedUtcTicks;}
+            if(profile.Blocks!=null && string.IsNullOrEmpty(profile.ReferenceId)){profile.ReferenceId=Guid.NewGuid().ToString("N");profile.CreatedUtcTicks=DateTime.UtcNow.Ticks;if(string.IsNullOrEmpty(profile.Source))profile.Source="capture";if(string.IsNullOrEmpty(profile.ReferenceName))profile.ReferenceName="Baseline "+DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");}
             profile.Number=existing==null?nextNumber:existing.Number;
             if(existing!=null && !updateStation)profile.Station=existing.Station;
             var next=new List<ShipProfile>(profiles);
@@ -87,6 +90,7 @@ namespace Marigold
                             w.Write(p.Number);w.Write(p.Station);Text(w,p.Id,32);Text(w,p.Name,1024);w.Write(p.GridSize);
                             Point(w,p.Anchor.Position);Point(w,p.Anchor.Right);Point(w,p.Anchor.Up);Point(w,p.Anchor.Backward);
                             Text(w,p.Anchor.Definition,2048);Text(w,p.Anchor.Name??"",1024);
+                            Text(w,p.ReferenceId??"",32);Text(w,p.ReferenceName??"",1024);Text(w,p.Source??"",128);Text(w,p.BlueprintIdentity??"",2048);w.Write(p.CreatedUtcTicks);
                             w.Write(p.Blocks==null?-1:p.Blocks.Length);
                             if(p.Blocks!=null)foreach(var b in p.Blocks)
                             {
@@ -111,6 +115,7 @@ namespace Marigold
             foreach(var p in list)
             {
                 ProfileAlignment.Validate(p);
+                Guid referenceId;if((!string.IsNullOrEmpty(p.ReferenceId) && !Guid.TryParseExact(p.ReferenceId,"N",out referenceId)) || p.CreatedUtcTicks<0 || p.CreatedUtcTicks>DateTime.MaxValue.Ticks)throw new InvalidOperationException("Invalid reference metadata.");
                 if(p.Number<=0 || p.Number==int.MaxValue || !numbers.Add(p.Number))throw new InvalidOperationException("Invalid/duplicate profile number.");
                 if(!ids.Add(p.Id))throw new InvalidOperationException("Duplicate profile ID.");
                 total+=p.Blocks==null?0:p.Blocks.Length;
@@ -124,7 +129,7 @@ namespace Marigold
             using(var stream=File.OpenRead(file))using(var r=new BinaryReader(stream,Encoding.UTF8))
             {
                 if(r.ReadInt32()!=0x4D475046)throw new InvalidDataException("Unsupported profile format.");
-                int version=r.ReadInt32();if(version!=1 && version!=Version)throw new InvalidDataException("Unsupported profile version.");
+                int version=r.ReadInt32();if(version!=1 && version!=2 && version!=Version)throw new InvalidDataException("Unsupported profile version.");
                 int count=r.ReadInt32(),total=0;if(count<0 || count>MaxProfiles)throw new InvalidDataException("Invalid profile count.");
                 if(version>=2){next=r.ReadInt32();if(next<1)throw new InvalidDataException("Invalid profile counter.");}
                 var list=new List<ShipProfile>();
@@ -135,6 +140,8 @@ namespace Marigold
                     if(number<=0 || number==int.MaxValue)throw new InvalidDataException("Invalid profile number.");
                     next=Math.Max(next,number+1);
                     p.Anchor=new AnchorFrame { Position=Point(r),Right=Point(r),Up=Point(r),Backward=Point(r),Definition=Text(r,2048),Name=Text(r,1024) };
+                    if(version>=3){p.ReferenceId=Text(r,32);p.ReferenceName=Text(r,1024);p.Source=Text(r,128);p.BlueprintIdentity=Text(r,2048);p.CreatedUtcTicks=r.ReadInt64();}
+                    else if(p.ReferenceId.Length==0){p.ReferenceId=p.Id;p.ReferenceName="Legacy baseline";p.Source="legacy";}
                     int blocks=r.ReadInt32();if(blocks< -1 || blocks>MaxBlocks || (total+=Math.Max(0,blocks))>MaxBlocks)throw new InvalidDataException("Invalid block count.");
                     if(blocks>=0)
                     {

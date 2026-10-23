@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Sandbox.Graphics;
 using Sandbox.Graphics.GUI;
 using VRage.Utils;
 using VRageMath;
@@ -14,9 +15,17 @@ namespace Marigold
         private void OpenPanel()
         {
             if(panel!=null)return;
-            var opened=new Panel(this);panel=opened;opened.Closed+=(screen,unloading)=>{if(ReferenceEquals(panel,opened))panel=null;};MyGuiSandbox.AddScreen(opened);
+            var opened=new Panel(this);panel=opened;opened.Closed+=(screen,unloading)=>{if(ReferenceEquals(panel,opened)){panel=null;EndPanelRecovery();}};MyGuiSandbox.AddScreen(opened);
         }
-        private void ClosePanel(){var previous=panel;panel=null;previous?.CloseScreen();}
+        private void ClosePanel(){var previous=panel;panel=null;EndPanelRecovery();previous?.CloseScreen();}
+        private void EndPanelRecovery()
+        {
+            if(recoveryProfile==null && recoveryPreview==null && recoveryTask==null)return;
+            CancelRecovery();
+            // Remove preview geometry immediately and reject any pending preview build.
+            points=new Point3[0];shadedMarkers=new int[0];fillBands.Clear();health=new ShipHealth();healthPreview=false;
+            RefreshReference("Recovery preview closed; saved baseline retained.");
+        }
         private string PanelCommand(string command)
         {
             try
@@ -36,6 +45,9 @@ namespace Marigold
             private int blueprintUiRevision=-1;
             private bool refreshBlueprint;
             public void NotifyBlueprint(string message){Status(message);refreshBlueprint=true;}
+            public bool RecoveryFocus {get{return tab==7;}}
+            public readonly SchematicControls RecoveryView=new SchematicControls();
+            private bool draggingRecovery;private Vector2 recoveryMouse;
             private int healthBarSelected;
             private bool browseLocal=true,browseWorkshop,browseCloud;private string searchText="";private int browsePage;
             private int captureShortcut=-1;private MyGuiControlTextbox shortcutBox;
@@ -46,7 +58,7 @@ namespace Marigold
             private MyGuiControlLabel blueprintPageLabel;
             private string[] localFiles=new string[0], localNames=new string[0];private Task<BlueprintCatalog.Listing> catalog;
             public Panel(SchematicOverlay owner):base(new Vector2(.5f,.5f),new Vector4(.03f,.06f,.08f,1),new Vector2(.92f,.92f),backgroundTransition:1f,guiTransition:1f)
-            {this.owner=owner;CanHideOthers=false;RecreateControls(true);}
+            {this.owner=owner;RecoveryView.Execute("/mg spin");CanHideOthers=false;RecreateControls(true);}
             public override string GetFriendlyName(){return "MarigoldControls";}
             private string T(string text){return UiText.Get(owner.controls.Language,text);}
             private void Label(float x,float y,string text)
@@ -61,22 +73,29 @@ namespace Marigold
                 if(change!=null)combo.ItemSelected+=()=>change((int)combo.GetSelectedKey());Controls.Add(combo);return combo;
             }
             public void NotifyStatus(string text){Status(text);}
-            private void Status(string text){status=text;if(output!=null){output.Clear();output.AppendText(text);}}
+            private void Status(string text){status=T(text);if(output!=null){output.Clear();output.AppendText(status);}}
             private void Run(string command,bool destructive=false)
             {
                 if(destructive && confirm!=command){confirm=command;Status(T("Click the same action again to confirm. No changes yet."));return;}
                 confirm=null;Status(owner.PanelCommand(command));
             }
-            private void Switch(int next){if(next==tab)return;if(pathBox!=null)path=pathBox.Text;history.Push(tab);tab=next;confirm=null;Status("");RecreateControls(false);}
-            private void Back(){if(history.Count==0)return;if(pathBox!=null)path=pathBox.Text;tab=history.Pop();confirm=null;Status("");RecreateControls(false);}
+            private void Switch(int next){if(next==tab)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;history.Push(tab);tab=next;confirm=null;Status("");RecreateControls(false);}
+            private void Back(){if(history.Count==0)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;tab=history.Pop();confirm=null;Status("");RecreateControls(false);}
             private int Section {get{return tab==1 || tab==2 || tab==6 || tab==7 || tab==10 || tab==15 || tab==18?1:tab==0 || tab==3 || tab==14?0:2;}}
             private static readonly string[] PageNames={"Ship","Baseline","Baseline / Import blueprint","Ship / View","Customize / HUD layout","Customize / System filters","Baseline / Saved versions","Baseline / Recovery alignment","Customize / Health bars","Customize","Baseline / Saved ships","Customize / Shortcuts","Customize / Preferences","Save display","Ship / Diagnostics","Baseline / Recovery","Customize / Colors","Customize / Share config","Baseline / Find blueprint"};
             private void MenuRow(float y,string title,string description,int next)
             {Button(-.28f,y,title,()=>Switch(next));Controls.Add(new MyGuiControlLabel(new Vector2(-.15f,y),text:T(description),textScale:.60f,maxWidth:.54f,isAutoEllipsisEnabled:true));}
             public override void RecreateControls(bool constructor)
             {
-                base.RecreateControls(constructor);pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
-                Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+PageNames[tab]);
+                base.RecreateControls(constructor);draggingRecovery=false;pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
+                Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+T(PageNames[tab]));
+                if(RecoveryFocus)
+                {
+                    if(history.Count>0)Button(-.31f,.40f,"Back",Back);
+                    Button(.32f,.40f,"Close",()=>CloseScreen());
+                    output=new MyGuiControlMultilineText(new Vector2(0,.325f),new Vector2(.8f,.085f),textScale:.56f,drawScrollbarH:false,contents:new StringBuilder(status));Controls.Add(output);
+                    Alignment();return;
+                }
                 Button(-.28f,-.33f,Section==0?"[ Ship ]":"Ship",()=>Switch(0));Button(0,-.33f,Section==1?"[ Baseline ]":"Baseline",()=>Switch(1));Button(.28f,-.33f,Section==2?"[ Customize ]":"Customize",()=>Switch(9));
                 if(history.Count>0)Button(-.31f,.40f,"Back",Back);
                 if(tab!=13)Button(0,.40f,"Save display...",()=>Switch(13));
@@ -109,10 +128,10 @@ namespace Marigold
             }
             private void Baseline()
             {
-                string name;try{name=owner.SelectedProfile().Name;}catch(InvalidOperationException){name="None - capture your ship or import a blueprint.";}
-                Label(-.39f,-.25f,"Current baseline: "+name);
+                string name;try{name=owner.SelectedProfile().Name;}catch(InvalidOperationException){name=T("None - capture your ship or import a blueprint.");}
+                Label(-.39f,-.25f,T("Current baseline: ")+name);
                 Button(-.21f,-.17f,"Capture this ship",()=>Run("capture",true));Button(.21f,-.17f,"Import blueprint",()=>Switch(2));
-                Label(-.39f,-.105f,"A baseline remembers the blocks your ship should have.");
+                Label(-.39f,-.105f,"Capture/import preserves the old baseline in Saved versions.");
                 MenuRow(-.03f,"Saved ships","Choose an existing baseline or detach it.",10);
                 MenuRow(.05f,"Saved versions","Keep named copies before changing your ship.",6);
                 MenuRow(.13f,"Recovery tools","Match a damaged ship or restore a backup.",15);
@@ -175,7 +194,7 @@ namespace Marigold
                 Label(-.39f,-.25f,"Use when the original cockpit is gone or automatic matching fails.");
                 var profiles=new List<ShipProfile>(owner.profileStore.Profiles);var names=new List<string>();foreach(var p in profiles)names.Add(p.Name+" ["+p.Number+"]");
                 var choice=Combo(0,-.17f,names.ToArray(),0);
-                Button(-.21f,-.07f,"Preview recovery",()=>{int i=(int)choice.GetSelectedKey();if(i<0 || i>=profiles.Count){Status("Select a saved ship first.");return;}Run("profile force "+profiles[i].Id);});
+                Button(-.21f,-.07f,"Preview recovery",()=>{int i=(int)choice.GetSelectedKey();if(i<0 || i>=profiles.Count){Status("Select a saved ship first.");return;}Run("profile force "+profiles[i].Id);if(owner.recoveryProfile!=null){string message=status;Switch(7);Status(message);}});
                 Button(.21f,-.07f,"Review alignment",()=>Switch(7));
                 Button(-.21f,.03f,"Matching status",()=>Run("auto status"));Button(.21f,.03f,"Retry matching",()=>Run("auto retry"));
                 Button(-.21f,.13f,"Set main cockpit",()=>Run("anchor"));Button(.21f,.13f,"Restore backup",()=>Run("recover",true));
@@ -234,7 +253,7 @@ namespace Marigold
                 Button(-.31f,.02f,"Damage overview",()=>{Run("isolate all");Run("filter faults");});Button(-.10f,.02f,"Propulsion",()=>Run("isolate thrusters,power,gas,control"));Button(.11f,.02f,"Conveyors",()=>Run("isolate conveyors,cargo"));Button(.32f,.02f,"Show all states",()=>Run("filter all"));
                 var style=Combo(-.16f,.12f,new[]{"hidden","wireframe","transparent","highlighted"},1);
                 Button(.21f,.12f,"Apply style",()=>{int index=(int)choice.GetSelectedKey();var values=owner.controls.SystemStyles.ToCharArray();if(index==0){for(int i=1;i<values.Length;i++)values[i]=(char)('0'+style.GetSelectedKey());}else values[index]=(char)('0'+style.GetSelectedKey());owner.controls.SystemStyles=new string(values);owner.RefreshReference("System presentation updated; damage markers retain their state colors.");Status(owner.comparisonReport);});
-                Label(-.39f,.19f,"Styles affect hull outlines; station uses visibility. Use Save display to keep changes.");
+                Label(-.39f,.19f,"Styles affect ship and docked hulls. Save display keeps changes.");
             }
             private string SystemName(string category)
             {
@@ -244,27 +263,35 @@ namespace Marigold
             private void Library()
             {
                 ShipProfile profile;try{profile=owner.SelectedProfile();}catch(Exception e){Label(-.39f,-.20f,e.Message);return;}
+                if(string.IsNullOrEmpty(status))Status("Active baseline: "+profile.ReferenceName+"\nSource: "+profile.Source+" | "+(profile.CreatedUtcTicks==0?"Creation date unknown":new DateTime(profile.CreatedUtcTicks,DateTimeKind.Utc).ToString("u"))+"\n"+profile.BlueprintIdentity);
                 Label(-.39f,-.26f,"Current ship name");
                 var shipName=new MyGuiControlTextbox(new Vector2(-.12f,-.21f),profile.Name,maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(shipName);
                 Button(.32f,-.21f,"Rename ship",()=>{Status(owner.RevisionAction("rename",shipName.Text));RecreateControls(false);});
-                Label(-.39f,-.145f,"New version name (for example, Original or Before refit)");
+                Label(-.39f,-.145f,"Version name (for saving or renaming)");
                 var name=new MyGuiControlTextbox(new Vector2(-.12f,-.10f),"",maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(name);
-                Button(.32f,-.10f,"Save version",()=>{Status(owner.RevisionAction("save",name.Text));RecreateControls(false);});
-                var revisions=new List<ShipProfile>(owner.Revisions(profile).Profiles);var names=new List<string>();foreach(var r in revisions)names.Add(r.Number+": "+r.Name);
+                Button(.32f,-.10f,"Save new version",()=>{Status(owner.RevisionAction("save",name.Text));RecreateControls(false);});
+                var revisions=new List<ShipProfile>(owner.Revisions(profile).Profiles);var names=new List<string>();foreach(var r in revisions)names.Add((r.ReferenceId==profile.ReferenceId?"[Active] ":"")+r.Number+": "+r.Name+" | "+r.Source+" | "+(r.CreatedUtcTicks==0?"date unknown":new DateTime(r.CreatedUtcTicks,DateTimeKind.Utc).ToString("yyyy-MM-dd HH:mm")+" UTC"));
                 Label(-.39f,-.035f,"Saved versions");var selected=Combo(-.12f,.01f,names.ToArray(),0);
-                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id));RecreateControls(false);};
+                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id,name.Text));if(verb=="load" && owner.recoveryIsRevision && owner.recoveryProfile!=null){string message=status;Switch(7);Status(message);}else RecreateControls(false);};
                 Button(.32f,.01f,"Use version",()=>revision("load"));Button(.32f,.10f,"Delete version",()=>revision("delete"));
-                Label(-.39f,.18f,"Loading keeps a copy of the previous baseline when needed.");
+                Button(-.21f,.10f,"Rename version",()=>revision("rename-version"));Button(0,.10f,"Replace version",()=>revision("replace"));
+                Label(-.39f,.18f,"Replace copies the active baseline into the selected version.");
             }
             private void Alignment()
             {
-                Label(-.39f,-.25f,"Recovery preview: adjust translation in live-grid cells");
-                Label(-.39f,-.18f,"Preview a recovery first. The saved baseline stays unchanged.");
-                Button(-.21f,-.08f,"X -",()=>Status(owner.RecoveryCommand("move x-")));Button(0,-.08f,"Y -",()=>Status(owner.RecoveryCommand("move y-")));Button(.21f,-.08f,"Z -",()=>Status(owner.RecoveryCommand("move z-")));
-                Button(-.21f,0,"X +",()=>Status(owner.RecoveryCommand("move x+")));Button(0,0,"Y +",()=>Status(owner.RecoveryCommand("move y+")));Button(.21f,0,"Z +",()=>Status(owner.RecoveryCommand("move z+")));
-                Button(-.21f,.10f,"Next alignment",()=>Run("recovery next"));Button(0,.10f,"Accept recovery",()=>Run("recovery accept",true));Button(.21f,.10f,"Cancel",()=>Run("recovery cancel"));
-                Label(-.39f,.18f,"At least 3 exact block matches are required to accept.");
+                Label(-.39f,-.345f,"Drag the preview to look around; buttons adjust the baseline");
+                Button(-.30f,.09f,"X -",()=>AdjustRecovery("move x-"),.12f);Button(-.17f,.09f,"X +",()=>AdjustRecovery("move x+"),.12f);
+                Button(-.04f,.09f,"Y -",()=>AdjustRecovery("move y-"),.12f);Button(.09f,.09f,"Y +",()=>AdjustRecovery("move y+"),.12f);
+                Button(.22f,.09f,"Z -",()=>AdjustRecovery("move z-"),.12f);Button(.35f,.09f,"Z +",()=>AdjustRecovery("move z+"),.12f);
+                Button(-.30f,.145f,"Rotate X 90",()=>AdjustRecovery("rotate x"),.18f);Button(-.10f,.145f,"Rotate Y 90",()=>AdjustRecovery("rotate y"),.18f);Button(.10f,.145f,"Rotate Z 90",()=>AdjustRecovery("rotate z"),.18f);
+                Button(.30f,.145f,"Other candidate",()=>{confirm=null;Run("recovery next");},.18f);
+                Button(-.30f,.20f,"Top",()=>RecoveryView.Execute("/mg top"),.12f);Button(-.17f,.20f,"Left",()=>RecoveryView.Execute("/mg left"),.12f);
+                Button(-.04f,.20f,"Zoom out",()=>RecoveryView.Execute("/mg out"),.12f);Button(.09f,.20f,"Zoom in",()=>RecoveryView.Execute("/mg in"),.12f);
+                Button(.29f,.20f,"Reset view",()=>{RecoveryView.Execute("/mg reset");RecoveryView.Execute("/mg spin");RecoveryView.Zoom=.85;},.22f);
+                Button(-.12f,.255f,"Accept recovery",()=>{Run("recovery accept",true);if(owner.recoveryProfile==null){string message=status;Switch(15);Status(message);}},.22f);
+                Button(.12f,.255f,"Cancel",()=>{Run("recovery cancel");if(owner.recoveryProfile==null){string message=status;Switch(15);Status(message);}},.22f);
             }
+            private void AdjustRecovery(string action){confirm=null;Status(owner.RecoveryCommand(action));}
             private void Profiles()
             {
                 var profiles=new List<ShipProfile>(owner.profileStore.Profiles);var names=new List<string>();foreach(var p in profiles)names.Add(p.Name+" ["+p.Number.ToString()+"]");
@@ -349,7 +376,8 @@ namespace Marigold
                     Label(-.39f,-.025f,"Or paste the path to a blueprint XML file:");
                     pathBox=new MyGuiControlTextbox(new Vector2(-.08f,.025f),path,maxLength:2048,textScale:.65f){Size=new Vector2(.60f,.04f)};Controls.Add(pathBox);
                     Button(.32f,.025f,"Load file",()=>{path=pathBox.Text;Run("blueprint load \""+path+"\"");});
-                    Label(-.39f,.12f,"After loading, choose the grid and its main cockpit.");return;
+                    Label(-.39f,.12f,"After loading, choose the grid and its main cockpit.");
+                    Label(-.39f,.18f,"XML only. For PB/archives, save a local copy in-game and select bp.sbc.");return;
                 }
                 var grids=new List<string>();foreach(var g in owner.blueprint.Grids)grids.Add(g.Name);
                 Label(-.39f,-.07f,"2. Choose the blueprint grid");
@@ -364,6 +392,25 @@ namespace Marigold
             public override bool Draw(){bool visible=base.Draw();if(visible)owner.DrawSafely();return visible;}
             public override bool Update(bool hasFocus)
             {
+                var mouseInput=VRage.Input.MyInput.Static;
+                if(!hasFocus || !RecoveryFocus || mouseInput==null)draggingRecovery=false;
+                else
+                {
+                    var cursor=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(MyGuiManager.MouseCursorPosition);
+                    var size=MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f,.37f));float side=Math.Min(size.X,size.Y);
+                    var center=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f,.365f));
+                    bool overPreview=Math.Abs(cursor.X-center.X)<=side/2 && Math.Abs(cursor.Y-center.Y)<=side/2;
+                    if(overPreview){int wheel=mouseInput.DeltaMouseScrollWheelValue();if(wheel!=0)RecoveryView.Execute(wheel>0?"/mg in":"/mg out");}
+                    if(!mouseInput.IsLeftMousePressed())draggingRecovery=false;
+                    if(mouseInput.IsNewLeftMousePressed() && overPreview)
+                    {draggingRecovery=true;recoveryMouse=cursor;}
+                    if(draggingRecovery)
+                    {
+                        var delta=cursor-recoveryMouse;recoveryMouse=cursor;
+                        // Independent inspection camera: never modify the recovery anchor or saved HUD.
+                        if(side>0 && delta.LengthSquared()>0)RecoveryView.RotateView(delta.X/side*Math.PI,-delta.Y/side*Math.PI);
+                    }
+                }
                 if(hasFocus && captureShortcut>=0 && VRage.Input.MyInput.Static!=null)
                 {
                     var input=VRage.Input.MyInput.Static;

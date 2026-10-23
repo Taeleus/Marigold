@@ -80,6 +80,7 @@ internal static class Program
         FeedbackChecks.Run();
         HealthBarChecks.Run();
         OffensiveChecks.Run();
+        ReferenceLifecycleChecks.Run();
     }
 }
 

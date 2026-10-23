@@ -28,6 +28,7 @@ internal static class BlueprintChecks
             {
                 File.WriteAllText(file,invalid);bool rejected=false;try{BlueprintDocument.Load(file);}catch(Exception){rejected=true;}Check(rejected,"Malformed/unsupported XML rejected");
             }
+            foreach(string extension in new[]{".sbcB5",".zip",".bin"}){bool explained=false;try{BlueprintDocument.Load(Path.Combine(folder,"bp"+extension));}catch(InvalidDataException e){explained=e.Message.Contains("bp.sbc") && e.Message.Contains("unsupported");}Check(explained,"Unsupported format explains XML alternative");}
             var controls=new SchematicControls();bool send=true;string response;
             Check(controls.TryHandle("/mg blueprint load \"C:\\Blueprints\\My Ship\\bp.sbc\"",ref send,out response) && !send && controls.ProfileArgument=="C:\\Blueprints\\My Ship\\bp.sbc","Quoted paths preserve spaces and slashes");
             controls.Execute("/mg blueprint preview 2");Check(controls.ReferenceAction=="blueprint preview" && controls.ProfileArgument=="2","Preview parsed");

@@ -27,27 +27,38 @@ namespace Marigold
             return "Preset "+name+(verb=="preset-save"?" saved.":" loaded.");
         }
         private ProfileStore Revisions(ShipProfile p){return new ProfileStore(Path.Combine(DataRoot,"revisions",p.Id));}
-        private string RevisionAction(string verb,string name)
+        private ProfileStore recoveryBindingStore;
+        private ProfileStore RecoveryBindings(){return recoveryBindingStore??(recoveryBindingStore=new ProfileStore(Path.Combine(DataRoot,"recovery")));}
+        private void ArchiveBaseline(ShipProfile p){ReferenceHistory.Archive(Revisions(p),p);}
+        private string RevisionAction(string verb,string name,string newName=null)
         {
             var p=SelectedProfile();var store=Revisions(p);
-            if(verb=="rename")
-            {profileStore.Put(new ShipProfile{Id=p.Id,Name=SafeName(name),GridSize=p.GridSize,Anchor=p.Anchor,Blocks=p.Blocks,Station=p.Station});return "Profile renamed; number retained.";}
+            if(verb=="rename"){var renamed=p.Copy();renamed.Name=SafeName(name);profileStore.Put(renamed);return "Profile renamed; number retained.";}
             if(verb=="save")
             {
-                if(p.Blocks==null)return "No baseline to save. Capture or import one first.";
-                store.Put(new ShipProfile{Id=Guid.NewGuid().ToString("N"),Name=SafeName(name),GridSize=p.GridSize,Anchor=p.Anchor,Blocks=p.Blocks});
-                return "Named baseline saved. It will not be changed by capture/import. Up to 16 revisions per profile.";
+                var saved=ReferenceHistory.SaveNamed(store,p,SafeName(name));var active=p.Copy();active.ReferenceId=saved.ReferenceId;active.ReferenceName=saved.ReferenceName;
+                var remembered=RecoveryBindings();foreach(var item in remembered.Profiles)if(item.Id==p.Id && item.ReferenceId==p.ReferenceId){var changed=item.Copy();changed.ReferenceId=active.ReferenceId;remembered.Put(changed);break;}
+                profileStore.Put(active);
+                return "Saved version "+saved.Name+" is now identified as the active baseline.";
             }
             var revision=store.Find(name);
+            if(verb=="rename-version")
+            {
+                var renamed=ReferenceHistory.Rename(store,revision,SafeName(newName));
+                if(p.ReferenceId==revision.ReferenceId){var active=p.Copy();active.ReferenceName=renamed.Name;profileStore.Put(active);}
+                return "Version renamed; baseline contents unchanged.";
+            }
+            if(verb=="replace")
+            {
+                var replacement=ReferenceHistory.Replace(store,revision,p);
+                var active=p.Copy();active.ReferenceName=replacement.Name;profileStore.Put(active);
+                return "Selected version replaced with the active baseline; its previous contents remain in Saved versions.";
+            }
             if(verb=="delete"){store.Delete(revision.Id);return "Named revision deleted; active baseline unchanged.";}
-            var a=p.Anchor;var b=revision.Anchor;
-            if(!a.Position.Equals(b.Position) || !a.Right.Equals(b.Right) || !a.Up.Equals(b.Up) || !a.Backward.Equals(b.Backward))return "This revision uses a different saved anchor. Restore through a verified alignment workflow; automatic revision loading is refused.";
-            // Preserve the previous active layout before replacing it, unless already archived.
-            bool archived=false;foreach(var existing in store.Profiles)if(ObservationCache.Same(existing.Blocks,p.Blocks)){archived=true;break;}
-            if(p.Blocks!=null && !archived)store.Put(new ShipProfile{Id=Guid.NewGuid().ToString("N"),Name="Before restore "+DateTime.UtcNow.ToString("yyyy-MM-dd HH-mm-ss"),GridSize=p.GridSize,Anchor=p.Anchor,Blocks=p.Blocks});
-            var updated=new ShipProfile{Id=p.Id,Name=p.Name,GridSize=p.GridSize,Anchor=p.Anchor,Blocks=revision.Blocks,Station=p.Station};
-            Reference binding=references[grid];profileStore.Put(updated);BindProfile(updated,binding.Anchor);
-            return "Loaded revision "+revision.Name+" as the active baseline. The named revision remains saved.";
+            var updated=revision.Copy();updated.Id=p.Id;updated.Name=p.Name;updated.Station=p.Station;
+            if(!ReferenceHistory.SameAnchor(p.Anchor,revision.Anchor))return StartRecovery(updated,true);
+            ArchiveBaseline(p);Reference binding=references[grid];profileStore.Put(updated);BindProfile(updated,binding.Anchor);
+            return "Loaded "+revision.Name+". Previous baseline preserved in Saved versions.";
         }
     }
 }

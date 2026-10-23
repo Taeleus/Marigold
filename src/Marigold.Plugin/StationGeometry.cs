@@ -23,15 +23,19 @@ namespace Marigold
     }
     internal static class StationGeometry
     {
+        internal static List<Box3> StyledBoxes(BlockSample[] blocks,string category,string styles,char style)
+        {
+            var result=new List<Box3>();foreach(var b in blocks)if(DisplayFilter.CategoryMatches(b.Definition,category) && DisplayFilter.Style(b.Definition,styles)==style)result.Add(b.Bounds);return result;
+        }
         public static double Radius(Box3 frame){double x=frame.Max.X-frame.Min.X,y=frame.Max.Y-frame.Min.Y,z=frame.Max.Z-frame.Min.Z;return Math.Max(.5,Math.Sqrt(x*x+y*y+z*z)/2);}
         public static Point3 Center(Box3 frame){return new Point3((frame.Min.X+frame.Max.X)/2,(frame.Min.Y+frame.Max.Y)/2,(frame.Min.Z+frame.Max.Z)/2);}
-        public static Point3[] Build(StationGrid grid,string category,Box3 frame,IList<Box3> overrideBoxes=null)
+        public static Point3[] Build(StationGrid grid,string category,Box3 frame,IList<Box3> overrideBoxes=null,int detail=0,int lineBudget=768)
         {
             var boxes=new List<Box3>();Box3? local=null;
             foreach(var b in grid.Blocks){local=local.HasValue?SchematicGeometry.Union(local.Value,b.Bounds):b.Bounds;if(DisplayFilter.CategoryMatches(b.Definition,category))boxes.Add(b.Bounds);}
             if(overrideBoxes!=null){boxes=new List<Box3>(overrideBoxes);foreach(var box in boxes)local=local.HasValue?SchematicGeometry.Union(local.Value,box):box;}
             if(!local.HasValue)return new Point3[0];
-            var points=OutlineGeometry.Build(boxes,0,local).Points;var center=Center(local.Value);double radius=Radius(local.Value),targetRadius=Radius(frame);var target=Center(frame);
+            var points=OutlineGeometry.Build(boxes,detail,local,lineBudget).Points;var center=Center(local.Value);double radius=Radius(local.Value),targetRadius=Radius(frame);var target=Center(frame);
             for(int i=0;i<points.Length;i++)
             {var p=points[i];p=grid.Transform(new Point3(center.X+p.X*radius,center.Y+p.Y*radius,center.Z+p.Z*radius));points[i]=new Point3((p.X-target.X)/targetRadius,(p.Y-target.Y)/targetRadius,(p.Z-target.Z)/targetRadius);}
             return points;

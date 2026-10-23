@@ -38,7 +38,7 @@ namespace Marigold
             public override int GetHashCode() { return Start.GetHashCode() ^ (Axis*7919); }
         }
 
-        public static OutlineModel Build(IList<Box3> blocks, int detail, Box3? frame = null)
+        public static OutlineModel Build(IList<Box3> blocks, int detail, Box3? frame = null, int lineBudget = 0)
         {
             if(blocks.Count==0) return new OutlineModel { CellSize=1 };
             // Anchoring to the minimum keeps negative coordinates and distant ships equivalent.
@@ -87,7 +87,9 @@ namespace Marigold
                     points.Add(Position(first.Start,bounds.Min,size));
                     points.Add(Position(end,bounds.Min,size));
                 }
-                if(points.Count/2>LineLimit(detail)) continue;
+                if(points.Count/2>(lineBudget>0?Math.Max(12,lineBudget):LineLimit(detail))) continue;
+                // Coarse occupancy must not extend the hull past its actual outer bounds.
+                for(int i=0;i<points.Count;i++){var p=points[i];points[i]=new Point3(Math.Min(bounds.Max.X,p.X),Math.Min(bounds.Max.Y,p.Y),Math.Min(bounds.Max.Z,p.Z));}
                 Normalize(points,frame);
                 return new OutlineModel { Points=points.ToArray(),Cells=cells.Count,CellSize=size };
             }

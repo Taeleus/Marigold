@@ -194,7 +194,7 @@ namespace Marigold
                 var anchor=SeatedAnchor();
                 var profile=new ShipProfile { Id=selected==null?Guid.NewGuid().ToString("N"):selected.ProfileId,Name=grid.DisplayName??"Unnamed ship",GridSize=grid.GridSize,Anchor=anchor,
                     Station=controls.Station,Blocks=selected==null?null:ProfileAlignment.Transform(selected.Blocks,anchor,true) };
-                profileStore.Put(profile);BindProfile(profile,anchor);
+                if(selected!=null)ArchiveBaseline(profileStore.Find(selected.ProfileId));profileStore.Put(profile);BindProfile(profile,anchor);
                 return "Saved cockpit anchor for "+profile.Name+" ("+profile.Number.ToString()+"). "+(profile.Blocks==null?"Use /mg capture to save the baseline.":"Existing baseline preserved.");
             }
             if(selected==null && action=="capture")
@@ -209,7 +209,7 @@ namespace Marigold
                 if(previewBlocks!=null)return "Accept or cancel the blueprint preview first.";
                 var blocks=action=="clear"?null:ProfileAlignment.Transform(SnapshotComparison.HealthyBaseline(Sample(grid)),selected.Anchor,true);
                 var updated=new ShipProfile { Id=saved.Id,Name=grid.DisplayName??saved.Name,GridSize=saved.GridSize,Anchor=selected.Anchor,Blocks=blocks };
-                profileStore.Put(updated);BindProfile(updated,selected.Anchor);
+                ArchiveBaseline(saved);profileStore.Put(updated);BindProfile(updated,selected.Anchor);
                 return action=="clear"?"Baseline cleared. Profile "+saved.Number+" ("+saved.Name+") and its cockpit anchor are still saved; /mg profiles lists it.":"Saved "+blocks.Length+" baseline blocks to profile "+saved.Number.ToString()+". This reference survives leaving the world.";
             }
             return SchematicControls.Help;
@@ -282,15 +282,19 @@ namespace Marigold
                 for(int group=0;group<2;group++){var styled=OutlineGeometry.Build(group==0?faded:highlighted,detail,frame);geometry.AddRange(styled.Points);for(int i=0;i<styled.Points.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(group==0?(byte)25:(byte)230);}}
                 if(frame.HasValue)foreach(var connected in station)
                 {
-                    var context=StationGeometry.Build(connected,category,frame.Value);geometry.AddRange(context);
-                    for(int i=0;i<context.Length/2;i++)kinds.Add(ChangeKind.Hull);
+                    for(int group=1;group<=3;group++)
+                    {
+                        var styledBoxes=StationGeometry.StyledBoxes(connected.Blocks,category,styles,(char)('0'+group));
+                        var context=StationGeometry.Build(connected,category,frame.Value,styledBoxes,detail,256);geometry.AddRange(context);
+                        for(int i=0;i<context.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(group==2?(byte)25:group==3?(byte)230:(byte)100);}
+                    }
                     if(connected.Baseline!=null)
                     {
                         var differences=SnapshotComparison.Compare(connected.Baseline,connected.Blocks);stationReports.Add(connected.Name+": "+differences.Summary);
                         foreach(ChangeKind kind in new[]{ChangeKind.Damaged,ChangeKind.NonFunctional,ChangeKind.Missing,ChangeKind.Added,ChangeKind.Replaced,ChangeKind.Unknown})
                         {
                             var changed=new List<Box3>();foreach(var change in differences.Changes)if(change.Kind==kind && DisplayFilter.StateMatches(kind,stateFilter) && DisplayFilter.CategoryMatches(change.Definition,category))changed.Add(change.Bounds);
-                            if(changed.Count==0)continue;var lines=StationGeometry.Build(connected,category,frame.Value,changed);geometry.AddRange(lines);for(int i=0;i<lines.Length/2;i++)kinds.Add(kind);
+                            if(changed.Count==0)continue;var lines=StationGeometry.Build(connected,category,frame.Value,changed,detail);geometry.AddRange(lines);for(int i=0;i<lines.Length/2;i++){kinds.Add(kind);weights.Add(100);}
                         }
                     }
                     else stationReports.Add(connected.Name+": no unambiguous baseline (context only).");
@@ -320,6 +324,7 @@ namespace Marigold
                     }
                     result.Report=comparison.Summary+". All matching missing regions outlined. Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
+                result.Report+="\nSchematic uses block envelopes, not model meshes. Coarse detail can merge small gaps; use High detail for inspection.";
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
                 while(weights.Count<kinds.Count)weights.Add(100);result.Weights=weights.ToArray();
                 result.Points=geometry.ToArray(); result.Kinds=kinds.ToArray(); result.ShadedMarkers=shaded.ToArray();
@@ -440,7 +445,7 @@ namespace Marigold
                 double now=clock.Elapsed.TotalSeconds, elapsed=Math.Min(0.1, now-lastTime);
                 lastTime=now;
                 if(!controls.Visible) return;
-                if(controls.Spin) controls.Yaw=(controls.Yaw+elapsed*0.25)%(Math.PI*2);
+                if(controls.Spin && !(panel?.RecoveryFocus??false)) controls.Yaw=(controls.Yaw+elapsed*0.25)%(Math.PI*2);
                 if(pending!=null && pending.IsCompleted)
                 {
                     var result=pending.Result;
@@ -491,17 +496,27 @@ namespace Marigold
             {
                 long drawStart=Stopwatch.GetTimestamp();
                 Vector2 screen=MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One,true);
-                if(controls.SchematicVisible)
+                bool recoveryFocus=panel?.RecoveryFocus??false;
+                var view=recoveryFocus?panel.RecoveryView:controls;
+                if(controls.SchematicVisible || recoveryFocus)
                 {
                 float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f*(float)(controls.Appearance.Size/.32)):Math.Min(screen.X*.6f,screen.Y*(float)controls.Appearance.Size);
                 float left=panel!=null?8:controls.Expanded?(screen.X-side)/2:8+(screen.X-side-24)*(float)controls.Appearance.X, top=panel!=null?(screen.Y-side)/2:8+(screen.Y-side-65)*(float)controls.Appearance.Y;
+                if(recoveryFocus)
+                {
+                    // Use the GUI safe area so preview and controls align on wide screens.
+                    var previewSize=MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f,.37f));
+                    side=Math.Min(previewSize.X,previewSize.Y);
+                    var previewCenter=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f,.365f));
+                    left=previewCenter.X-side/2;top=previewCenter.Y-side/2;
+                }
                 var panelRect=new RectangleF(left-8,top-8,side+16,side+16);
                 MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,(byte)(255*controls.Appearance.Background)),0,false,false);
                 float half=side/2;
                 for(int i=0;i<points.Length;i++)
-                    rotated[i]=controls.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
+                    rotated[i]=view.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
                 byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*Math.Sin(clock.Elapsed.TotalSeconds*Math.PI));
-                MarkerFill.Build(rotated,shadedMarkers,controls.Zoom,side,fillBands);
+                MarkerFill.Build(rotated,shadedMarkers,view.Zoom,side,fillBands);
                 foreach(var band in fillBands)
                 {
                     var fill=new RectangleF(left+half+(float)band.X*half,top+half+(float)band.Y*half,
@@ -514,7 +529,7 @@ namespace Marigold
                 for(int b=0;b<points.Length;b+=2)
                     {
                         var a=rotated[b]; var c=rotated[b+1];
-                        double x0=a.X*controls.Zoom,y0=-a.Y*controls.Zoom,x1=c.X*controls.Zoom,y1=-c.Y*controls.Zoom;
+                        double x0=a.X*view.Zoom,y0=-a.Y*view.Zoom,x1=c.X*view.Zoom,y1=-c.Y*view.Zoom;
                         if(!SchematicGeometry.Clip(ref x0,ref y0,ref x1,ref y1))continue;
                         var from=new Vector2(left+half+(float)x0*half,top+half+(float)y0*half);
                         var to=new Vector2(left+half+(float)x1*half,top+half+(float)y1*half);
@@ -522,11 +537,11 @@ namespace Marigold
                         var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y)/2-0.5f,length,1);
                         MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]),(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
-                MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
+                if(!recoveryFocus)MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
                     useFullClientArea:true,maxTextWidth:controls.Expanded?.65f:.28f);
                 if(controls.Expanded && panel==null)MyGuiManager.DrawString("White",controls.Mode+" | "+controls.Category.Replace("weapons","Offensive")+" | "+controls.StateFilter+" | /mg report for counts",new Vector2((left-8)/screen.X,(top+side+32)/screen.Y),.5f,useFullClientArea:true,maxTextWidth:.65f);
                 }
-                DrawHealthBars(screen);
+                if(!recoveryFocus)DrawHealthBars(screen);
                 double drawMs=(Stopwatch.GetTimestamp()-drawStart)*1000.0/Stopwatch.Frequency;
                 if(drawSamples>=600) { drawSamples=0; drawTotalMs=drawMaxMs=0; }
                 drawSamples++; drawTotalMs+=drawMs; drawMaxMs=Math.Max(drawMaxMs,drawMs);

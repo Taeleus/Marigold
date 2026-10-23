@@ -1,218 +1,51 @@
-# Marigold roadmap to feature complete
+# Marigold roadmap
 
-Updated October 22, 2026, after the latest 0.9 testing notes.
+Updated October 23, 2026. Stable `master`: **0.12.6**. Development `dev`: **0.14.1**.
 
-## 0.11 health-bar update
+0.14.0 is deployed and all 12 of its checklist entries have user-reported passes. The 0.13 checks pass except for one entry requesting a clearer recovery preview. That feedback is implemented in 0.14.1: a large top-center recovery display with compact controls below and an independent inspection camera. Visual acceptance is pending. Original feedback and results remain in [TESTING-TODO.md](TESTING-TODO.md).
 
-Implemented optional stacked health bars for Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. All default off. Each has independent placement, dimensions, opacity and labels, saved globally/per profile/in presets. Bars count baseline block states independently of schematic filtering; unknown health remains gray. New in-game checks are appended. Drag positioning and configurable group membership are not implemented; numeric/movement controls and fixed groups are available.
+## Implemented scope
 
-## 0.10 implementation update
-
-Implemented; runtime checks are appended to TESTING-TODO.md:
-
-| Area | Delivered | Still open |
-| --- | --- | --- |
-| Feedback | Punctuation/press-to-bind, middle-left preview, cockpit-free recovery candidates and cell adjustments | Recovery may need repeating after reconnect; arbitrary alignment rotation beyond generated candidates |
-| HUD | Position, size, opacity, colors/pulse, manual rotation, extra shortcuts, named presets | Live layout/input tests; freehand pan |
-| Systems | Multiple categories; hidden/wireframe/faint/highlighted hull styles | Station applies visibility but not category brightness; mod-type audit |
-| Profiles | Per-profile display saves, rename, named baseline libraries, archive before revision load | Cross-anchor restore, source/time metadata and active-revision identity. Capture/import replace the active baseline unless saved as a named revision first |
-| Blueprint/report | Cached Workshop XML, named omitted definitions, structural completeness | PB-only/archive support and complex import coverage |
-| Validation | Recovery rotations/loss/ties/cancellation and settings migration checks | Live tests, scale-specific performance, source-loader acceptance and release |
-
-This is progress toward feature complete, not a claim that every item is finished.
-
-## What feature complete means
-
-A player can enter a ship, see its damage against a persistent capture or blueprint, recover the reference after severe damage or a server transfer, and customize an unobtrusive engineering HUD through the UI. Routine use should not require remembering chat commands. The player controls baseline replacement and uncertain profile matches.
-
-This roadmap combines the original project plan with the later decisions: comparison-only display, full-health captures, cockpit-relative views, numeric profile IDs, conservative automatic association, and connector-only station mode. Mechanical subgrids remain excluded. Implementation completion and release acceptance are separate milestones.
-
-## Already implemented and reported working
-
-The latest user checks confirm these workflows on the tested ships and servers; they are not a claim of compatibility with every server or blueprint.
-
-- Controlled-grid switching, live ship names, cockpit-relative views, rotation, static isometric view, zoom and compact/expanded layouts.
-
-- One-command capture that creates an anchor and assumes full health; persistent numeric profiles; load, clear, delete and detach.
-
-- Damage colors, repairs, replacements, additions, missing-region outlines across marker pages, and baseline retention through tested grid splits.
-
-- Reconnect/restart/Nexus reassociation, delayed-streaming retries, manual override and persistent auto-off.
-
-- Single-category isolation, damage-state filters, reports and marker pagination.
-
-- Per-profile station mode, off by default; connector traversal and docked-ship comparisons against matching profiles.
-
-- Local/nested-folder and cloud XML blueprints, automatic preparation, preview/cancel/accept, creation without a prior capture, and explicit omission of unavailable mod blocks.
-
-- Native control panel, small live preview, saved preferences and three configurable shortcuts. Punctuation keys still need work.
-
-- Incremental observation, stale-result rejection, hidden/resumed updates and the performance checks marked passed by the user.
-
-The original test log stays intact in [TESTING-TODO.md](TESTING-TODO.md). Later passes supersede earlier failed expectations where behavior changed. Old notes about separate anchor/capture commands, live/reference modes, missing-mod rejection or globally saved station mode are historical, not current requirements.
-
-## 1. Finish the latest feedback fixes
-
-| Work | Completion criteria |
-
+| Area | Current behavior |
 | --- | --- |
-
-| Punctuation shortcuts | Accept apostrophe and other supported punctuation keys, including modifiers. Display readable names, persist them, reject duplicates and ignore input in chat/menus. Prefer a press-to-bind control so users need not know internal key names. No default conflicts introduced. |
-
-| Preview placement | Move the panel's miniature schematic to middle-left. Check its caption and bounds at normal resolutions/UI scales so it does not overlap controls or important HUD elements. |
-
-| Recovery after the anchor cockpit is destroyed | Add an explicit **Force apply profile** action in Profiles and a chat equivalent. Select a saved profile from another seat and find a best-fit rotation/translation using surviving block definitions, positions and orientations. Do not require the old cockpit to survive or treat the new seat as the old anchor automatically. |
-
-| Recovery review and fallback | Show a preview and useful match evidence: matched surviving blocks, competing candidates and uncertainty. Let the player accept/cancel or adjust alignment when the result is ambiguous. Insufficient evidence must produce an explanation instead of a silent guess. |
-
-| Preserve the recovered baseline | Recovery changes the live binding, never recaptures or rewrites missing blocks. Retain alignment while moving seats; define and test recovery after reconnect. Keep ordinary automatic matching conservative. Bound expensive matching work and discard stale results. |
-
-Acceptance: test the original cockpit removed, a differently oriented/different-type replacement seat, heavy losses, a split remnant, repeated/symmetric armor patterns and the wrong selected profile. Missing sections must remain red after acceptance. A normal capture/load must still work.
-
-## 2. Complete HUD customization and input
-
-These were in the original plan but are not all present in the current prototype.
-
-- Adjustable compact HUD position and size, with screen-bound clamping and a reset-to-default action.
-
-- Separate panel-preview placement from the in-flight HUD layout.
-
-- Background, outline and fill opacity controls; configurable state colors and missing-state pulse strength/on-off. Keep the current yellow/orange/red scheme as the default.
-
-- Manual model rotation in the expanded engineering view, with existing snap/reset controls retained. Add pan only if useful without interfering with flight controls.
-
-- Configurable show/hide shortcut alongside expanded view, cycle-system and cycle-state shortcuts. Add panel/view actions where they remove routine chat use.
-
-- Save named display presets and restore a known-good default. Keep UI labels and shortcut names understandable.
-
-Acceptance: settings survive restart, off-screen layouts can always be reset, and UI capture does not steer the ship or trigger shortcuts while typing. Confirm normal and larger/wider displays.
-
-## 3. Complete system filtering and rendering controls
-
-- Allow multiple categories at once instead of only one isolated category.
-
-- Give categories independent visible/hidden, transparent, highlighted and wireframe presentation where supported by the schematic renderer.
-
-- Keep a quick isolate action and useful presets, such as damage overview, propulsion and conveyors through transparent armor.
-
-- Apply category choices consistently to live outlines, missing baseline geometry, markers and station context. Reports must make filtered counts distinct from full totals.
-
-- Review modded-block classification and provide a clear fallback for unknown types.
-
-- Assess the current simplified outline against representative ships. Improve misleading shapes or lost detail within the rendering budget; document that it is a schematic. Full textured game-block meshes are not required for the first complete release.
-
-Acceptance: combine categories, inspect internal systems and missing blocks, switch presets during a pending rebuild, and retain whole-ship orientation/scale without stale or misleading geometry.
-
-## 4. Finish profiles and reference management
-
-- Store display preferences per ship/profile, with global defaults for new profiles. Station mode already works this way; extend the behavior to the agreed layout/filter/zoom preferences.
-
-- Add clear profile rename and management actions while keeping stable numeric IDs.
-
-- Support multiple named baseline revisions under one profile, such as Original, Retrofit and Pre-combat, with one active revision.
-
-- Record reference name, source, creation time and available blueprint identity. A database backup is not a user-selectable reference revision.
-
-- Make capture/import replacement explicit: create a new revision or replace the chosen one. Automatic matching and recovery must never change reference contents.
-
-- Migrate existing single-baseline profiles without losing numbers, anchors, station preferences or baselines. Retain atomic saves and backup recovery.
-
-- Ensure revision selection does not make automatic matching treat one ship's own revisions as competing ship identities.
-
-Acceptance: upgrade existing data, create/switch/rename revisions, reconnect, recover a backup and compare against an older revision. An old baseline must remain unchanged after damage or a new revision.
-
-## 5. Finish blueprint coverage and diagnostics
-
-- Add browsing/import of locally available Workshop blueprints where the installed game exposes a readable layout. Normal use must not require a new external download service.
-
-- Investigate protobuf-only blueprint support through verified game readers. If safe, read-only support is unavailable, explicitly identify unsupported files and document the XML route; do not imply all game blueprint formats are supported.
-
-- Finish edge-case checks for multiple grids/cockpits, rotated multi-cell blocks, missing mods, changed mods, failed cloud requests and profile/ship switches during preview.
-
-- Make omitted definitions inspectable by name/count before acceptance, not only a total skipped-block count.
-
-- Add a concise engineering summary: expected blocks, matching blocks, missing/damaged/non-functional/added/replaced blocks and structural completeness.
-
-- Define completeness explicitly as matching expected positions/definitions out of the baseline. Keep it separate from health/integrity; show unavailable health as unknown rather than inventing a precise percentage.
-
-- Keep station diagnostics separate per docked grid and expose loading/display limits clearly.
-
-Acceptance: the imported baseline and report agree, skipped blocks are understandable, cancel leaves saved data untouched, and no blueprint scripts, inventories or ownership changes are applied.
-
-## 6. Hardening and remaining validation
-
-User-reported passes remain recorded. This is the remaining coverage and regression work, not a request to redo every successful test immediately.
-
-- Test ambiguous/near-identical saved profiles and symmetric structures. A layout match is not proof of ship identity; preserve manual selection and auto-off.
-
-- Verify cockpit, flight-seat and remote-control transitions, including destroyed controllers and leaving control during pending work.
-
-- Validate blueprint preview isolation/cancellation and rotated multi-cell alignment beyond the already-passed basic import flow.
-
-- Record reproducible live performance on approximately 1k, 10k and 50k-block ships, plus a large connector dock. Prior performance passes are useful; scale-specific timing and worst-case matching/capture/import costs still need measurement.
-
-- Add bounded refresh/performance controls if profiling shows a useful tradeoff. Avoid full-grid work per frame and keep game-object reads on the game thread.
-
-- Exercise dock display limits, mixed grid sizes, long sessions, reconnects and repeated grid destruction. Check memory, subscriptions and queued-worker cleanup.
-
-- Verify partial/delayed multiplayer observations, unavailable integrity data and heavily modded block definitions without weakening missing-block semantics.
-
-- Finish English/Spanish label persistence and new-control coverage. Full translation of diagnostic responses is optional; document the English fallback.
-
-- Keep every new runtime test in TESTING-TODO.md. Automated tests verify logic and compilation; only observed game results complete runtime checks.
-
-## 7. Release acceptance
-
-Feature complete means sections 1–5 are delivered, with conditional format support resolved and documented. Release-ready additionally requires the relevant section 6 checks and these gates:
-
-1. Build the binary package and pass automated regression checks.
-
-2. Compile the manifest-selected source without local-build-only assumptions.
-
-3. Actually load that pinned source through Pulsar Legacy with the binary copy disabled; verify version, dependencies, commands, panel and unload behavior. A source compilation check alone does not establish this.
-
-4. Finish a fresh-install and existing-profile-upgrade smoke test; document known limitations, backup/recovery and installation steps.
-
-5. Reconcile README, commands, plugin description and this roadmap with shipped behavior. Publish versioned release notes and package contents without game DLLs or duplicate Harmony.
-
-6. Recheck PluginHub rules against the final source and prepare the pinned manifest. Hub submission/review is a distribution step; acceptance is not guaranteed by local testing.
-
-Current supported target remains Pulsar Legacy / .NET Framework 4.8. A .NET 10/Interim plugin build needs its own API, build and runtime validation before support is claimed; the .NET 10 test executable is not that build.
-
-## Outside the first feature-complete release
-
-- Mechanical rotor/hinge/piston subgrid rendering or baselines: explicitly excluded by user decision. Connector-only station mode remains in scope.
-
-- Separate live-only/reference-only display modes: replaced by comparison-only behavior at user request.
-
-- Fully textured block meshes, a second client-mod implementation and an additional runtime port.
-
-- Damage history, combat timelines, conveyor connectivity analysis, power-network simulation, repair priorities and other advanced engineering diagnostics.
-
-- Automatic Workshop downloading and additional UI languages/full diagnostic translation.
-
-- Server components, world edits, repair automation or bypassing normal client replication: outside the product's read-only design.
-
-## Recommended order of work
-
-1. Punctuation shortcuts and middle-left preview, then cockpit-loss recovery with alignment preview/fallback.
-
-2. HUD customization and multi-category filters/presets.
-
-3. Per-profile display preferences and named baseline revisions.
-
-4. Blueprint coverage, inspectable import warnings and engineering statistics.
-
-5. Remaining hardening, source-loader acceptance and release packaging.
-
-Current build: 0.12.5 prototype. New runtime acceptance is pending.
-
-0.11 user acceptance: all health-bar checks passed. 0.11.1 adds a separate Offensive bar, active-filter captions, panel spacing fixes and readable Workshop labels. New checks are in TESTING-TODO.md; unchecked recovery edge cases remain open.
-
-0.11.2: Offensive classification now reads loaded weapon definitions and the game Weapons targeting group (excluding vanilla tools/decoys), plus the optional local WeaponCore GetCoreWeapons registry. Immutable definition-ID snapshots support saved/missing blocks and refresh rendering when late registration arrives. Runtime checks remain pending.
-
-0.12.0: Reorganized the native control panel into Ship, Baseline and Customize, with focused subpages, Back navigation, a shared save screen, progressive blueprint steps, readable choice labels and individual color editing. Runtime layout/navigation acceptance is pending in TESTING-TODO.md.
-
-0.12.0 user acceptance: navigation, viewing, profiles, recovery, customization, shortcuts and saving passed. Blueprint browsing needed fixes. 0.12.2 uses blueprint IDs/grid titles instead of author names, cleans Cloud labels, and adds combined-source search with paginated results. Retests are in TESTING-TODO.md; 0.12.1 checklist retained.
-
-0.12.2 user acceptance: empty search handling, Enter submission, profile dropdown refresh, and paging beyond five pages passed. 0.12.3 removes the separate Mechanical filter, groups those blocks under Utility, renames Gas to Tanks, and migrates saved filter/style settings. Runtime checks are in TESTING-TODO.md.
+| Ship display | Cockpit-relative views, corrected default orientation, rotation/zoom, independent show/hide/size, damage colors/fills, missing-region outlines and marker pages |
+| Health bars | Eight optional, independently positioned/configured bars: Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools |
+| Customization | State colors/pulse, opacity, compact/expanded layouts, multi-system filters, hull styles, shortcuts, defaults/per-ship saves/presets and clipboard config sharing |
+| Profiles | Persistent numbered profiles, capture/clear/load/detach/delete, main-cockpit selection and conservative client-side reconnect/Nexus matching |
+| Recovery | Surviving-block alignment previews, translation and manual 90-degree turns about live-grid axes, accept/cancel and a manual starting point if no candidate is found |
+| Persistent recovery | Latest accepted alignment remembered per profile; reconnect matching supports partial repairs and changed cockpit type when sufficient structure still matches |
+| Baseline versions | Automatic preservation before capture/import/anchor changes/restores, named versions, rename, use/delete, explicit replace with prior-copy preservation, source/date/blueprint metadata and cross-anchor previews |
+| Blueprints | Search any combination of local, locally cached Workshop and Cloud XML; select grid/cockpit, inspect omitted definitions, preview/accept/cancel |
+| Station mode | Off by default; connector-linked grids show independent matched references and reports, respecting system visibility and hull brightness/styles |
+| Reports | Expected/observed/matching counts, damage states, structural completeness distinct from health, plus rendering/performance statistics |
+| Languages | English and Spanish controls, page titles and menu descriptions; unlocalized dynamic diagnostics fall back to English |
+
+These features cover the agreed first-release development scope and the latest user-tested behavior. Recovery-preview visual acceptance and targeted release validation remain before release readiness.
+
+## 0.14.0 closes the remaining development items
+
+- Recovery matching now requires at least 90% of the remembered structure to remain and at least 90% of observed blocks to match the full baseline for a repair-based match. Both exact-match counts must be at least eight. Cockpit definition equality is no longer required for an explicitly remembered recovery. Competing profiles/alignments still require a clear lead and stable observations.
+- Alignment tools can turn the baseline by 90 degrees around X/Y/Z at its origin. Block grids require axis-aligned rotations, not arbitrary angles. Translation is separate. No automatic candidate means an explicitly unverified starting point, not automatic acceptance; manual acceptance still requires three exact matches.
+- Saved versions offers **Save new version**, **Rename version** and **Replace version**. Replace copies the active baseline into the selected slot, preserving its previous contents in another slot. A full library refuses changes rather than deleting history.
+- Docked hulls use the same normal/faint/highlighted styles as the main ship. Their combined hull budget remains 768 lines per docked grid; damage outlines retain their existing separate budgets. Coarse outer outlines are clamped to actual block-envelope extents.
+- Protobuf/archive support is explicitly deferred. The inspected game convenience loaders can write PB caches or use Workshop state; this release keeps its bounded, read-only XML reader. Direct PB deserialization exists but is not integrated or validated here. See [blueprint format notes](docs/BLUEPRINT-FORMATS.md).
+- Roadmap/help and Spanish labels now reflect the current UI rather than historical page names.
+
+## Remaining release work
+
+1. **0.14.1 recovery-preview acceptance.** The enlarged preview and compact controls are implemented. Retest readability and confirm the independent preview camera and temporary layout leave saved HUD settings unchanged. The other 0.13/0.14 checklist items are reported passed.
+2. **Multiplayer edge cases.** Ambiguous/near-identical ships, symmetric remnants, controller loss, grid splits, delayed observations, reconnect/Nexus transfer, auto-off/manual detach and changing grids during pending work.
+3. **Blueprint edge cases.** Multiple grids/cockpits, rotated multi-cell blocks, missing/changed mods, cloud failures and cancel/switch during preview. Confirm XML-only guidance is useful for unsupported files.
+4. **Performance and cleanup.** Record live costs on approximately 1k/10k/50k-block ships and large connector docks. Check long sessions, repeated destruction/reconnect, observer subscriptions and worker cleanup. Add performance controls only if measurements justify them.
+5. **Installation and loader acceptance.** Fresh install and existing-data upgrade; actually load the pinned source through Pulsar Legacy with the binary disabled. Source compilation alone does not prove loader behavior.
+6. **Distribution.** Final docs/known limitations, versioned release package without game DLLs or duplicate Harmony, current PluginHub rules review and pinned manifest. Hub submission is a separate distribution step.
+
+## Limits and optional follow-up
+
+- One remembered recovery per profile; significant further losses, different seat placement/orientation or ambiguous structures can still require manual recovery. Layout similarity is not identity proof.
+- Profile format 3 is incompatible with 0.12.6. Restore a pre-upgrade copy of the complete Marigold data folder when rolling back.
+- Schematic block envelopes are not meshes. Slopes are box-like and coarse detail may merge small gaps. High detail helps but is still bounded.
+- Baseline libraries allow 16 entries and 250,000 total blocks. Replacing a version needs one free slot to preserve its previous contents.
+- Drag positioning, freehand pan, custom health-bar groups and full diagnostic translation are optional.
+- Mechanical rotor/hinge/piston subgrids, textured meshes, automatic Workshop downloads, advanced engineering simulation, repair automation and server components remain outside this release.
+- Target: Pulsar Legacy / .NET Framework 4.8. The .NET 10 regression executable does not establish support for a .NET 10 plugin runtime.
