@@ -15,9 +15,17 @@ namespace Marigold
         private void OpenPanel()
         {
             if(panel!=null)return;
-            var opened=new Panel(this);panel=opened;opened.Closed+=(screen,unloading)=>{if(ReferenceEquals(panel,opened))panel=null;};MyGuiSandbox.AddScreen(opened);
+            var opened=new Panel(this);panel=opened;opened.Closed+=(screen,unloading)=>{if(ReferenceEquals(panel,opened)){panel=null;EndPanelRecovery();}};MyGuiSandbox.AddScreen(opened);
         }
-        private void ClosePanel(){var previous=panel;panel=null;previous?.CloseScreen();}
+        private void ClosePanel(){var previous=panel;panel=null;EndPanelRecovery();previous?.CloseScreen();}
+        private void EndPanelRecovery()
+        {
+            if(recoveryProfile==null && recoveryPreview==null && recoveryTask==null)return;
+            CancelRecovery();
+            // Remove preview geometry immediately and reject any pending preview build.
+            points=new Point3[0];shadedMarkers=new int[0];fillBands.Clear();health=new ShipHealth();healthPreview=false;
+            RefreshReference("Recovery preview closed; saved baseline retained.");
+        }
         private string PanelCommand(string command)
         {
             try
@@ -71,8 +79,8 @@ namespace Marigold
                 if(destructive && confirm!=command){confirm=command;Status(T("Click the same action again to confirm. No changes yet."));return;}
                 confirm=null;Status(owner.PanelCommand(command));
             }
-            private void Switch(int next){if(next==tab)return;if(pathBox!=null)path=pathBox.Text;history.Push(tab);tab=next;confirm=null;Status("");RecreateControls(false);}
-            private void Back(){if(history.Count==0)return;if(pathBox!=null)path=pathBox.Text;tab=history.Pop();confirm=null;Status("");RecreateControls(false);}
+            private void Switch(int next){if(next==tab)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;history.Push(tab);tab=next;confirm=null;Status("");RecreateControls(false);}
+            private void Back(){if(history.Count==0)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;tab=history.Pop();confirm=null;Status("");RecreateControls(false);}
             private int Section {get{return tab==1 || tab==2 || tab==6 || tab==7 || tab==10 || tab==15 || tab==18?1:tab==0 || tab==3 || tab==14?0:2;}}
             private static readonly string[] PageNames={"Ship","Baseline","Baseline / Import blueprint","Ship / View","Customize / HUD layout","Customize / System filters","Baseline / Saved versions","Baseline / Recovery alignment","Customize / Health bars","Customize","Baseline / Saved ships","Customize / Shortcuts","Customize / Preferences","Save display","Ship / Diagnostics","Baseline / Recovery","Customize / Colors","Customize / Share config","Baseline / Find blueprint"};
             private void MenuRow(float y,string title,string description,int next)
@@ -385,13 +393,16 @@ namespace Marigold
             public override bool Update(bool hasFocus)
             {
                 var mouseInput=VRage.Input.MyInput.Static;
-                if(!hasFocus || !RecoveryFocus || mouseInput==null || !mouseInput.IsLeftMousePressed())draggingRecovery=false;
+                if(!hasFocus || !RecoveryFocus || mouseInput==null)draggingRecovery=false;
                 else
                 {
                     var cursor=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(MyGuiManager.MouseCursorPosition);
                     var size=MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f,.37f));float side=Math.Min(size.X,size.Y);
                     var center=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f,.365f));
-                    if(mouseInput.IsNewLeftMousePressed() && Math.Abs(cursor.X-center.X)<=side/2 && Math.Abs(cursor.Y-center.Y)<=side/2)
+                    bool overPreview=Math.Abs(cursor.X-center.X)<=side/2 && Math.Abs(cursor.Y-center.Y)<=side/2;
+                    if(overPreview){int wheel=mouseInput.DeltaMouseScrollWheelValue();if(wheel!=0)RecoveryView.Execute(wheel>0?"/mg in":"/mg out");}
+                    if(!mouseInput.IsLeftMousePressed())draggingRecovery=false;
+                    if(mouseInput.IsNewLeftMousePressed() && overPreview)
                     {draggingRecovery=true;recoveryMouse=cursor;}
                     if(draggingRecovery)
                     {

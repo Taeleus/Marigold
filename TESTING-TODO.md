@@ -372,3 +372,10 @@ Implemented the recovery-layout feedback above. Earlier results and notes are pr
 - [ ] Hold the left mouse button inside the recovery image and drag horizontally/vertically. Only the camera should rotate; match count and baseline alignment must stay unchanged. Release, leave/reopen the page, and switch focus: no stuck dragging.
 - [ ] Start a click outside the image or on X/Y/Z adjustment buttons: it must not start camera dragging. Drag after Top/Left, then Reset view and zoom. Check sensitivity at your resolution.
 - [ ] Accept/cancel and close the panel. Ordinary HUD camera/layout and saved settings must remain unchanged. Baseline adjustments still use the buttons.
+
+
+## 0.14.3 - Recovery preview cleanup and wheel zoom
+
+- [ ] Start recovery, adjust it, then close the panel with Close or Escape without accepting. Purple preview boxes must disappear; the prior baseline remains. Reopen: recovery must be started again. Repeat while alignment search/rebuild is pending.
+- [ ] Accept recovery, then close: the accepted comparison remains, without preview ghosts. Cross-anchor revision previews must also cancel safely when closing without acceptance.
+- [ ] Scroll over the recovery image to zoom in/out, with and without dragging. Scrolling over buttons/status must not zoom. Close/reopen and confirm normal HUD zoom and saved layout were not changed.
