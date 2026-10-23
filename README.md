@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-This page describes **Marigold 0.14.3**. Marigold is under active development; see the [testing checklist](TESTING-TODO.md) for current validation and known follow-ups.
+This page describes **Marigold 0.14.3**. Marigold is under active development.
 
 ## Your first ship
 
@@ -32,7 +32,7 @@ The baseline stays fixed as your ship takes damage or gets repaired. Capture aga
 
 A block detached from your ship counts as missing even if it is floating nearby. Switching a block off or losing power does not make it orange.
 
-The display is a schematic built from block bounds, rather than a detailed model. Missing sections remain outlined even when individual damage markers span multiple pages.
+The display is a schematic built from block bounds, rather than a detailed model.
 
 ## Make the HUD yours
 
@@ -117,4 +117,4 @@ Most actions are available through **`/mg ui`**. For chat commands, start with `
 
 Found a problem? [Open an issue](https://github.com/Taeleus/Marigold/issues) with your Marigold version, steps to reproduce it, relevant mods and a screenshot if helpful.
 
-For project progress, see the [roadmap](ROADMAP.md) and [testing checklist](TESTING-TODO.md).
+For project progress, see the [roadmap](ROADMAP.md).
