@@ -10,17 +10,21 @@ internal static class HealthBarChecks
     {return new BlockSample{Position=new Point3(i,0,0),Bounds=new Box3(new Point3(i-.5,-.5,-.5),new Point3(i+.5,.5,.5)),Definition="MyObjectBuilder_"+type+"/Test",Forward=0,Up=4,MaxIntegrity=100,Integrity=100,BuildIntegrity=100,HasFunctionalState=true,IsFunctional=true};}
     public static void Run()
     {
-        var baseline=new[]{Block(0,"CubeBlock"),Block(1,"BatteryBlock"),Block(2,"Thrust"),Block(3,"Conveyor"),Block(4,"CargoContainer"),Block(5,"ShipDrill")};
+        var baseline=new[]{Block(0,"CubeBlock"),Block(1,"BatteryBlock"),Block(2,"Thrust"),Block(3,"Conveyor"),Block(4,"CargoContainer"),Block(5,"ShipDrill"),Block(6,"ShipWelder"),Block(7,"ShipGrinder"),Block(8,"CubeBlock")};
+        var toolcore=baseline[8];toolcore.Definition="MyObjectBuilder_CubeBlock/DeepWelderTypeIIToolcoreSmall";baseline[8]=toolcore;
         var live=new List<BlockSample>(baseline);var b=live[1];b.Integrity=50;live[1]=b;b=live[2];b.Integrity=10;b.IsFunctional=false;live[2]=b;live.RemoveAt(3);b=live[3];b.Integrity=double.NaN;live[3]=b;b=live[4];b.Definition="Replacement";live[4]=b;live.Add(Block(99,"Reactor"));
         var health=ShipHealth.Build(baseline,live.ToArray());
-        Check(health.HasBaseline && health.Total(0)==6,"Denominator retains missing blocks and excludes additions");
-        Check(health.Counts[0,0]==1 && health.Counts[0,1]==1 && health.Counts[0,2]==1 && health.Counts[0,3]==2 && health.Counts[0,4]==1,"Exact blue/yellow/orange/red/gray distribution");
-        Check(health.Counts[1,0]==1 && health.Counts[2,1]==1 && health.Counts[3,2]==1 && health.Counts[4,3]==2 && health.Counts[5,4]==1,"States attributed to baseline systems");
+        Check(health.HasBaseline && health.Total(0)==9,"Denominator retains missing blocks and excludes additions");
+        Check(health.Counts[0,0]==4 && health.Counts[0,1]==1 && health.Counts[0,2]==1 && health.Counts[0,3]==2 && health.Counts[0,4]==1,"Exact blue/yellow/orange/red/gray distribution");
+        Check(health.Counts[1,0]==1 && health.Counts[2,1]==1 && health.Counts[3,2]==1 && health.Counts[4,3]==1 && health.Counts[5,4]==1 && health.Counts[7,0]==3 && health.Counts[7,3]==1,"States attributed to baseline systems, including Tools");
         for(int state=0;state<5;state++){int sum=0;for(int group=1;group<ShipHealth.Names.Length;group++)sum+=health.Counts[group,state];Check(sum==health.Counts[0,state],"System groups partition overall bar");}
-        var healed=ShipHealth.Build(baseline,baseline);Check(healed.Counts[0,0]==6,"Repairs return to blue");
-        var absent=ShipHealth.Build(baseline,new BlockSample[0]);Check(absent.Counts[0,3]==6 && absent.Total(0)==6,"Destroyed grid remains all red with a baseline");
+        var healed=ShipHealth.Build(baseline,baseline);Check(healed.Counts[0,0]==9,"Repairs return to blue");
+        var absent=ShipHealth.Build(baseline,new BlockSample[0]);Check(absent.Counts[0,3]==9 && absent.Total(0)==9,"Destroyed grid remains all red with a baseline");
         Check(!ShipHealth.Build(null,baseline).HasBaseline && ShipHealth.Build(new BlockSample[0],baseline).Total(0)==0,"No baseline and empty baseline are not 100 percent healthy");
-        Check(ShipHealth.Group("MyObjectBuilder_ShipWelder/Modded")==4 && ShipHealth.Group("MyObjectBuilder_GasTank/Test")==4,"Utility contains tools and gas");
+        Check(ShipHealth.Group("MyObjectBuilder_ShipWelder/Modded")==7 && ShipHealth.Group("MyObjectBuilder_ToolCore/SDX2Tool")==7 && ShipHealth.Group("MyObjectBuilder_CubeBlock/DeepWelderTypeIIToolcoreSmall")==7 && ShipHealth.Group("MyObjectBuilder_GasTank/Test")==4 && ShipHealth.Group("MyObjectBuilder_MotorStator/Test")==4 && ShipHealth.Group("MyObjectBuilder_PistonBase/Test")==4,"ToolCore subtypes use the Tools group, while tanks and mechanical blocks stay Utility");
+        foreach(string id in new[]{"MyObjectBuilder_ConveyorSorter/sdx_welderVanillaLg","MyObjectBuilder_ConveyorSorter/sdx_grinderImprovisedLg","MyObjectBuilder_CubeBlock/DeepWelderTypeIIToolcoreSmall"})
+        {Check(DisplayFilter.Category(id)=="tools","Modded tools take priority over generic carrier type");var sample=Block(0,"CubeBlock");sample.Definition=id;Check(ShipHealth.Build(new[]{sample},new BlockSample[0]).Counts[7,3]==1,"Missing modded tool remains red in Tools");}
+        Check(DisplayFilter.Category("MyObjectBuilder_ConveyorSorter/Normal")=="conveyors" && DisplayFilter.Category("MyObjectBuilder_CargoContainer/WelderSupplies")=="cargo","Utility name hints do not reclassify ordinary cargo/sorters");
         var weapon=Block(0,"SmallGatlingGun");var weaponHealth=ShipHealth.Build(new[]{weapon},new BlockSample[0]);Check(weaponHealth.Counts[6,3]==1 && weaponHealth.Total(4)==0 && weaponHealth.Total(0)==1,"Missing weapons are separate from Utility");
         var shared=new SchematicControls{SchematicVisible=false};shared.HealthBars.Bars[0].Enabled=true;shared.HealthBars.Bars[0].X=.2;shared.Appearance.Size=.4;
         var imported=new SchematicControls();DisplaySettings.Import(DisplaySettings.Export(shared),imported);
@@ -29,7 +33,9 @@ internal static class HealthBarChecks
         Check(invalidConfig && !imported.SchematicVisible && imported.HealthBars.Bars[0].X==.2,"Invalid clipboard config leaves settings intact");
         var settings=new HealthBarSettings();foreach(var bar in settings.Bars)Check(!bar.Enabled,"Bars start disabled");
         settings.Bars[2].Enabled=true;settings.Bars[2].Set("x","0");settings.Bars[2].Set("height","0.08");var restored=HealthBarSettings.Parse(settings.Encode());Check(restored.Bars[2].Enabled && restored.Bars[2].X==0 && restored.Bars[2].Height==.08 && !restored.Bars[1].Enabled,"Independent layouts round trip");
-        var oldLayouts=new List<string>(settings.Encode().Split(';'));oldLayouts.RemoveAt(6);var migrated=HealthBarSettings.Parse(string.Join(";",oldLayouts));Check(migrated.Bars[2].Enabled && !migrated.Bars[6].Enabled,"Six-bar settings preserve layouts and add hidden Weapons");
+        var currentLayouts=settings.Encode().Split(';');var legacySeven=new string[7];Array.Copy(currentLayouts,legacySeven,legacySeven.Length);legacySeven[6]=new HealthBarLayout{Enabled=true}.Encode();
+        var migratedSeven=HealthBarSettings.Parse(string.Join(";",legacySeven));Check(migratedSeven.Bars[6].Enabled && !migratedSeven.Bars[7].Enabled,"Seven-bar settings preserve existing bars and add hidden Tools");
+        var legacySix=new List<string>(legacySeven);legacySix.RemoveAt(6);var migratedSix=HealthBarSettings.Parse(string.Join(";",legacySix));Check(migratedSix.Bars[2].Enabled && !migratedSix.Bars[6].Enabled && !migratedSix.Bars[7].Enabled,"Six-bar settings preserve layouts and add hidden groups");
         foreach(string invalid in new[]{"NaN","Infinity","-1","1.1"}){bool rejected=false;try{settings.Bars[2].Set("opacity",invalid);}catch(InvalidDataException){rejected=true;}Check(rejected && settings.Bars[2].Opacity==1,"Bad edits leave settings unchanged");}
         string dir=Path.Combine(Directory.GetCurrentDirectory(),".cache","Bars-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);
         try

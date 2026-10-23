@@ -7,8 +7,11 @@ internal static class DisplayChecks
     private static void Check(bool value,string message){if(!value)throw new Exception(message);count++;}
     public static void Run()
     {
-        foreach(var pair in new[]{"ShipDrill:tools","ShipWelder:tools","ShipGrinder:tools","Thrust:thrusters","LargeGatlingTurret:weapons","BatteryBlock:power","OxygenTank:gas","MotorStator:mechanical","PistonBase:mechanical","Assembler:production","CargoContainer:cargo","Cockpit:control","ConveyorSorter:conveyors","CubeBlock:armor","Unrecognized:other"})
+        foreach(var pair in new[]{"ShipDrill:tools","ShipWelder:tools","ShipGrinder:tools","ToolCore:tools","Thrust:thrusters","LargeGatlingTurret:weapons","BatteryBlock:power","OxygenTank:tanks","MotorStator:other","PistonBase:other","Assembler:production","CargoContainer:cargo","Cockpit:control","ConveyorSorter:conveyors","CubeBlock:armor","Unrecognized:other"})
         {var a=pair.Split(':');Check(DisplayFilter.Category("MyObjectBuilder_"+a[0]+"/ModdedSubtype")==a[1],"Category "+a[0]);}
+        Check(DisplayFilter.Category("MyObjectBuilder_CubeBlock/DeepWelderTypeIIToolcoreSmall")=="tools","CubeBlock ToolCore subtype is classified as a tool");
+        Check(!DisplayFilter.Contains(DisplayFilter.Categories,"mechanical") && DisplayFilter.Category("MyObjectBuilder_MotorStator/ModdedSubtype")=="other","Mechanical blocks are included in Utility rather than a separate system");
+        Check(DisplayFilter.ValidCategories("gas,mechanical") && DisplayFilter.NormalizeCategories("gas,mechanical")=="tanks,other","Legacy category settings map to Tanks and Utility");
         Check(!DisplayFilter.Contains(DisplayFilter.Categories,"armor conveyors"),"Multiple category tokens rejected");
         foreach(ChangeKind kind in Enum.GetValues(typeof(ChangeKind)))
         {Check(DisplayFilter.StateMatches(kind,"broken")== (kind==ChangeKind.NonFunctional),"Only nonfunctional is broken");Check(DisplayFilter.StateMatches(kind,"missing")==(kind==ChangeKind.Missing),"Only absent is missing");}

@@ -39,7 +39,7 @@ namespace Marigold
                 throw new InvalidDataException("Invalid display settings; existing settings were kept.");
             if((version5 || version6) && !DisplayFilter.ValidStyles(a[12]))throw new InvalidDataException("Invalid system styles.");
             var bars=version6?HealthBarSettings.Parse(a[13]):new HealthBarSettings();
-            c.SchematicVisible=schematicVisible;c.HealthBars=bars;c.SystemStyles=(version5 || version6)?a[12]:DisplayFilter.DefaultStyles;c.Appearance=appearance;c.Detail=detail;c.Mode="compare";c.Category=a[3];c.StateFilter=a[4];c.Expanded=expanded;c.Zoom=zoom;c.Visible=visible;c.Page=1;c.Station=false;c.AutoAssociate=auto;c.Language=(version3 || version4 || version5 || version6)?a[10]:"en";
+            c.SchematicVisible=schematicVisible;c.HealthBars=bars;c.SystemStyles=(version5 || version6)?DisplayFilter.NormalizeStyles(a[12]):DisplayFilter.DefaultStyles;c.Appearance=appearance;c.Detail=detail;c.Mode="compare";c.Category=DisplayFilter.NormalizeCategories(a[3]);c.StateFilter=a[4];c.Expanded=expanded;c.Zoom=zoom;c.Visible=visible;c.Page=1;c.Station=false;c.AutoAssociate=auto;c.Language=(version3 || version4 || version5 || version6)?a[10]:"en";
         }
         public static void Save(string path,SchematicControls c)
         {

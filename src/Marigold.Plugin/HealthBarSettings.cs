@@ -28,6 +28,6 @@ namespace Marigold
         public HealthBarSettings(){for(int i=0;i<Bars.Length;i++)Bars[i]=new HealthBarLayout {Y=.48+i*.055};}
         public string Encode(){var a=new string[ShipHealth.Names.Length];for(int i=0;i<Bars.Length;i++)a[i]=Bars[i].Encode();return string.Join(";",a);}
         public static HealthBarSettings Parse(string text)
-        {var a=text.Split(';');if(a.Length!=6 && a.Length!=ShipHealth.Names.Length)throw new InvalidDataException("Invalid health bar layout count.");var result=new HealthBarSettings();for(int i=0;i<a.Length;i++)result.Bars[i]=HealthBarLayout.Parse(a[i]);return result;}
+        {var a=text.Split(';');if(a.Length!=6 && a.Length!=7 && a.Length!=ShipHealth.Names.Length)throw new InvalidDataException("Invalid health bar layout count.");var result=new HealthBarSettings();for(int i=0;i<a.Length;i++)result.Bars[i]=HealthBarLayout.Parse(a[i]);return result;}
     }
 }

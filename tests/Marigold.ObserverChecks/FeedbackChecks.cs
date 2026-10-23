@@ -27,7 +27,7 @@ internal static class FeedbackChecks
         var repeated=(BlockSample[])baseline.Clone();for(int i=0;i<repeated.Length;i++){repeated[i].Definition="Armor";repeated[i].Position=new Point3(i,0,0);repeated[i].Bounds=new Box3(new Point3(i-.5,-.5,-.5),new Point3(i+.5,.5,.5));}
         profile.Blocks=repeated;var tied=RecoveryMatcher.Find(profile,repeated.Take(5).ToArray(),CancellationToken.None);Check(tied.Count>1 && tied[0].Matches==tied[1].Matches,"Repeated patterns retain alternatives rather than claiming identity");
         foreach(var pair in new[]{"'=OemQuotes","Ctrl+'=Ctrl+OemQuotes","+=OemPlus","Ctrl++=Ctrl+OemPlus","7=D7",";=OemSemicolon"}){int n=pair.LastIndexOf('=');Check(KeyNames.Normalize(pair.Substring(0,n))==pair.Substring(n+1),"Readable punctuation key alias");}
-        Check(DisplayFilter.ValidCategories("power,gas,thrusters") && DisplayFilter.CategoryMatches("MyObjectBuilder_Thrust/Test","power,thrusters"),"Multi-system inclusion");
+        Check(DisplayFilter.ValidCategories("power,tanks,thrusters") && DisplayFilter.CategoryMatches("MyObjectBuilder_Thrust/Test","power,thrusters"),"Multi-system inclusion");
         Check(!DisplayFilter.ValidCategories("tools,garbage") && !DisplayFilter.CategoryMatches("MyObjectBuilder_Thrust/Test","none"),"Invalid and empty category sets");
         var styles=DisplayFilter.DefaultStyles.ToCharArray();styles[Array.IndexOf(DisplayFilter.Categories.Split(' '),"armor")]='0';
         Check(!DisplayFilter.CategoryMatches("MyObjectBuilder_CubeBlock/Test",DisplayFilter.VisibleCategories("all",new string(styles))),"Hidden category removed from all visibility");
@@ -35,7 +35,7 @@ internal static class FeedbackChecks
         var appearance=new HudAppearance();appearance.Set("x","0");appearance.Set("pulse","0");Check(HudAppearance.Parse(appearance.Encode()).Pulse==0,"Appearance round trip");
         bool invalid=false;try{appearance.Set("size","NaN");}catch(InvalidDataException){invalid=true;}Check(invalid && appearance.Size==.32,"Bad appearance edit is atomic");
         string dir=Path.Combine(Directory.GetCurrentDirectory(),".cache","Feedback-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);
-        try{var c=new SchematicControls{Category="power,gas",Appearance=appearance,SystemStyles=new string(styles)};string path=Path.Combine(dir,"display.txt");DisplaySettings.Save(path,c);var loaded=new SchematicControls();DisplaySettings.Load(path,loaded);var migrated=Path.Combine(dir,"old.txt");
+        try{var c=new SchematicControls{Category="power,tanks",Appearance=appearance,SystemStyles=new string(styles)};string path=Path.Combine(dir,"display.txt");DisplaySettings.Save(path,c);var loaded=new SchematicControls();DisplaySettings.Load(path,loaded);var migrated=Path.Combine(dir,"old.txt");
             for(int version=1;version<=4;version++)
             {
                 var old=new System.Collections.Generic.List<string>{"Marigold display "+version,"1","reference","tools","missing","True","1.5","False"};
@@ -43,7 +43,9 @@ internal static class FeedbackChecks
                 File.WriteAllLines(migrated,old);var migratedControls=new SchematicControls();DisplaySettings.Load(migrated,migratedControls);
                 Check(migratedControls.Category=="tools" && migratedControls.Zoom==1.5 && !migratedControls.Visible && migratedControls.Mode=="compare","Old display version "+version+" migrates");
             }
-            Check(loaded.Category=="power,gas" && loaded.Appearance.X==0 && loaded.Appearance.Pulse==0 && loaded.SystemStyles==new string(styles),"Extended display file round trip");}
+            Check(loaded.Category=="power,tanks" && loaded.Appearance.X==0 && loaded.Appearance.Pulse==0 && loaded.SystemStyles==new string(styles),"Extended display file round trip");
+            var oldNames="all armor conveyors thrusters weapons power gas mechanical production cargo control tools other".Split(' ');var oldStyles=new string('1',oldNames.Length).ToCharArray();oldStyles[Array.IndexOf(oldNames,"gas")]='0';oldStyles[Array.IndexOf(oldNames,"mechanical")]='2';oldStyles[Array.IndexOf(oldNames,"production")]='3';var legacySettings=string.Join("\n",new[]{"Marigold display 6","1","compare","gas,mechanical","all","False","0.85","True","False","True","en",appearance.Encode(),new string(oldStyles),new HealthBarSettings().Encode()});File.WriteAllText(path,legacySettings);DisplaySettings.Load(path,loaded);
+            var currentNames=DisplayFilter.Categories.Split(' ');Check(loaded.Category=="tanks,other" && loaded.SystemStyles.Length==currentNames.Length && loaded.SystemStyles[Array.IndexOf(currentNames,"tanks")]=='0' && loaded.SystemStyles[Array.IndexOf(currentNames,"production")]=='3' && loaded.SystemStyles[Array.IndexOf(currentNames,"other")]=='1',"Legacy gas/mechanical filters and system styles migrate");}
         finally{Directory.Delete(dir,true);}
         Console.WriteLine("PASS: "+count+" recovery/customization feedback checks.");
     }

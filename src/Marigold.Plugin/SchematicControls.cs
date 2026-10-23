@@ -87,7 +87,7 @@ namespace Marigold
                 if(verb=="station" && (value=="on" || value=="off" || value=="status")) { ReferenceAction="station "+value;return "Station mode requested."; }
                 if(verb=="auto" && (value=="on" || value=="off" || value=="status" || value=="retry")) { ReferenceAction="auto "+value;return "Reassociation requested."; }
                 if(verb=="mode") { if(!DisplayFilter.Contains("live reference compare",value))return "Mode: live, reference or compare.";Mode="compare";Page=1;return "Damage comparison is always enabled."; }
-                if(verb=="isolate") { if(!DisplayFilter.ValidCategories(value))return "Categories: "+DisplayFilter.Categories;Category=value;Page=1;return "Visible system: "+value; }
+                if(verb=="isolate") { if(!DisplayFilter.ValidCategories(value))return "Categories: "+DisplayFilter.Categories;Category=DisplayFilter.NormalizeCategories(value);Page=1;return "Visible system: "+Category; }
                 if(verb=="filter") { if(!DisplayFilter.Contains(DisplayFilter.States,value))return "States: "+DisplayFilter.States;StateFilter=value;Page=1;return "Marker filter: "+value; }
                 if(verb=="layout") { if(value!="compact" && value!="expanded")return "Layout: compact or expanded.";Expanded=value=="expanded";return "Layout: "+value; }
                 if(verb=="page")

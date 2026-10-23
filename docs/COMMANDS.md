@@ -60,7 +60,7 @@ Import uses installed block definitions for exact multi-cell bounds and cockpit 
 
 | `/mg help display`, `profiles`, `blueprint` | Topic-specific help |
 
-Categories: `all armor conveyors thrusters weapons power gas mechanical production cargo control tools other`. Classification uses block types; unusual/modded definitions may fall back to `other`. `mechanical` isolates rotor/piston blocks on the observed grid, not their attached grids.
+Categories: `all armor conveyors thrusters weapons power tanks production cargo control tools other`. Category labels use consistent title case in the UI; `weapons` is displayed as Offensive and `other` as Utility. Gas tanks and generators appear under Tanks. Mechanical blocks are grouped under Utility, not as a separate filter. Unusual/modded definitions may also fall back to Utility.
 
 States: `all faults missing damaged broken added replaced unknown`. `broken` means structurally non-functional; `faults` includes missing, damaged, broken and unknown. Power loss and a disabled switch do not count as structural damage.
 
@@ -94,7 +94,7 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 `/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells, not screen directions. Acceptance requires three exact matches and never recaptures the baseline. Recovery is session-local and may need repeating after reconnect.
 
-`/mg isolate thrusters,power,gas` combines categories; `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
+`/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
 
 Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time and toggles missing-block pulse. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
@@ -107,6 +107,6 @@ Workshop cache reads local bp.sbc files in the current Steam library without dow
 
 ## 0.11 health bars
 
-Display > Health bars provides six independent bars: Overall, Armor, Power, Thrust, Utility, Cargo and Offensive. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Old settings migrate with bars off.
+Display > Health bars provides eight independent bars: Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Older six- and seven-bar settings retain their existing layouts; new bars start disabled.
 
-Bars count baseline block states: healthy blue, damaged yellow, non-functional orange, missing/replaced expected blocks red, and unreadable gray. This is not summed integrity. New blocks are excluded; replacements retain the original system category. Utility covers all categories other than armor, power, thrusters and cargo. Filters/pagination and docked-grid context do not affect these controlled-grid totals. Preview baselines are labeled. No baseline or an empty system is shown as unavailable, never 100% healthy. Global Show/hide and normal HUD suppression also hide the bars.
+Bars count baseline block states: healthy blue, damaged yellow, non-functional orange, missing/replaced expected blocks red, and unreadable gray. This is not summed integrity. New blocks are excluded; replacements retain the original system category. Tools includes welders, grinders, drills and ToolCore blocks; Utility covers categories without a dedicated bar. Filters/pagination and docked-grid context do not affect these controlled-grid totals. Preview baselines are labeled. No baseline or an empty system is shown as unavailable, never 100% healthy. Global Show/hide and normal HUD suppression also hide the bars.

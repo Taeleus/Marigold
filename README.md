@@ -4,7 +4,7 @@ A ship schematic and damage display for **Space Engineers 1**, built for **Pulsa
 
 Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
 
-**Current version: 0.12.2 prototype.** The 0.11 health-bar checks passed user testing. Follow-up fixes and the remaining recovery edge cases still need in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
+**Current version: 0.12.5 prototype.** The 0.12.2 blueprint-browser fixes passed user testing. Remaining recovery edge cases and the new Tools health bar need in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
 
 ## Get started
 
@@ -52,9 +52,9 @@ The interface has English and Spanish labels; new controls may fall back to Engl
 
 ## Optional health bars
 
-Open **/mg ui > Customize > Health bars**. Overall, Armor, Power, Thrust, Utility, Cargo and Offensive bars are all hidden by default. Enable the ones you want, then set each bar's position, width, height, opacity and label. Save global or Save ship to keep them; named display presets include them too.
+Open **/mg ui > Customize > Health bars**. Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools bars are all hidden by default. Enable the ones you want, then set each bar's position, width, height, opacity and label. Save global or Save ship to keep them; named display presets include them too.
 
-Each bar runs **blue (healthy), yellow (damaged), orange (non-functional), red (missing expected blocks), then gray (unreadable)** from left to right. Segment widths count baseline blocks equally, not hit points. Replacements count red because the expected block is absent; additions do not inflate the denominator. Utility contains the remaining systems, including conveyors, gas, tools, production and controls.
+Each bar runs **blue (healthy), yellow (damaged), orange (non-functional), red (missing expected blocks), then gray (unreadable)** from left to right. Segment widths count baseline blocks equally, not hit points. Replacements count red because the expected block is absent; additions do not inflate the denominator. Tools groups welders, grinders, drills and ToolCore blocks; Utility contains the remaining systems, including conveyors, tanks, mechanical blocks, production and controls.
 
 Bars ignore schematic filters, marker pages and docked context. They use the controlled grid's saved reference; recovery/blueprint previews are labeled. No baseline or no blocks in a system shows an empty bar with an explanation. The normal Show/hide command hides the whole Marigold HUD, including bars. Damage colors follow Customize / Colors; healthy is blue.
 

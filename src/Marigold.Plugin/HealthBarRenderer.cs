@@ -16,7 +16,7 @@ namespace Marigold
                 int total=health.Total(group);
                 if(layout.Label)
                 {
-                    string text=ShipHealth.Names[group]+(healthPreview?" [preview]":"")+": "+(!health.HasBaseline?"capture or load a baseline":total==0?"no baseline blocks":health.Counts[group,0]+"/"+total+" healthy blocks");
+                    string text=UiText.Get(controls.Language,ShipHealth.Names[group])+(healthPreview?" [preview]":"")+": "+(!health.HasBaseline?"capture or load a baseline":total==0?"no baseline blocks":health.Counts[group,0]+"/"+total+" healthy blocks");
                     MyGuiManager.DrawString("White",text,new Vector2(x/screen.X,y/screen.Y),.45f,new Color(255,255,255,(byte)(255*layout.Opacity)),useFullClientArea:true,maxTextWidth:width/screen.X);
                 }
                 y+=labelHeight;var background=new RectangleF(x-2,y-2,width+4,height+4);

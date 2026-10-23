@@ -198,11 +198,11 @@ Notes:
 ## 0.11 - Optional stacked health bars (pending in-game)
 
 - [x] Restart into 0.11.0 with existing settings. All six bars should be hidden by default; previous HUD settings must survive.
-- [x] Open `/mg ui` > Display > Health bars. Enable Overall, then Armor, Power, Thrust, Utility and Cargo individually. Check that blue is leftmost, followed by yellow, orange, red and any gray unknown segment.
+- [x] Open `/mg ui` > Display > Health bars. Enable Overall, then Armor, Power, Thrusters, Utility and Cargo individually. Check that blue is leftmost, followed by yellow, orange, red and any gray unknown segment.
 - [x] On a small captured ship, damage, disable structurally, remove and repair known blocks. Segment widths should match counts, with repairs returning to blue. Simply switching a block off/unpowering it must not make it orange.
 - [x] Remove most of a system. Its red segment must grow using the original baseline denominator; the bar must not become healthier merely because blocks disappeared.
 - [x] Add extra blocks and replace an expected block with another type/orientation. Additions should not improve the baseline score; replacements count red in the expected block's original system. The schematic replacement marker stays purple.
-- [x] Confirm Utility covers conveyors, gas, tools, weapons, production, control and other remaining categories. Armor/Power/Thrust/Cargo should not be counted twice. Overall combines every baseline block.
+- [x] Confirm Utility covers conveyors, tanks, mechanical blocks, tools, weapons, production, control and other remaining categories. Armor/Power/Thrusters/Cargo should not be counted twice. Overall combines every baseline block.
 - [x] Change schematic category/state filters, marker pages and station mode. Health totals should remain for the entire controlled-grid baseline; docked context must not inflate them.
 - [x] Clear/detach the baseline, select a profile with no Cargo or Power blocks, and switch ships. Empty/unavailable bars should explain the state rather than show 100% healthy or another ship's data.
 - [x] Preview a blueprint or forced recovery. Bar labels should say preview. Accept/cancel should return to the correct reference totals. Gray is reserved for unreadable health rather than treating it as blue.
@@ -263,9 +263,33 @@ User feedback: Local and Workshop entries show the player name instead of the bl
 - [x] Submit an empty or whitespace-only search using Enter and Search. It must say the search can't be empty, preserve the text/caret and keep focus in the search box so another query can be entered.
 - [x] Search from the text box using Enter, then repeat with the Search button. Both should return the same matching results.
 - [x] Browse Previous/Next with Local-only results spanning at least three pages and mixed sources spanning at least six pages. Reach the last result, return to the first, and select a title near the end. Paging must not stop early, wrap, or load a different file.
-- [working now] Latest retest: Next still stops at page 5 of 20. Pagination now updates the existing result buttons and counter in place instead of rebuilding controls during navigation; verify Previous/Next through all 20 pages in-game.
+- [x] Retest: Previous/Next now advances through all 20 pages; page navigation updates the existing result buttons and counter in place.
 - [x] Load/prepare/preview/accept/cancel for each source. Recheck a blueprint with a blank title, malformed XML and duplicate names across sources. Original files must remain untouched.
 
 - [x] In Baseline > Saved ships, confirm deletion of a profile and verify the dropdown refreshes immediately without navigating away. The deleted profile must no longer be selectable.
 
-another note. Mechanical view doesnt need to be a thing. itd probably work fine under Utility.. Gas can be called Tanks.
+## 0.12.3 - System groups and labels
+
+- [x] Verify the system filter list uses consistent title capitalization and labels Offensive, not Weapons.
+- [x] Verify Tanks includes gas tanks/generators, with no separate Gas filter. Existing saved `gas` filters should load as Tanks.
+- [x] Verify there is no Mechanical filter. Rotor/piston blocks should be included by Utility, including old saved `mechanical` selections.
+- [x] Load an existing saved display with custom system styles. Confirm Tanks, Production and later group styles retain their previous settings after removing Mechanical.
+- [x] Check old `gas` and `mechanical` chat isolate values remain backward compatible and new controls/commands use `tanks`.
+
+## 0.12.4 - Tools health bar and ToolCore recognition
+
+- [x] In Customize > Health bars, enable Tools and verify its label, placement, persistence and visibility work independently of Utility and other bars.
+- [drills work, welders and grinders do not show up] Capture a baseline with welders, grinders and drills; damage, disable, remove and repair them. Confirm Tools and Overall bars update with the correct blue/yellow/orange/red counts.
+- [They show up in other view mode] Verify SDX2: Core Modpack ToolCore blocks appear when filtering the schematic to Tools and are counted in the Tools health bar, not Utility.
+- [ ] Verify a ToolCore block stored as a `MyObjectBuilder_CubeBlock` subtype (for example, SDX2 Deep Welder) is recognized by the Tools filter and health bar.
+- [x] Load existing six- and seven-bar display settings. Confirm all existing bar settings remain unchanged and the new Tools bar starts disabled.
+
+## 0.12.6 - Review follow-up and ToolCore classification
+
+Your 0.12.2-0.12.5 changes and existing results are preserved. Review found generic ConveyorSorter classification ran before modded-tool detection; source-build version attributes also remained at 0.12.2. Both are corrected. ToolCore GetTCDefs now supplies authoritative subtype membership, including tools with no recognizable name.
+
+- [x] With the existing baseline, check SDX welders/grinders and Deep Welder under Tools (schematic and health bar). Allow up to five seconds for ToolCore registration; no recapture should be needed.
+- [x] Damage, remove and repair a modded tool. Tools and Overall should agree; missing tools must remain red in Tools. Offensive and Utility must not also count them.
+- [x] Check ordinary sorters remain Conveyors, PDCs remain Offensive, and cargo with tool-related names remains Cargo.
+- [x] Reconnect/change worlds, including a world without ToolCore. Old ToolCore registrations must not leak into the next world.
+- [x] Confirm binary and Pulsar source builds both identify as 0.12.6.

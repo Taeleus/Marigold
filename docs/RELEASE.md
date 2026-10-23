@@ -39,3 +39,20 @@ The 0.9 runtime passes are recorded in TESTING-TODO.md. The new 0.10 section cov
 ## 0.11 validation scope
 
 Health bars add pure classification and settings checks, with existing comparison tests retained after sharing the classifier. Runtime appearance, positioning, persistence and large-grid refresh behavior remain in the 0.11 user checklist. No PluginHub submission is made by this update.
+
+## 0.12.3 validation scope
+
+The system list no longer exposes a separate Mechanical category; those blocks are grouped under Utility/Other. Gas is labeled Tanks. Legacy `gas`/`mechanical` filters and the previous system-style ordering migrate when saved display settings load. Pagination and the other 0.12.2 browser fixes are user-verified; the new group labels and settings migration still need the checks in TESTING-TODO.md.
+
+## 0.12.4 validation scope
+
+Adds a dedicated Tools health bar for welders, grinders, drills and ToolCore block definitions. ToolCore definitions also match the existing Tools schematic filter. Previous six- and seven-bar layouts retain their saved entries, with Tools disabled by default. Automated classification, health grouping and settings migration checks pass; in-game appearance and SDX2 modpack checks remain pending in TESTING-TODO.md.
+
+## 0.12.5 validation scope
+
+Corrects classification of modded tools registered as `MyObjectBuilder_CubeBlock` with tool names in their subtype IDs. Matching the complete definition ID ensures SDX2 Deep Welder ToolCore blocks are categorized into the Tools filter and health bar. An observer regression test covers the CubeBlock subtype form shown in the reported in-game screenshot.
+
+
+## 0.12.6 review
+
+Reviewed the 0.12.2 baseline through the committed blueprint browser fix and uncommitted 0.12.3-0.12.5 changes. In-place page updates, nonempty search validation, category/style migration and appended Tools layouts are retained. Fixed sorter precedence blocking SDX tools, added optional ToolCore GetTCDefs classification with session cleanup, and synchronized source assembly versions. Regression checks use actual SDX definition IDs and exercise registered subtype detection without WeaponCore, missing-tool accounting and cleanup. Game/mod directories remain read-only. Runtime checks are pending.

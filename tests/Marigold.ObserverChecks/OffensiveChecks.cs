@@ -19,6 +19,7 @@ internal static class OffensiveChecks
         using(var catalog=new OffensiveDefinitions())
         {
             catalog.Update();
+            Check(DisplayFilter.Category("MyObjectBuilder_ConveyorSorter/RegisteredUtility")=="tools","ToolCore registry recognizes tools without name hints or WeaponCore");
             Check(DisplayFilter.Category("MyObjectBuilder_ConveyorSorter/WeaponWithoutName")=="weapons","Weapon definitions override sorter type");
             Check(DisplayFilter.Category("MyObjectBuilder_CubeBlock/TargetGroupOnly")=="weapons","Targeting-group membership classifies offensive blocks");
             Check(DisplayFilter.Category("MyObjectBuilder_ShipWelder/Utility")=="tools","Vanilla target-group tools remain Utility");
@@ -31,6 +32,7 @@ internal static class OffensiveChecks
             int revision=DisplayFilter.ClassificationRevision;for(int i=0;i<300;i++)catalog.Update();
             Check(DisplayFilter.ClassificationRevision==revision,"Unchanged registry does not force geometry rebuilds");
         }
+        Check(DisplayFilter.Category("MyObjectBuilder_ConveyorSorter/RegisteredUtility")=="conveyors","ToolCore classification clears on unload");
         Check(utilities.ModHandlers==0 && DisplayFilter.Category(pdc)=="conveyors","Unload unregisters API and clears session classification");
         manager.Definitions.Clear();utilities.WeaponDefinitions.Clear();
         Console.WriteLine("PASS: "+count+" offensive definition/API lifecycle checks (API doubles).");
@@ -47,7 +49,7 @@ namespace VRage.Game
 }
 namespace VRage.Utils
 {
-    public struct MyStringHash {public static MyStringHash GetOrCompute(string value){return new MyStringHash();}}
+    public struct MyStringHash {public string String;public static MyStringHash GetOrCompute(string value){return new MyStringHash{String=value};}}
 }
 namespace Sandbox.Definitions
 {
@@ -84,6 +86,7 @@ namespace Sandbox.ModAPI
         public void UnregisterMessageHandler(long channel,Action<object> callback){handler-=callback;}
         public void SendModMessage(long channel,object message)
         {
+            if(channel==2172757428){handler?.Invoke(new Dictionary<string,Delegate>{{"GetTCDefs",new Action<ICollection<VRage.Utils.MyStringHash>>(items=>items.Add(VRage.Utils.MyStringHash.GetOrCompute("RegisteredUtility")))}});return;}
             if(WeaponDefinitions.Count==0)return;
             handler?.Invoke(new Dictionary<string,Delegate>{{"GetCoreWeapons",new Action<ICollection<MyDefinitionId>>(items=>{foreach(var id in WeaponDefinitions)items.Add(id);})}});
         }

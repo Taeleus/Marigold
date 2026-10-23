@@ -4,7 +4,7 @@ Updated October 22, 2026, after the latest 0.9 testing notes.
 
 ## 0.11 health-bar update
 
-Implemented optional stacked health bars for Overall, Armor, Power, Thrust, Utility, Cargo and Offensive. All default off. Each has independent placement, dimensions, opacity and labels, saved globally/per profile/in presets. Bars count baseline block states independently of schematic filtering; unknown health remains gray. New in-game checks are appended. Drag positioning and configurable group membership are not implemented; numeric/movement controls and fixed groups are available.
+Implemented optional stacked health bars for Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. All default off. Each has independent placement, dimensions, opacity and labels, saved globally/per profile/in presets. Bars count baseline block states independently of schematic filtering; unknown health remains gray. New in-game checks are appended. Drag positioning and configurable group membership are not implemented; numeric/movement controls and fixed groups are available.
 
 ## 0.10 implementation update
 
@@ -205,7 +205,7 @@ Current supported target remains Pulsar Legacy / .NET Framework 4.8. A .NET 10/I
 
 5. Remaining hardening, source-loader acceptance and release packaging.
 
-Current build: 0.12.2 prototype. New runtime acceptance is pending.
+Current build: 0.12.5 prototype. New runtime acceptance is pending.
 
 0.11 user acceptance: all health-bar checks passed. 0.11.1 adds a separate Offensive bar, active-filter captions, panel spacing fixes and readable Workshop labels. New checks are in TESTING-TODO.md; unchecked recovery edge cases remain open.
 
@@ -214,3 +214,5 @@ Current build: 0.12.2 prototype. New runtime acceptance is pending.
 0.12.0: Reorganized the native control panel into Ship, Baseline and Customize, with focused subpages, Back navigation, a shared save screen, progressive blueprint steps, readable choice labels and individual color editing. Runtime layout/navigation acceptance is pending in TESTING-TODO.md.
 
 0.12.0 user acceptance: navigation, viewing, profiles, recovery, customization, shortcuts and saving passed. Blueprint browsing needed fixes. 0.12.2 uses blueprint IDs/grid titles instead of author names, cleans Cloud labels, and adds combined-source search with paginated results. Retests are in TESTING-TODO.md; 0.12.1 checklist retained.
+
+0.12.2 user acceptance: empty search handling, Enter submission, profile dropdown refresh, and paging beyond five pages passed. 0.12.3 removes the separate Mechanical filter, groups those blocks under Utility, renames Gas to Tanks, and migrates saved filter/style settings. Runtime checks are in TESTING-TODO.md.

@@ -4,14 +4,14 @@ namespace Marigold
     // Baseline block counts, not summed integrity or a combat-survivability estimate.
     internal sealed class ShipHealth
     {
-        public static readonly string[] Names={"Overall","Armor","Power","Thrust","Utility","Cargo","Offensive"};
+        public static readonly string[] Names={"Overall","Armor","Power","Thrusters","Utility","Cargo","Offensive","Tools"};
         // Blue, yellow, orange, red, gray. Replacements count as an absent expected block.
         public readonly int[,] Counts=new int[Names.Length,5];
         public bool HasBaseline;
         public int Total(int group){int total=0;for(int i=0;i<5;i++)total+=Counts[group,i];return total;}
         public static int Group(string definition)
         {
-            switch(DisplayFilter.Category(definition)){case "armor":return 1;case "power":return 2;case "thrusters":return 3;case "cargo":return 5;case "weapons":return 6;default:return 4;}
+            switch(DisplayFilter.Category(definition)){case "armor":return 1;case "power":return 2;case "thrusters":return 3;case "cargo":return 5;case "weapons":return 6;case "tools":return 7;default:return 4;}
         }
         public static ShipHealth Build(BlockSample[] reference,BlockSample[] current)
         {

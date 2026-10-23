@@ -209,7 +209,7 @@ namespace Marigold
                 Button(-.21f,.08f,"Hide all",()=>{foreach(var b in owner.controls.HealthBars.Bars)b.Enabled=false;RecreateControls(false);});
                 Button(.21f,.08f,"Reset this bar",()=>{owner.controls.HealthBars.Bars[healthBarSelected]=new HealthBarSettings().Bars[healthBarSelected];RecreateControls(false);});
                 Label(-.39f,.15f,"X/Y/opacity: 0-1; width: .05-.8; height: .005-.08");
-                Label(-.39f,.19f,"Utility: all remaining systems. Added blocks excluded; replacements count red.");
+                Label(-.39f,.19f,"Utility includes systems without a dedicated bar. Added blocks excluded; replacements count red.");
             }
             private void Appearance()
             {
@@ -228,13 +228,18 @@ namespace Marigold
             private void Systems()
             {
                 Label(-.39f,-.25f,"Choose several systems to display together");
-                var items=DisplayFilter.Categories.Split(' ');var choice=Combo(0,-.17f,Array.ConvertAll(items,item=>item=="weapons"?"Offensive":item),1);
+                var items=DisplayFilter.Categories.Split(' ');var choice=Combo(0,-.17f,Array.ConvertAll(items,SystemName),1);
                 Action<bool> toggle=add=>{string item=items[(int)choice.GetSelectedKey()];if(item=="all"){Run(add?"isolate all":"isolate none");return;}var selected=new List<string>(owner.controls.Category=="all"?items:owner.controls.Category.Split(','));selected.Remove("all");selected.Remove("none");if(add && !selected.Contains(item))selected.Add(item);if(!add)selected.Remove(item);Run("isolate "+(selected.Count==0?"none":string.Join(",",selected)));};
                 Button(-.31f,-.08f,"Add system",()=>toggle(true));Button(-.10f,-.08f,"Remove system",()=>toggle(false));Button(.11f,-.08f,"All systems",()=>Run("isolate all"));Button(.32f,-.08f,"No systems",()=>Run("isolate none"));
                 Button(-.31f,.02f,"Damage overview",()=>{Run("isolate all");Run("filter faults");});Button(-.10f,.02f,"Propulsion",()=>Run("isolate thrusters,power,gas,control"));Button(.11f,.02f,"Conveyors",()=>Run("isolate conveyors,cargo"));Button(.32f,.02f,"Show all states",()=>Run("filter all"));
                 var style=Combo(-.16f,.12f,new[]{"hidden","wireframe","transparent","highlighted"},1);
                 Button(.21f,.12f,"Apply style",()=>{int index=(int)choice.GetSelectedKey();var values=owner.controls.SystemStyles.ToCharArray();if(index==0){for(int i=1;i<values.Length;i++)values[i]=(char)('0'+style.GetSelectedKey());}else values[index]=(char)('0'+style.GetSelectedKey());owner.controls.SystemStyles=new string(values);owner.RefreshReference("System presentation updated; damage markers retain their state colors.");Status(owner.comparisonReport);});
                 Label(-.39f,.19f,"Styles affect hull outlines; station uses visibility. Use Save display to keep changes.");
+            }
+            private string SystemName(string category)
+            {
+                string name=T(category=="weapons"?"Offensive":category=="other"?"Utility":category);
+                return name.Length==0?name:char.ToUpperInvariant(name[0])+name.Substring(1);
             }
             private void Library()
             {
