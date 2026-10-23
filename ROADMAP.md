@@ -1,6 +1,17 @@
 # Marigold roadmap to feature complete
 
-Updated October 22, 2026, after the latest 0.9 testing notes.
+Updated October 23, 2026. Stable master: 0.12.6; development branch: 0.13.0.
+
+## 0.13.0 development update
+
+Implemented and automated checks passed; runtime acceptance remains pending:
+
+- Accepted recovery persists as a cockpit-relative alignment plus surviving-layout signature. Reconnect/transfer matching uses the same conservative ambiguity safeguards; the baseline is never recaptured automatically.
+- Capture/import/anchor changes and revision restores archive the old baseline. Named versions have stable reference identity, source, creation date and blueprint identity. Cross-anchor restores use an explicit recovery preview.
+- Profile formats 1 and 2 migrate to format 3 with their numbers, station preference, anchors and blocks preserved. Old creation dates remain unknown. Back up the full data folder before trying dev or reverting to stable.
+
+Remaining recovery/revision work: runtime acceptance below; revision renaming beyond naming a new saved copy; arbitrary manual rotation beyond generated candidates; broader partial-repair and changed-cockpit matching. One remembered recovery per profile is currently supported. UI capture/import uses automatic preservation rather than an overwrite-existing-version chooser. Existing scope/acceptance requirements below remain the target; older implementation notes describe their original builds.
+
 
 ## 0.11 health-bar update
 
@@ -205,7 +216,7 @@ Current supported target remains Pulsar Legacy / .NET Framework 4.8. A .NET 10/I
 
 5. Remaining hardening, source-loader acceptance and release packaging.
 
-Current build: 0.12.5 prototype. New runtime acceptance is pending.
+Current dev build: 0.13.0 prototype. 0.12.6 runtime checks passed; 0.13.0 runtime acceptance is pending.
 
 0.11 user acceptance: all health-bar checks passed. 0.11.1 adds a separate Offensive bar, active-filter captions, panel spacing fixes and readable Workshop labels. New checks are in TESTING-TODO.md; unchecked recovery edge cases remain open.
 

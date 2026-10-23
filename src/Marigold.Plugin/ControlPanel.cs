@@ -112,7 +112,7 @@ namespace Marigold
                 string name;try{name=owner.SelectedProfile().Name;}catch(InvalidOperationException){name="None - capture your ship or import a blueprint.";}
                 Label(-.39f,-.25f,"Current baseline: "+name);
                 Button(-.21f,-.17f,"Capture this ship",()=>Run("capture",true));Button(.21f,-.17f,"Import blueprint",()=>Switch(2));
-                Label(-.39f,-.105f,"A baseline remembers the blocks your ship should have.");
+                Label(-.39f,-.105f,"Capture/import preserves the old baseline in Saved versions.");
                 MenuRow(-.03f,"Saved ships","Choose an existing baseline or detach it.",10);
                 MenuRow(.05f,"Saved versions","Keep named copies before changing your ship.",6);
                 MenuRow(.13f,"Recovery tools","Match a damaged ship or restore a backup.",15);
@@ -244,17 +244,18 @@ namespace Marigold
             private void Library()
             {
                 ShipProfile profile;try{profile=owner.SelectedProfile();}catch(Exception e){Label(-.39f,-.20f,e.Message);return;}
+                if(string.IsNullOrEmpty(status))Status("Active baseline: "+profile.ReferenceName+"\nSource: "+profile.Source+" | "+(profile.CreatedUtcTicks==0?"Creation date unknown":new DateTime(profile.CreatedUtcTicks,DateTimeKind.Utc).ToString("u"))+"\n"+profile.BlueprintIdentity);
                 Label(-.39f,-.26f,"Current ship name");
                 var shipName=new MyGuiControlTextbox(new Vector2(-.12f,-.21f),profile.Name,maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(shipName);
                 Button(.32f,-.21f,"Rename ship",()=>{Status(owner.RevisionAction("rename",shipName.Text));RecreateControls(false);});
                 Label(-.39f,-.145f,"New version name (for example, Original or Before refit)");
                 var name=new MyGuiControlTextbox(new Vector2(-.12f,-.10f),"",maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(name);
                 Button(.32f,-.10f,"Save version",()=>{Status(owner.RevisionAction("save",name.Text));RecreateControls(false);});
-                var revisions=new List<ShipProfile>(owner.Revisions(profile).Profiles);var names=new List<string>();foreach(var r in revisions)names.Add(r.Number+": "+r.Name);
+                var revisions=new List<ShipProfile>(owner.Revisions(profile).Profiles);var names=new List<string>();foreach(var r in revisions)names.Add((r.ReferenceId==profile.ReferenceId?"[Active] ":"")+r.Number+": "+r.Name+" | "+r.Source+" | "+(r.CreatedUtcTicks==0?"date unknown":new DateTime(r.CreatedUtcTicks,DateTimeKind.Utc).ToString("yyyy-MM-dd HH:mm")+" UTC"));
                 Label(-.39f,-.035f,"Saved versions");var selected=Combo(-.12f,.01f,names.ToArray(),0);
-                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id));RecreateControls(false);};
+                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id));if(verb=="load" && owner.recoveryIsRevision && owner.recoveryProfile!=null){string message=status;Switch(7);Status(message);}else RecreateControls(false);};
                 Button(.32f,.01f,"Use version",()=>revision("load"));Button(.32f,.10f,"Delete version",()=>revision("delete"));
-                Label(-.39f,.18f,"Loading keeps a copy of the previous baseline when needed.");
+                Label(-.39f,.18f,"Capture, import and restore preserve the previous baseline.");
             }
             private void Alignment()
             {

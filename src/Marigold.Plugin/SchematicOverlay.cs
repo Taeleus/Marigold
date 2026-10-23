@@ -194,7 +194,7 @@ namespace Marigold
                 var anchor=SeatedAnchor();
                 var profile=new ShipProfile { Id=selected==null?Guid.NewGuid().ToString("N"):selected.ProfileId,Name=grid.DisplayName??"Unnamed ship",GridSize=grid.GridSize,Anchor=anchor,
                     Station=controls.Station,Blocks=selected==null?null:ProfileAlignment.Transform(selected.Blocks,anchor,true) };
-                profileStore.Put(profile);BindProfile(profile,anchor);
+                if(selected!=null)ArchiveBaseline(profileStore.Find(selected.ProfileId));profileStore.Put(profile);BindProfile(profile,anchor);
                 return "Saved cockpit anchor for "+profile.Name+" ("+profile.Number.ToString()+"). "+(profile.Blocks==null?"Use /mg capture to save the baseline.":"Existing baseline preserved.");
             }
             if(selected==null && action=="capture")
@@ -209,7 +209,7 @@ namespace Marigold
                 if(previewBlocks!=null)return "Accept or cancel the blueprint preview first.";
                 var blocks=action=="clear"?null:ProfileAlignment.Transform(SnapshotComparison.HealthyBaseline(Sample(grid)),selected.Anchor,true);
                 var updated=new ShipProfile { Id=saved.Id,Name=grid.DisplayName??saved.Name,GridSize=saved.GridSize,Anchor=selected.Anchor,Blocks=blocks };
-                profileStore.Put(updated);BindProfile(updated,selected.Anchor);
+                ArchiveBaseline(saved);profileStore.Put(updated);BindProfile(updated,selected.Anchor);
                 return action=="clear"?"Baseline cleared. Profile "+saved.Number+" ("+saved.Name+") and its cockpit anchor are still saved; /mg profiles lists it.":"Saved "+blocks.Length+" baseline blocks to profile "+saved.Number.ToString()+". This reference survives leaving the world.";
             }
             return SchematicControls.Help;

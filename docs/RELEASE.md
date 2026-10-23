@@ -56,3 +56,8 @@ Corrects classification of modded tools registered as `MyObjectBuilder_CubeBlock
 ## 0.12.6 review
 
 Reviewed the 0.12.2 baseline through the committed blueprint browser fix and uncommitted 0.12.3-0.12.5 changes. In-place page updates, nonempty search validation, category/style migration and appended Tools layouts are retained. Fixed sorter precedence blocking SDX tools, added optional ToolCore GetTCDefs classification with session cleanup, and synchronized source assembly versions. Regression checks use actual SDX definition IDs and exercise registered subtype detection without WeaponCore, missing-tool accounting and cleanup. Game/mod directories remain read-only. Runtime checks are pending.
+
+
+## 0.13.0 dev validation
+
+Binary build and all automated suites pass, including 13 persistent-recovery/reference lifecycle checks and 129 profile persistence/alignment checks. All 35 manifest-selected sources compile without LOCAL_BUILD. NuGet vulnerability-data retrieval was unavailable (NU1900); no vulnerability scan is claimed. Runtime acceptance is pending in TESTING-TODO.md. Stable master remains 0.12.6; the dev package is not deployed. Profile format 3 requires a full pre-upgrade data-folder backup for rollback to stable.

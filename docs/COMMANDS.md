@@ -92,13 +92,13 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 ## 0.10 additions
 
-`/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells, not screen directions. Acceptance requires three exact matches and never recaptures the baseline. Recovery is session-local and may need repeating after reconnect.
+`/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells, not screen directions. Acceptance requires three exact matches and never recaptures the baseline. Acceptance remembers the alignment and surviving layout locally for conservative automatic matching after reconnect. This requires auto matching on, at least eight blocks and a compatible cockpit; ambiguity or further major layout changes may require recovery again. Only the latest accepted recovery is retained per profile, tied to its baseline identity.
 
 `/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
 
 Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time and toggles missing-block pulse. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
-Library saves independent named baselines. Capture/import do not update those copies. Loading archives the previous active baseline when needed; deleting a revision leaves the active baseline intact. Cross-anchor restore is refused. Limits: 16 revisions and 250,000 total blocks per library.
+Library saves independent named baselines. Capture/import and loading archive the previous active baseline when needed; deleting a revision leaves the active baseline intact. Versions show source/date and active identity. Cross-anchor restore opens a recovery preview and changes the active baseline only after acceptance. Limits: 16 revisions and 250,000 total blocks per library.
 
 Views accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
 

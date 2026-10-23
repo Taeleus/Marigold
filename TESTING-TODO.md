@@ -293,3 +293,22 @@ Your 0.12.2-0.12.5 changes and existing results are preserved. Review found gene
 - [x] Check ordinary sorters remain Conveyors, PDCs remain Offensive, and cargo with tool-related names remains Cargo.
 - [x] Reconnect/change worlds, including a world without ToolCore. Old ToolCore registrations must not leak into the next world.
 - [x] Confirm binary and Pulsar source builds both identify as 0.12.6.
+
+
+## 0.13.0 dev - Persistent recovery and baseline history
+
+Not deployed yet. Binary/source compilation and automated migration/recovery checks passed; these runtime checks remain unverified. Preserve your existing results above.
+
+Before upgrading: close the game and copy the entire `%APPDATA%/Marigold` folder to a safe backup. Format 3 is readable by 0.13.0, not 0.12.6; rolling back requires restoring that folder as well as the old plugin.
+
+- [ ] Upgrade existing profiles. Check profile numbers/names, station settings, original blocks and saved versions. Legacy references should show unknown creation date rather than an invented date. Save, restart and recheck.
+- [ ] Capture a baseline, remove the original cockpit and a substantial section, then sit in another cockpit. Baseline > Recovery: preview/adjust/accept. Missing sections must stay red and health bars must retain the original denominator.
+- [ ] Restart/reconnect with auto matching on and the same remnant (at least eight blocks). It should recover the accepted alignment without Force apply again. Repeat across a Nexus transfer if available; check a differently oriented replacement cockpit and non-origin placement.
+- [ ] Repair the ship fully and reconnect. It should still align against the original baseline. Try partial repairs too; if matching is uncertain, manual recovery must remain available without changing the baseline.
+- [ ] Try identical profiles or symmetric remnants, auto-off, manual detach, and a profile already used by another loaded grid. Uncertain recovery must not silently choose a conflicting profile. Tiny remnants may need manual recovery each session.
+- [ ] Capture a changed layout, import a blueprint and change main cockpit. Verify the previous baseline appears in Saved versions before replacement. Recovery accepted for an older baseline must not be reused for a different baseline identity.
+- [ ] Name/save a version, switch versions and restart. Check readable name/source/date, available blueprint identity and active indicator. Deleting a saved version must not clear the active baseline. Renaming the ship must retain metadata.
+- [ ] Restore a version with a different saved anchor. The Alignment page should open; inspect missing markers and health preview, then cancel (no change). Repeat and accept: the older baseline becomes active and the previous baseline remains in Saved versions.
+- [ ] Leave control, change grids or cancel during recovery/version alignment. No late worker result should bind another ship or replace its baseline. Capture a new baseline during a pending preview and ensure stale acceptance is rejected.
+- [ ] Fill a version library to its limit (16 revisions / 250,000 total blocks). Replacement must fail clearly without losing the active baseline or deleting history. Remove an unwanted revision and retry.
+- [ ] Check profile backup recovery with copied test data, then restart. Verify recovered references, metadata and conservative matching; preserve the original pre-upgrade backup for rollback.

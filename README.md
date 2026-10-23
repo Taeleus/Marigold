@@ -40,10 +40,10 @@ A detached block counts as missing from the observed grid, even if it still exis
 
 New in 0.10:
 
-- **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Force apply may be needed again after reconnect.
+- **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Accepted recovery is remembered locally and checked again after reconnect; ambiguous or substantially changed layouts still need manual recovery.
 - **Customize / HUD layout and Colors:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
 - **Systems:** combine categories and choose hidden, wireframe, faint or highlighted hull outlines. Damage markers retain state colors; station context follows visibility.
-- **Baseline / Saved versions:** rename profiles and save/load/delete named baselines. Captures/imports do not change named copies. Revision loading requires the same saved anchor and archives the previous active baseline when needed. Limits are 16 revisions and 250,000 total blocks per library.
+- **Baseline / Saved versions:** rename profiles and save/load/delete named baselines. Capture, import and revision loading preserve the previous baseline in Saved versions. Versions show their source, date and active status. Restoring a different anchor opens an alignment preview and requires acceptance. Limits are 16 revisions and 250,000 total blocks per library.
 - **Customize / Shortcuts:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
 - **Blueprints:** locally cached Workshop XML discovery and a list of omitted definition names/counts. Protobuf-only and archived entries remain unsupported.
 - **Reports:** structural completeness and expected/observed/matching counts, distinct from health.
@@ -100,4 +100,14 @@ Offensive recognizes loaded weapon definitions and weapon-targeting metadata, pl
 
 The control panel has three sections: **Ship** for everyday viewing and damage reports; **Baseline** for captures, blueprints, saved ships and recovery; **Customize** for layout, colors, health bars, filters, shortcuts and preferences. **Save display** opens the shared save/restore screen for defaults, this ship and named presets. Use **Back** to return to your previous page.
 
-Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud, enter part of its title (or leave blank), and Search. Use Previous/Next and click a result to load it.
+Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud, enter part of its title (required), and Search. Use Previous/Next and click a result to load it.
+
+## Development version 0.13.0
+
+`master` contains the tested 0.12.6 release; `dev` contains the recovery and baseline-history changes awaiting game testing.
+
+After accepting recovery, Marigold remembers the surviving layout and its alignment to the original baseline. With automatic matching enabled, it can reuse that alignment after logout or transfer when the layout uniquely matches. Missing sections stay missing: recovery never captures the remnant as the new baseline. At least eight observed blocks and a compatible cockpit are needed for automatic matching. Identical ships, further major changes, or partial repairs may require recovery again. One accepted recovery is remembered per ship profile.
+
+Capture/import automatically archive the previous baseline. Saved versions retain source, creation date and blueprint identity where available; old references show an unknown date. Restoring a version from a different anchor requires reviewing and accepting recovery alignment. A full version library blocks replacement until you remove an unwanted version, rather than discarding history.
+
+Before testing 0.13.0, copy `%APPDATA%/Marigold` somewhere safe with the game closed. This build reads older profiles but saves format 3, which 0.12.6 cannot read. To roll back, restore that complete pre-upgrade folder alongside the older plugin. Automated migration tests pass; in-game upgrade/reconnect tests remain in TESTING-TODO.md.

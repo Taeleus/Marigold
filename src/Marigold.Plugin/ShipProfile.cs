@@ -16,6 +16,9 @@ namespace Marigold
     internal sealed class ShipProfile
     {
         public string Id, Name;
+        public string ReferenceId="",ReferenceName="",Source="",BlueprintIdentity="";
+        public long CreatedUtcTicks;
+        public ShipProfile Copy(){return (ShipProfile)MemberwiseClone();}
         public int Number;
         public bool Station;
         public double GridSize;
