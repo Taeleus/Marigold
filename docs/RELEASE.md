@@ -61,3 +61,12 @@ Reviewed the 0.12.2 baseline through the committed blueprint browser fix and unc
 ## 0.13.0 dev validation
 
 Binary build and all automated suites pass, including 13 persistent-recovery/reference lifecycle checks and 129 profile persistence/alignment checks. All 35 manifest-selected sources compile without LOCAL_BUILD. NuGet vulnerability-data retrieval was unavailable (NU1900); no vulnerability scan is claimed. Runtime acceptance is pending in TESTING-TODO.md. Stable master remains 0.12.6; the dev package is not deployed. Profile format 3 requires a full pre-upgrade data-folder backup for rollback to stable.
+
+
+## 0.14.0 development scope
+
+Adds partial-repair/cockpit-type recovery matching, explicit manual quarter turns and fallback preview, version rename/replace with history preservation, station hull styles with a shared per-grid line budget, bounded coarse outer extents and current Spanish UI labels. XML-only blueprint support is an explicit release limitation; investigation is recorded in BLUEPRINT-FORMATS.md. ROADMAP.md now separates delivered features from release validation instead of repeating historical tasks.
+
+Runtime acceptance remains pending in the appended 0.14 checklist, alongside the untested 0.13 checklist. The build does not deploy. Profile format remains 3; the full pre-0.13 data backup is still required for rollback to 0.12.6.
+
+Validation: binary build and all regression suites passed, including 32 recovery/reference lifecycle checks and 22 blueprint checks. All 35 manifest-selected files compiled without LOCAL_BUILD. NU1900 reports unavailable NuGet vulnerability data; no vulnerability audit is claimed. Runtime testing is pending.

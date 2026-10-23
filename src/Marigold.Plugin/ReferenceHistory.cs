@@ -19,6 +19,14 @@ namespace Marigold
             var copy=profile.Copy();copy.Id=Guid.NewGuid().ToString("N");copy.ReferenceId=copy.Id;copy.ReferenceName=name;copy.Name=name;
             library.Put(copy);return copy;
         }
+        public static ShipProfile Rename(ProfileStore library,ShipProfile revision,string name)
+        {var renamed=revision.Copy();renamed.Name=renamed.ReferenceName=name;library.Put(renamed);return renamed;}
+        public static ShipProfile Replace(ProfileStore library,ShipProfile revision,ShipProfile active)
+        {
+            if(active.Blocks==null)throw new InvalidOperationException("Capture or load a baseline first.");
+            var archived=revision.Copy();archived.Id=Guid.NewGuid().ToString("N");archived.Name=revision.Name+" (previous)";library.Put(archived);
+            var replacement=active.Copy();replacement.Id=revision.Id;replacement.Name=revision.Name;replacement.ReferenceName=revision.Name;library.Put(replacement);return replacement;
+        }
         // Store the baseline frame relative to the recovery seat, not a world/grid ID.
         public static AnchorFrame Relative(AnchorFrame frame,AnchorFrame seat)
         {return new AnchorFrame{Position=seat.Local(frame.Position),Right=SchematicGeometry.ToBasis(frame.Right,seat.Right,seat.Up,seat.Backward),Up=SchematicGeometry.ToBasis(frame.Up,seat.Right,seat.Up,seat.Backward),Backward=SchematicGeometry.ToBasis(frame.Backward,seat.Right,seat.Up,seat.Backward),Definition=seat.Definition,Name=seat.Name};}

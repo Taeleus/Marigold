@@ -18,6 +18,13 @@ namespace Marigold
             var live=new Dictionary<Point3,BlockSample>();foreach(var b in current)live[b.Position]=b;
             int count=0;foreach(var b in baseline){BlockSample now;if(live.TryGetValue(b.Position,out now) && now.Definition==b.Definition && now.Forward==b.Forward && now.Up==b.Up && now.Bounds.Min.Equals(b.Bounds.Min) && now.Bounds.Max.Equals(b.Bounds.Max))count++;}return count;
         }
+        // Quarter turns about the selected baseline origin preserve the block lattice.
+        internal static AnchorFrame Rotate(AnchorFrame frame,string axis)
+        {
+            Func<Point3,Point3> turn=p=>axis=="x"?new Point3(p.X,-p.Z,p.Y):axis=="y"?new Point3(p.Z,p.Y,-p.X):new Point3(-p.Y,p.X,p.Z);
+            if(axis!="x" && axis!="y" && axis!="z")throw new ArgumentException("Choose X, Y or Z.");
+            frame.Right=turn(frame.Right);frame.Up=turn(frame.Up);frame.Backward=turn(frame.Backward);return frame;
+        }
         private static Point3 Shift(Point3 p,Point3 d){return new Point3(p.X+d.X,p.Y+d.Y,p.Z+d.Z);}
         private static int ScoreShift(BlockSample[] baseline,Dictionary<Point3,BlockSample> live,Point3 delta,CancellationToken token)
         {

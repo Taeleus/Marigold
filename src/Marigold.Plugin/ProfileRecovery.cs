@@ -35,6 +35,11 @@ namespace Marigold
                 candidate.Anchor.Position=new Point3(p.X+(axis=="x+"?1:axis=="x-"?-1:0),p.Y+(axis=="y+"?1:axis=="y-"?-1:0),p.Z+(axis=="z+"?1:axis=="z-"?-1:0));
                 candidate.Matches=RecoveryMatcher.Score(ProfileAlignment.Transform(recoveryProfile.Blocks,candidate.Anchor,false),observation.Snapshot());
             }
+            if(action.StartsWith("rotate "))
+            {
+                candidate.Anchor=RecoveryMatcher.Rotate(candidate.Anchor,action.Substring(7));
+                candidate.Matches=RecoveryMatcher.Score(ProfileAlignment.Transform(recoveryProfile.Blocks,candidate.Anchor,false),observation.Snapshot());
+            }
             if(action=="accept")
             {
                 if(profileStore.Find(recoveryProfile.Id).Blocks!=recoveryOriginalBlocks){CancelRecovery();return "Baseline changed; start recovery again.";}
@@ -71,7 +76,17 @@ namespace Marigold
         {
             if(recoveryTask==null || !recoveryTask.IsCompleted)return;
             var task=recoveryTask;recoveryTask=null;
-            try{recoveryCandidates=task.GetAwaiter().GetResult();recoveryIndex=0;RecoveryMessage(recoveryCandidates.Count==0?"No supported alignment with at least 3 matches. Try another saved profile; sparse/symmetric remnants may not be recoverable.":RecoveryCommand("preview"));}
+            try
+            {
+                recoveryCandidates=task.GetAwaiter().GetResult();recoveryIndex=0;
+                if(recoveryCandidates.Count==0)
+                {
+                    var anchor=SeatedAnchor();var current=observation.Snapshot();
+                    recoveryCandidates.Add(new RecoveryCandidate{Anchor=anchor,Observed=current.Length,Expected=recoveryProfile.Blocks.Length,Matches=RecoveryMatcher.Score(ProfileAlignment.Transform(recoveryProfile.Blocks,anchor,false),current)});
+                    RecoveryCommand("preview");RecoveryMessage("No automatic alignment found. This is an unverified manual starting point at your seat. Use Alignment tools to rotate/translate, or cancel. Acceptance still requires 3 exact matches.");
+                }
+                else RecoveryMessage(RecoveryCommand("preview"));
+            }
             catch(OperationCanceledException){}catch(Exception e){CancelRecovery();RecoveryMessage("Recovery failed: "+e.Message);}
         }
     }

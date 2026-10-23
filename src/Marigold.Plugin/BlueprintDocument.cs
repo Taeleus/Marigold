@@ -27,7 +27,7 @@ namespace Marigold
         {
             path=Path.GetFullPath(path);
             if(path.StartsWith(@"\\",StringComparison.Ordinal) || !Path.GetExtension(path).Equals(".sbc",StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("Choose a local .sbc blueprint file (usually bp.sbc).");
+                throw new InvalidDataException("Use the XML bp.sbc file. Protobuf (.sbcB5), ZIP and .bin archives are unsupported; save a local copy through the game, then select its bp.sbc.");
             if(new FileInfo(path).Length>32*1024*1024)throw new InvalidDataException("Blueprint file exceeds 32 MB.");
             return Parse(()=>Open(path));
         }

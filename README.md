@@ -4,14 +4,14 @@ A ship schematic and damage display for **Space Engineers 1**, built for **Pulsa
 
 Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
 
-**Current version: 0.12.5 prototype.** The 0.12.2 blueprint-browser fixes passed user testing. Remaining recovery edge cases and the new Tools health bar need in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
+**Stable: 0.12.6. Development: 0.14.0.** Development builds need the in-game checks in [TESTING-TODO.md](TESTING-TODO.md); 0.13.0 has not yet been tested in-game.
 
 ## Get started
 
 1. Enable **Marigold (prototype)** in Pulsar Legacy and launch the game.
 2. Sit in the cockpit you want to use as your ship's reference point.
 3. Type **`/mg ui`** to open Marigold's controls.
-4. In **Profiles**, choose **Capture** to save the current ship as your reference. Click Capture again when prompted to confirm.
+4. In **Baseline**, choose **Capture this ship** to save the current ship as your reference. Click Capture again when prompted to confirm.
 5. Close the panel to see the schematic. Damage and missing blocks update as the ship changes.
 
 Prefer chat commands? Use `/mg capture`; it saves the seated cockpit as the anchor automatically. Captured blocks are treated as fully repaired, so existing damage remains visible. `/mg` shows help, and `/marigold` works as an alias. `/m` is reserved by the game.
@@ -33,22 +33,15 @@ A detached block counts as missing from the observed grid, even if it still exis
 
 ## Use the control panel
 
-- **Display:** choose systems and damage states to show, adjust detail and layout, or toggle station mode and automatic profile matching.
-- **Profiles:** create or select a reference, capture changes, detach a profile, or view a report. Clearing, deleting and replacing saved data requires a second click in the panel.
-- **Blueprints:** browse nested local folders or cloud XML blueprints, load one, choose its grid, then its matching cockpit. A single grid prepares automatically. Preview the alignment, then choose **Save profile**. No prior capture is needed. Unavailable mod blocks are omitted with a count; a usable matching cockpit is still required.
-- **Views:** snap to a side, zoom, rotate, browse marker pages, or assign shortcuts to cycle systems, cycle markers and toggle expanded view. Shortcuts start unbound.
+- **Ship:** show/hide, rotation, system/state filters, views/zoom and damage reports.
+- **Baseline:** capture/import, saved ships, saved versions and recovery tools.
+- **Customize:** HUD layout, colors, health bars, system styles, shortcuts, preferences and clipboard config sharing.
 
-New in 0.10:
+**Save display** keeps your changes as defaults, a per-ship setup or a named preset. Closing the panel alone does not save layout edits. The ship schematic can be hidden while health bars stay visible; global Hide HUD hides everything. Shortcuts start unbound.
 
-- **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Accepted recovery is remembered locally and checked again after reconnect; ambiguous or substantially changed layouts still need manual recovery.
-- **Customize / HUD layout and Colors:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
-- **Systems:** combine categories and choose hidden, wireframe, faint or highlighted hull outlines. Damage markers retain state colors; station context follows visibility.
-- **Baseline / Saved versions:** rename profiles and save/load/delete named baselines. Capture, import and revision loading preserve the previous baseline in Saved versions. Versions show their source, date and active status. Restoring a different anchor opens an alignment preview and requires acceptance. Limits are 16 revisions and 250,000 total blocks per library.
-- **Customize / Shortcuts:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
-- **Blueprints:** locally cached Workshop XML discovery and a list of omitted definition names/counts. Protobuf-only and archived entries remain unsupported.
-- **Reports:** structural completeness and expected/observed/matching counts, distinct from health.
+For a blueprint, use Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud and search part of its title. Load a result, select its grid and matching cockpit, preview, then **Use baseline**. Unsupported definitions are listed under Omitted blocks. Files remain read-only. See [supported formats](docs/BLUEPRINT-FORMATS.md).
 
-The interface has English and Spanish labels; new controls may fall back to English. Diagnostic messages remain in English. Use **Save settings** to keep ordinary display changes; automatic matching and language choices save immediately. Station mode saves with the ship profile. The panel has a small live schematic preview.
+The UI has English and Spanish controls and descriptions. Dynamic diagnostic responses may remain English.
 
 ## Optional health bars
 
@@ -68,7 +61,7 @@ Identical copies cannot reliably be distinguished by layout alone. Nexus transfe
 
 ## Station mode
 
-Station mode is **off by default**. Enable it in Display or with `/mg station on` to show grids attached through locked connectors.
+Station mode is **off by default**. Enable it in Customize > Preferences or with `/mg station on` to show grids attached through locked connectors.
 
 Station mode belongs to the current grid/profile and defaults off on other ships. Docked grids with an unambiguous saved profile show their own damage outlines and report counts; unmatched grids remain context only. They never become part of the controlled ship's captured baseline. Rotor, hinge and piston subgrids are outside the current scope. Large docked groups have display limits; `/mg report` tells you when context is loading or limited.
 
@@ -102,12 +95,16 @@ The control panel has three sections: **Ship** for everyday viewing and damage r
 
 Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud, enter part of its title (required), and Search. Use Previous/Next and click a result to load it.
 
-## Development version 0.13.0
+## Development recovery and versions
 
-`master` contains the tested 0.12.6 release; `dev` contains the recovery and baseline-history changes awaiting game testing.
+`master` contains the tested 0.12.6 release; `dev` contains 0.14.0 recovery, version-management and UI changes awaiting game testing.
 
-After accepting recovery, Marigold remembers the surviving layout and its alignment to the original baseline. With automatic matching enabled, it can reuse that alignment after logout or transfer when the layout uniquely matches. Missing sections stay missing: recovery never captures the remnant as the new baseline. At least eight observed blocks and a compatible cockpit are needed for automatic matching. Identical ships, further major changes, or partial repairs may require recovery again. One accepted recovery is remembered per ship profile.
+After accepting recovery, Marigold remembers the surviving layout and its alignment to the original baseline. With automatic matching enabled, it can reuse that alignment after logout or transfer when the layout uniquely matches. Missing sections stay missing: recovery never captures the remnant as the new baseline. At least eight exact structural matches are needed for remembered recovery. Partial repairs and changed cockpit types are supported when the surrounding layout still matches. Identical ships, major changes or a relocated/reoriented cockpit may require recovery again. One accepted recovery is remembered per ship profile.
+
+Use Alignment tools for grid-cell translation and 90-degree X/Y/Z turns about the baseline origin before accepting recovery. If no candidate is found, the preview starts unverified at your seat.
 
 Capture/import automatically archive the previous baseline. Saved versions retain source, creation date and blueprint identity where available; old references show an unknown date. Restoring a version from a different anchor requires reviewing and accepting recovery alignment. A full version library blocks replacement until you remove an unwanted version, rather than discarding history.
 
-Before testing 0.13.0, copy `%APPDATA%/Marigold` somewhere safe with the game closed. This build reads older profiles but saves format 3, which 0.12.6 cannot read. To roll back, restore that complete pre-upgrade folder alongside the older plugin. Automated migration tests pass; in-game upgrade/reconnect tests remain in TESTING-TODO.md.
+In Saved versions, **Save new version** creates a named copy; **Rename version** uses the name field; **Replace version** copies the active baseline into the selected slot and preserves the overwritten version. Rename/use/replace/delete require confirmation. Replacement needs a free slot.
+
+Before testing 0.13.0 or later, copy `%APPDATA%/Marigold` somewhere safe with the game closed. These builds read older profiles but save format 3, which 0.12.6 cannot read. To roll back, restore that complete pre-upgrade folder alongside the older plugin. Automated migration tests pass; in-game upgrade/reconnect tests remain in TESTING-TODO.md.

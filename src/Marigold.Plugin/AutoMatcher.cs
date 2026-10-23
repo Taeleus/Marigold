@@ -28,9 +28,9 @@ namespace Marigold
                     if(recovered==null)continue;
                     foreach(var saved in recovered)
                     {
-                        if(saved.Id!=p.Id || saved.ReferenceId!=p.ReferenceId || saved.Anchor.Definition!=anchors[i].Definition || saved.Blocks==null || saved.Blocks.Length<8 || Math.Abs(saved.GridSize-gridSize)>.001)continue;
+                        if(saved.Id!=p.Id || saved.ReferenceId!=p.ReferenceId || saved.Blocks==null || saved.Blocks.Length<8 || Math.Abs(saved.GridSize-gridSize)>.001)continue;
                         var baselineInSeat=ProfileAlignment.Transform(p.Blocks,saved.Anchor,false);
-                        double score=Math.Max(Score(saved.Blocks,local),Score(baselineInSeat,local));
+                        double score=Math.Max(Score(saved.Blocks,local),Math.Max(Score(baselineInSeat,local),RepairScore(saved.Blocks,baselineInSeat,local)));
                         add(new AutoMatch{ProfileId=p.Id,AnchorIndex=i,BindingAnchor=ReferenceHistory.Compose(saved.Anchor,anchors[i]),Score=score,Recovered=true});
                     }
                 }
@@ -39,6 +39,15 @@ namespace Marigold
             if(matches.Count==0 || matches[0].Score<.90)return result;
             if(matches.Count>1 && matches[0].Score-matches[1].Score<.08){result.Message="Ambiguous profiles or cockpit alignment. Select manually.";return result;}
             result=matches[0];result.Message="Unique layout match; waiting for stable observations.";return result;
+        }
+        // A repair may add expected blocks without changing the accepted remnant's identity.
+        internal static double RepairScore(BlockSample[] remembered,BlockSample[] baseline,BlockSample[] current)
+        {
+            if(current.Length<8 || remembered.Length<8)return 0;
+            int retained=RecoveryMatcher.Score(remembered,current);
+            int expected=RecoveryMatcher.Score(baseline,current);
+            if(retained<8 || expected<8)return 0;
+            return Math.Min((double)retained/remembered.Length,(double)expected/current.Length);
         }
         private static double Score(BlockSample[] expected,BlockSample[] current)
         {return (double)Math.Min(expected.Length,current.Length)/Math.Max(expected.Length,current.Length)<.82?0:ProfileSuggestions.Score(expected,current);}

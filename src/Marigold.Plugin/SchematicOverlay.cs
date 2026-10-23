@@ -282,15 +282,19 @@ namespace Marigold
                 for(int group=0;group<2;group++){var styled=OutlineGeometry.Build(group==0?faded:highlighted,detail,frame);geometry.AddRange(styled.Points);for(int i=0;i<styled.Points.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(group==0?(byte)25:(byte)230);}}
                 if(frame.HasValue)foreach(var connected in station)
                 {
-                    var context=StationGeometry.Build(connected,category,frame.Value);geometry.AddRange(context);
-                    for(int i=0;i<context.Length/2;i++)kinds.Add(ChangeKind.Hull);
+                    for(int group=1;group<=3;group++)
+                    {
+                        var styledBoxes=StationGeometry.StyledBoxes(connected.Blocks,category,styles,(char)('0'+group));
+                        var context=StationGeometry.Build(connected,category,frame.Value,styledBoxes,detail,256);geometry.AddRange(context);
+                        for(int i=0;i<context.Length/2;i++){kinds.Add(ChangeKind.Hull);weights.Add(group==2?(byte)25:group==3?(byte)230:(byte)100);}
+                    }
                     if(connected.Baseline!=null)
                     {
                         var differences=SnapshotComparison.Compare(connected.Baseline,connected.Blocks);stationReports.Add(connected.Name+": "+differences.Summary);
                         foreach(ChangeKind kind in new[]{ChangeKind.Damaged,ChangeKind.NonFunctional,ChangeKind.Missing,ChangeKind.Added,ChangeKind.Replaced,ChangeKind.Unknown})
                         {
                             var changed=new List<Box3>();foreach(var change in differences.Changes)if(change.Kind==kind && DisplayFilter.StateMatches(kind,stateFilter) && DisplayFilter.CategoryMatches(change.Definition,category))changed.Add(change.Bounds);
-                            if(changed.Count==0)continue;var lines=StationGeometry.Build(connected,category,frame.Value,changed);geometry.AddRange(lines);for(int i=0;i<lines.Length/2;i++)kinds.Add(kind);
+                            if(changed.Count==0)continue;var lines=StationGeometry.Build(connected,category,frame.Value,changed,detail);geometry.AddRange(lines);for(int i=0;i<lines.Length/2;i++){kinds.Add(kind);weights.Add(100);}
                         }
                     }
                     else stationReports.Add(connected.Name+": no unambiguous baseline (context only).");
@@ -320,6 +324,7 @@ namespace Marigold
                     }
                     result.Report=comparison.Summary+". All matching missing regions outlined. Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
+                result.Report+="\nSchematic uses block envelopes, not model meshes. Coarse detail can merge small gaps; use High detail for inspection.";
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
                 while(weights.Count<kinds.Count)weights.Add(100);result.Weights=weights.ToArray();
                 result.Points=geometry.ToArray(); result.Kinds=kinds.ToArray(); result.ShadedMarkers=shaded.ToArray();

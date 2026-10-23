@@ -61,7 +61,7 @@ namespace Marigold
                 if(change!=null)combo.ItemSelected+=()=>change((int)combo.GetSelectedKey());Controls.Add(combo);return combo;
             }
             public void NotifyStatus(string text){Status(text);}
-            private void Status(string text){status=text;if(output!=null){output.Clear();output.AppendText(text);}}
+            private void Status(string text){status=T(text);if(output!=null){output.Clear();output.AppendText(status);}}
             private void Run(string command,bool destructive=false)
             {
                 if(destructive && confirm!=command){confirm=command;Status(T("Click the same action again to confirm. No changes yet."));return;}
@@ -76,7 +76,7 @@ namespace Marigold
             public override void RecreateControls(bool constructor)
             {
                 base.RecreateControls(constructor);pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
-                Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+PageNames[tab]);
+                Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+T(PageNames[tab]));
                 Button(-.28f,-.33f,Section==0?"[ Ship ]":"Ship",()=>Switch(0));Button(0,-.33f,Section==1?"[ Baseline ]":"Baseline",()=>Switch(1));Button(.28f,-.33f,Section==2?"[ Customize ]":"Customize",()=>Switch(9));
                 if(history.Count>0)Button(-.31f,.40f,"Back",Back);
                 if(tab!=13)Button(0,.40f,"Save display...",()=>Switch(13));
@@ -109,8 +109,8 @@ namespace Marigold
             }
             private void Baseline()
             {
-                string name;try{name=owner.SelectedProfile().Name;}catch(InvalidOperationException){name="None - capture your ship or import a blueprint.";}
-                Label(-.39f,-.25f,"Current baseline: "+name);
+                string name;try{name=owner.SelectedProfile().Name;}catch(InvalidOperationException){name=T("None - capture your ship or import a blueprint.");}
+                Label(-.39f,-.25f,T("Current baseline: ")+name);
                 Button(-.21f,-.17f,"Capture this ship",()=>Run("capture",true));Button(.21f,-.17f,"Import blueprint",()=>Switch(2));
                 Label(-.39f,-.105f,"Capture/import preserves the old baseline in Saved versions.");
                 MenuRow(-.03f,"Saved ships","Choose an existing baseline or detach it.",10);
@@ -234,7 +234,7 @@ namespace Marigold
                 Button(-.31f,.02f,"Damage overview",()=>{Run("isolate all");Run("filter faults");});Button(-.10f,.02f,"Propulsion",()=>Run("isolate thrusters,power,gas,control"));Button(.11f,.02f,"Conveyors",()=>Run("isolate conveyors,cargo"));Button(.32f,.02f,"Show all states",()=>Run("filter all"));
                 var style=Combo(-.16f,.12f,new[]{"hidden","wireframe","transparent","highlighted"},1);
                 Button(.21f,.12f,"Apply style",()=>{int index=(int)choice.GetSelectedKey();var values=owner.controls.SystemStyles.ToCharArray();if(index==0){for(int i=1;i<values.Length;i++)values[i]=(char)('0'+style.GetSelectedKey());}else values[index]=(char)('0'+style.GetSelectedKey());owner.controls.SystemStyles=new string(values);owner.RefreshReference("System presentation updated; damage markers retain their state colors.");Status(owner.comparisonReport);});
-                Label(-.39f,.19f,"Styles affect hull outlines; station uses visibility. Use Save display to keep changes.");
+                Label(-.39f,.19f,"Styles affect ship and docked hulls. Save display keeps changes.");
             }
             private string SystemName(string category)
             {
@@ -248,14 +248,15 @@ namespace Marigold
                 Label(-.39f,-.26f,"Current ship name");
                 var shipName=new MyGuiControlTextbox(new Vector2(-.12f,-.21f),profile.Name,maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(shipName);
                 Button(.32f,-.21f,"Rename ship",()=>{Status(owner.RevisionAction("rename",shipName.Text));RecreateControls(false);});
-                Label(-.39f,-.145f,"New version name (for example, Original or Before refit)");
+                Label(-.39f,-.145f,"Version name (for saving or renaming)");
                 var name=new MyGuiControlTextbox(new Vector2(-.12f,-.10f),"",maxLength:40,textScale:.65f){Size=new Vector2(.5f,.04f)};Controls.Add(name);
-                Button(.32f,-.10f,"Save version",()=>{Status(owner.RevisionAction("save",name.Text));RecreateControls(false);});
+                Button(.32f,-.10f,"Save new version",()=>{Status(owner.RevisionAction("save",name.Text));RecreateControls(false);});
                 var revisions=new List<ShipProfile>(owner.Revisions(profile).Profiles);var names=new List<string>();foreach(var r in revisions)names.Add((r.ReferenceId==profile.ReferenceId?"[Active] ":"")+r.Number+": "+r.Name+" | "+r.Source+" | "+(r.CreatedUtcTicks==0?"date unknown":new DateTime(r.CreatedUtcTicks,DateTimeKind.Utc).ToString("yyyy-MM-dd HH:mm")+" UTC"));
                 Label(-.39f,-.035f,"Saved versions");var selected=Combo(-.12f,.01f,names.ToArray(),0);
-                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id));if(verb=="load" && owner.recoveryIsRevision && owner.recoveryProfile!=null){string message=status;Switch(7);Status(message);}else RecreateControls(false);};
+                Action<string> revision=verb=>{int i=(int)selected.GetSelectedKey();if(i<0 || i>=revisions.Count){Status("Save or select a version first.");return;}string key=verb+revisions[i].Id;if(confirm!=key){confirm=key;Status("Click again to confirm "+verb+" of "+revisions[i].Name+".");return;}confirm=null;Status(owner.RevisionAction(verb,revisions[i].Id,name.Text));if(verb=="load" && owner.recoveryIsRevision && owner.recoveryProfile!=null){string message=status;Switch(7);Status(message);}else RecreateControls(false);};
                 Button(.32f,.01f,"Use version",()=>revision("load"));Button(.32f,.10f,"Delete version",()=>revision("delete"));
-                Label(-.39f,.18f,"Capture, import and restore preserve the previous baseline.");
+                Button(-.21f,.10f,"Rename version",()=>revision("rename-version"));Button(0,.10f,"Replace version",()=>revision("replace"));
+                Label(-.39f,.18f,"Replace copies the active baseline into the selected version.");
             }
             private void Alignment()
             {
@@ -263,8 +264,9 @@ namespace Marigold
                 Label(-.39f,-.18f,"Preview a recovery first. The saved baseline stays unchanged.");
                 Button(-.21f,-.08f,"X -",()=>Status(owner.RecoveryCommand("move x-")));Button(0,-.08f,"Y -",()=>Status(owner.RecoveryCommand("move y-")));Button(.21f,-.08f,"Z -",()=>Status(owner.RecoveryCommand("move z-")));
                 Button(-.21f,0,"X +",()=>Status(owner.RecoveryCommand("move x+")));Button(0,0,"Y +",()=>Status(owner.RecoveryCommand("move y+")));Button(.21f,0,"Z +",()=>Status(owner.RecoveryCommand("move z+")));
-                Button(-.21f,.10f,"Next alignment",()=>Run("recovery next"));Button(0,.10f,"Accept recovery",()=>Run("recovery accept",true));Button(.21f,.10f,"Cancel",()=>Run("recovery cancel"));
-                Label(-.39f,.18f,"At least 3 exact block matches are required to accept.");
+                Button(-.21f,.065f,"Rotate X 90",()=>Status(owner.RecoveryCommand("rotate x")));Button(0,.065f,"Rotate Y 90",()=>Status(owner.RecoveryCommand("rotate y")));Button(.21f,.065f,"Rotate Z 90",()=>Status(owner.RecoveryCommand("rotate z")));
+                Button(-.21f,.13f,"Next alignment",()=>Run("recovery next"));Button(0,.13f,"Accept recovery",()=>Run("recovery accept",true));Button(.21f,.13f,"Cancel",()=>Run("recovery cancel"));
+                Label(-.39f,.205f,"Turns use live-grid axes around the baseline origin; 3 matches required.");
             }
             private void Profiles()
             {
@@ -350,7 +352,8 @@ namespace Marigold
                     Label(-.39f,-.025f,"Or paste the path to a blueprint XML file:");
                     pathBox=new MyGuiControlTextbox(new Vector2(-.08f,.025f),path,maxLength:2048,textScale:.65f){Size=new Vector2(.60f,.04f)};Controls.Add(pathBox);
                     Button(.32f,.025f,"Load file",()=>{path=pathBox.Text;Run("blueprint load \""+path+"\"");});
-                    Label(-.39f,.12f,"After loading, choose the grid and its main cockpit.");return;
+                    Label(-.39f,.12f,"After loading, choose the grid and its main cockpit.");
+                    Label(-.39f,.18f,"XML only. For PB/archives, save a local copy in-game and select bp.sbc.");return;
                 }
                 var grids=new List<string>();foreach(var g in owner.blueprint.Grids)grids.Add(g.Name);
                 Label(-.39f,-.07f,"2. Choose the blueprint grid");

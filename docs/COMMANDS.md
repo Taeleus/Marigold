@@ -1,10 +1,10 @@
-# Marigold commands — 0.8
+# Marigold commands — 0.14.0
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
 ## Start and save a baseline
 
-Sit in the cockpit you want as the permanent alignment anchor. Run `/mg capture`; it creates the cockpit anchor automatically and assumes full health. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline.
+Sit in the cockpit you want as the permanent alignment anchor. Run `/mg capture`; it creates the cockpit anchor automatically and assumes full health. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline after preserving the old reference in Saved versions.
 
 Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold searches up to 16 cockpit candidates for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile load ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 90% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must be unchanged, and the current sample is rechecked before acceptance. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
 
@@ -24,7 +24,7 @@ Automatic matching is enabled by default. After reconnect or world transfer, con
 
 6. `/mg blueprint accept` saves the intended layout. `/mg blueprint cancel` leaves the original baseline intact. After cancel, the prepared grid remains available for another preview.
 
-Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; attached grids need future construct support. Unavailable mod definitions are skipped with an explicit count. Compound blocks, legacy quaternion-only orientations and supergrids remain unsupported. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
+Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; mechanical subgrids are excluded. Unavailable mod definitions are skipped with an explicit count. Compound blocks, legacy quaternion-only orientations and supergrids remain unsupported. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
 
 ## Display and diagnostics
 
@@ -32,7 +32,7 @@ Import uses installed block definitions for exact multi-cell bounds and cockpit 
 
 | --- | --- |
 
-| `/mg show`, `hide` | Show/hide schematic; hiding pauses diagram observation; automatic matching still runs |
+| `/mg show`, `hide` | Show/hide the entire HUD, including health bars; automatic matching still runs |
 
 | `/mg spin`, `reset` | Toggle rotation; restore default rotating view |
 
@@ -80,7 +80,7 @@ Station changes save to the selected ship profile, or remain session-local until
 
 Use `/mg ui` for Ship, Baseline and Customize. Capture creates an anchor and full-health baseline in one step. Profiles have stable numeric IDs; old GUIDs and `profile select` remain accepted. Clear removes only the baseline; Delete removes the profile.
 
-Local discovery includes nested folders (depth 16, 2,000 folders, 500 results) and skips linked folders. Cloud lists game-service XML `bp.sbc` files, including gzip; protobuf-only and Workshop downloads are not supported. Choose Load, a grid if needed, a matching cockpit, Preview, then Save profile. Lists update after preparation and a small live schematic stays visible beside the panel.
+Local discovery includes nested folders (depth 16, 2,000 folders, 500 results) and skips linked folders. Cloud lists game-service XML `bp.sbc` files, including gzip; protobuf-only and Workshop downloads are not supported. Choose Load, a grid if needed, a matching cockpit, Preview, then Use baseline. Lists update after preparation and a small live schematic stays visible beside the panel.
 
 Capture/clear/delete/recover and blueprint acceptance require a second identical panel click. Chat commands execute directly. Ship changes close the panel.
 
@@ -88,25 +88,34 @@ Customize > Shortcuts lets you assign shortcuts for cycle-system, cycle-marker a
 
 Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regions remain outlined regardless of individual marker pagination; category/state filters still apply.
 
-`/mg language en|es` changes UI label language. Newly added and diagnostic messages may remain English.
+`/mg language en|es` changes UI label language. Controls, headings and menu descriptions are translated; dynamic diagnostic messages may remain English.
 
-## 0.10 additions
+## Recovery, versions and customization
 
-`/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells, not screen directions. Acceptance requires three exact matches and never recaptures the baseline. Acceptance remembers the alignment and surviving layout locally for conservative automatic matching after reconnect. This requires auto matching on, at least eight blocks and a compatible cockpit; ambiguity or further major layout changes may require recovery again. Only the latest accepted recovery is retained per profile, tied to its baseline identity.
+`/mg profile force NUMBER` searches surviving-block alignments without requiring the original cockpit. Wait for a preview; use `/mg recovery next`, `accept` or `cancel`. UI Alignment tools adjust translation by live-grid cells and rotate by 90 degrees about live-grid X/Y/Z axes around the baseline origin. If no candidate is found, a clearly unverified manual starting point is available. Acceptance requires three exact matches and never recaptures the baseline. Acceptance remembers the alignment and surviving layout locally for conservative automatic matching after reconnect. This requires auto matching on, at least eight exact matches and a verifiable remembered layout; ambiguity or further major layout changes may require recovery again. Only the latest accepted recovery is retained per profile, tied to its baseline identity.
 
-`/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station context applies visibility, not category brightness.
+`/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station hulls use the same category visibility and brightness styles.
 
 Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time and toggles missing-block pulse. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
 Library saves independent named baselines. Capture/import and loading archive the previous active baseline when needed; deleting a revision leaves the active baseline intact. Versions show source/date and active identity. Cross-anchor restore opens a recovery preview and changes the active baseline only after acceptance. Limits: 16 revisions and 250,000 total blocks per library.
 
-Views accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
+Customize > Shortcuts accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
 
-Workshop cache reads local bp.sbc files in the current Steam library without downloading; PB-only/archived items are unsupported. Omitted blocks lists unavailable definitions. Structural completeness measures matching expected structure, not health. New labels may remain English.
+Workshop cache reads local bp.sbc files in the current Steam library without downloading; PB-only/archived items are unsupported. Omitted blocks lists unavailable definitions. Structural completeness measures matching expected structure, not health. Dynamic diagnostic responses may remain English.
 
 
-## 0.11 health bars
+## Health bars
 
-Display > Health bars provides eight independent bars: Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Older six- and seven-bar settings retain their existing layouts; new bars start disabled.
+Customize > Health bars provides eight independent bars: Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Older six- and seven-bar settings retain their existing layouts; new bars start disabled.
 
 Bars count baseline block states: healthy blue, damaged yellow, non-functional orange, missing/replaced expected blocks red, and unreadable gray. This is not summed integrity. New blocks are excluded; replacements retain the original system category. Tools includes welders, grinders, drills and ToolCore blocks; Utility covers categories without a dedicated bar. Filters/pagination and docked-grid context do not affect these controlled-grid totals. Preview baselines are labeled. No baseline or an empty system is shown as unavailable, never 100% healthy. Global Show/hide and normal HUD suppression also hide the bars.
+
+
+## Version controls and remembered matching
+
+Baseline > Saved versions: **Save new version** creates a named copy of the active baseline. **Rename version** uses the name input to rename the selected copy without changing its blocks. **Replace version** copies the active baseline into the selected slot and preserves the overwritten copy in another slot. Use/rename/replace/delete require a second click. A full library refuses replacement before overwriting anything; remove an unwanted version first.
+
+Remembered recovery accepts partial repairs when at least 90% of its saved remnant survives and at least 90% of observed blocks match the full baseline, with eight exact matches in each comparison. A changed cockpit type can match on surrounding structure. Ambiguity, auto-off, manual-detach and stable-observation safeguards remain. The original baseline and missing-block denominator never shrink to fit the remnant.
+
+The renderer shows block envelopes rather than model meshes. Coarse detail may merge small gaps; outer extents are clamped to the actual hull. Docked-grid styles share a 768-line hull budget per grid. Damage markers retain state colors. See [blueprint formats](BLUEPRINT-FORMATS.md) for XML support and PB/archive limitations.

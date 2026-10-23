@@ -30,7 +30,7 @@ namespace Marigold
         private ProfileStore recoveryBindingStore;
         private ProfileStore RecoveryBindings(){return recoveryBindingStore??(recoveryBindingStore=new ProfileStore(Path.Combine(DataRoot,"recovery")));}
         private void ArchiveBaseline(ShipProfile p){ReferenceHistory.Archive(Revisions(p),p);}
-        private string RevisionAction(string verb,string name)
+        private string RevisionAction(string verb,string name,string newName=null)
         {
             var p=SelectedProfile();var store=Revisions(p);
             if(verb=="rename"){var renamed=p.Copy();renamed.Name=SafeName(name);profileStore.Put(renamed);return "Profile renamed; number retained.";}
@@ -42,6 +42,18 @@ namespace Marigold
                 return "Saved version "+saved.Name+" is now identified as the active baseline.";
             }
             var revision=store.Find(name);
+            if(verb=="rename-version")
+            {
+                var renamed=ReferenceHistory.Rename(store,revision,SafeName(newName));
+                if(p.ReferenceId==revision.ReferenceId){var active=p.Copy();active.ReferenceName=renamed.Name;profileStore.Put(active);}
+                return "Version renamed; baseline contents unchanged.";
+            }
+            if(verb=="replace")
+            {
+                var replacement=ReferenceHistory.Replace(store,revision,p);
+                var active=p.Copy();active.ReferenceName=replacement.Name;profileStore.Put(active);
+                return "Selected version replaced with the active baseline; its previous contents remain in Saved versions.";
+            }
             if(verb=="delete"){store.Delete(revision.Id);return "Named revision deleted; active baseline unchanged.";}
             var updated=revision.Copy();updated.Id=p.Id;updated.Name=p.Name;updated.Station=p.Station;
             if(!ReferenceHistory.SameAnchor(p.Anchor,revision.Anchor))return StartRecovery(updated,true);

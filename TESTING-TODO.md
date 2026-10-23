@@ -312,3 +312,21 @@ Before upgrading: close the game and copy the entire `%APPDATA%/Marigold` folder
 - [ ] Leave control, change grids or cancel during recovery/version alignment. No late worker result should bind another ship or replace its baseline. Capture a new baseline during a pending preview and ensure stale acceptance is rejected.
 - [ ] Fill a version library to its limit (16 revisions / 250,000 total blocks). Replacement must fail clearly without losing the active baseline or deleting history. Remove an unwanted revision and retry.
 - [ ] Check profile backup recovery with copied test data, then restart. Verify recovered references, metadata and conservative matching; preserve the original pre-upgrade backup for rollback.
+
+
+## 0.14.0 dev - Recovery, versions, rendering and UI polish
+
+0.13.0 results above are still pending. This section adds checks; it does not replace your previous notes. 0.14.0 builds into artifacts/Marigold and is not deployed by the build. It uses the same format 3 as 0.13.0. Retain the full pre-0.13 backup when testing or rolling back to 0.12.6.
+
+- [ ] Accept recovery of a damaged ship, repair about half of its missing blocks, then reconnect. It should reuse the accepted alignment without recapturing; original missing blocks remain red. Repeat after full repair. Automatic matching still needs enough exact surviving structure.
+- [ ] Replace the recovery cockpit with a different type at the same grid position/orientation, then reconnect. With enough surrounding matches it should associate correctly. Try a relocated/rotated seat too: uncertain matching should wait for manual recovery rather than guess.
+- [ ] Add unrelated blocks, remove more remembered structure or introduce an identical saved profile. Ambiguous/insufficient matches must not silently attach. Auto-off, manual detach and original health-bar denominator must remain intact.
+- [ ] Recovery > Review alignment: Rotate X/Y/Z each turns 90 degrees about the baseline origin using live-grid axes. Four clicks restore the original orientation. Combine rotations with translation; accept/cancel, reconnect and check markers at asymmetric locations. Acceptance must still reject fewer than three exact matches.
+- [ ] With a profile that produces no automatic alignment, check the clearly unverified starting point and manual controls. Cancel leaves the baseline/binding unchanged. Do not accept a wrong alignment merely because three repeated blocks happen to match.
+- [ ] Saved versions: Save new version, select it, enter a different name and Rename version twice to confirm. Check name, active indicator and metadata after restart; its block contents must not change.
+- [ ] Make a new active baseline, select an older version and Replace version. First click only asks for confirmation. Second copies the active baseline into that slot and keeps a '(previous)' copy with the old contents. Load both to confirm the difference. Replacement at the library limit must refuse without overwriting.
+- [ ] Station mode: set Armor faint, Thrusters highlighted and another system hidden. Check main and connector-docked ships, including mixed grid sizes and multiple docked damaged ships. Hull styles should agree; damage markers retain yellow/orange/red independently. Switch styles during rebuild and reconnect.
+- [ ] Inspect a thin/long or irregular ship at Low/Medium/High detail. Outer geometry must not swell beyond actual block bounds. Slopes remain block envelopes; coarse detail can merge small gaps. Read the report's explanation and watch docked-display performance.
+- [ ] Open a .sbcB5, ZIP or .bin path: the message must clearly explain XML bp.sbc support. Search remains XML-only. Load normal XML and gzip XML, including local/Workshop/Cloud, and confirm existing imports still work and source files stay untouched.
+- [ ] Switch to Spanish: check all section tabs, page titles, menus, health/style selectors, clipboard controls, version/rotation buttons and preferences. Check truncation/overlap at your normal UI scale; save language and restart. Ship/version names must remain yours. Dynamic diagnostics may fall back to English.
+- [ ] Smoke-test capture, cross-anchor version restore, UI navigation and config import/export after these changes. No unchecked 0.13 or older test is considered passed by this build.
