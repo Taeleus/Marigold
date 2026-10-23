@@ -1,103 +1,112 @@
 # Marigold
 
-A ship schematic and damage display for **Space Engineers 1**, built for **Pulsar Legacy**.
+**See your ship. Find the damage. Know what's missing.**
 
-Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
+Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-**Current version: 0.12.5 prototype.** The 0.12.2 blueprint-browser fixes passed user testing. Remaining recovery edge cases and the new Tools health bar need in-game checks. Track those checks in [TESTING-TODO.md](TESTING-TODO.md).
+This page describes **0.12.6**, the version on `master`. Marigold is still a prototype; newer features are being developed on [`dev`](https://github.com/Taeleus/Marigold/tree/dev).
 
-## Get started
+## Your first ship
 
-1. Enable **Marigold (prototype)** in Pulsar Legacy and launch the game.
-2. Sit in the cockpit you want to use as your ship's reference point.
-3. Type **`/mg ui`** to open Marigold's controls.
-4. In **Profiles**, choose **Capture** to save the current ship as your reference. Click Capture again when prompted to confirm.
-5. Close the panel to see the schematic. Damage and missing blocks update as the ship changes.
+With Marigold installed and enabled:
 
-Prefer chat commands? Use `/mg capture`; it saves the seated cockpit as the anchor automatically. Captured blocks are treated as fully repaired, so existing damage remains visible. `/mg` shows help, and `/marigold` works as an alias. `/m` is reserved by the game.
+1. Sit in the cockpit you want to use as the ship's orientation reference.
+2. Type **`/mg ui`** to open the controls.
+3. Open **Baseline**, choose **Capture this ship**, then click again to confirm.
+4. Close the panel. The schematic now compares your ship against that saved layout.
 
-## What the colors mean
+A **baseline** is the layout your ship should have. Capture records the blocks currently present and treats them as fully repaired, so existing damage still shows. Blocks already missing when you capture cannot be included; use an older saved baseline or a blueprint to account for those.
+
+The baseline stays fixed as your ship takes damage or gets repaired. Capture again only when you want to make the current layout the new reference. Before a refit, use **Baseline > Saved versions** to keep a named copy of the old layout.
+
+## Read the damage
 
 | Color | Meaning |
 | --- | --- |
-| Faint yellow | Damaged or degraded |
+| Faint yellow | Damaged |
 | Orange | Too damaged or unfinished to function |
-| Pulsing red | Missing from the saved reference |
-| Green | Added since the reference |
-| Purple | Replaced with a different block or orientation |
-| Gray | Block health could not be read |
+| Pulsing red | Missing from the saved layout |
+| Green | Added since the baseline |
+| Purple | Replaced by a different block or orientation |
+| Gray | Health information is unavailable |
 
-Missing sections remain outlined across marker pages; individual shaded markers are paginated. Turning spin off snaps to a fixed isometric view.
+A block detached from your ship counts as missing even if it is floating nearby. Switching a block off or losing power does not make it orange.
 
-A detached block counts as missing from the observed grid, even if it still exists nearby. A block being switched off or unpowered does not make it structurally non-functional.
+The display is a schematic built from block bounds, rather than a detailed model. Missing sections remain outlined even when individual damage markers span multiple pages.
 
-## Use the control panel
+## Make the HUD yours
 
-- **Display:** choose systems and damage states to show, adjust detail and layout, or toggle station mode and automatic profile matching.
-- **Profiles:** create or select a reference, capture changes, detach a profile, or view a report. Clearing, deleting and replacing saved data requires a second click in the panel.
-- **Blueprints:** browse nested local folders or cloud XML blueprints, load one, choose its grid, then its matching cockpit. A single grid prepares automatically. Preview the alignment, then choose **Save profile**. No prior capture is needed. Unavailable mod blocks are omitted with a count; a usable matching cockpit is still required.
-- **Views:** snap to a side, zoom, rotate, browse marker pages, or assign shortcuts to cycle systems, cycle markers and toggle expanded view. Shortcuts start unbound.
+Open **`/mg ui`** for three main sections:
 
-New in 0.10:
+- **Ship:** show or hide the HUD, pause rotation, choose systems and damage states, change views or zoom, and read the damage report.
+- **Baseline:** capture your ship, import a blueprint, select saved ships, manage saved versions and recover alignment after cockpit loss.
+- **Customize:** adjust the display's position, size, opacity and colors; configure health bars, system styles, shortcuts and preferences.
 
-- **Profiles > Force apply:** recover alignment from surviving blocks after losing the original cockpit. Inspect the preview, cycle candidates or adjust grid-cell translation in Alignment tools, then accept. At least three exact matches are required; ambiguous patterns are not proof of identity. The baseline stays unchanged. Force apply may be needed again after reconnect.
-- **Customize / HUD layout and Colors:** position, size, opacity, colors/pulse, manual rotation, named presets, and global/per-ship display saves.
-- **Systems:** combine categories and choose hidden, wireframe, faint or highlighted hull outlines. Damage markers retain state colors; station context follows visibility.
-- **Baseline / Saved versions:** rename profiles and save/load/delete named baselines. Captures/imports do not change named copies. Revision loading requires the same saved anchor and archives the previous active baseline when needed. Limits are 16 revisions and 250,000 total blocks per library.
-- **Customize / Shortcuts:** punctuation and press-to-bind shortcuts, including Show/hide and Open panel. Existing shortcuts migrate.
-- **Blueprints:** locally cached Workshop XML discovery and a list of omitted definition names/counts. Protobuf-only and archived entries remain unsupported.
-- **Reports:** structural completeness and expected/observed/matching counts, distinct from health.
+Views follow your saved cockpit orientation. Combine system filters to focus on propulsion, cargo, tools or **Offensive** blocks. WeaponCore and ToolCore registrations help recognize supported modded weapons and tools.
 
-The interface has English and Spanish labels; new controls may fall back to English. Diagnostic messages remain in English. Use **Save settings** to keep ordinary display changes; automatic matching and language choices save immediately. Station mode saves with the ship profile. The panel has a small live schematic preview.
+Use **Save display** to save your setup as the default, for this ship, or as a named preset. Closing the panel alone does not save display edits. **Customize > Share config** lets you copy and paste layouts, health bars, colors and filters through the clipboard; ship baselines and shortcuts are not included.
 
-## Optional health bars
+Shortcuts are optional and start unbound. The interface offers English and Spanish, with English fallback for some controls and diagnostic messages.
 
-Open **/mg ui > Customize > Health bars**. Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools bars are all hidden by default. Enable the ones you want, then set each bar's position, width, height, opacity and label. Save global or Save ship to keep them; named display presets include them too.
+### Optional health bars
 
-Each bar runs **blue (healthy), yellow (damaged), orange (non-functional), red (missing expected blocks), then gray (unreadable)** from left to right. Segment widths count baseline blocks equally, not hit points. Replacements count red because the expected block is absent; additions do not inflate the denominator. Tools groups welders, grinders, drills and ToolCore blocks; Utility contains the remaining systems, including conveyors, tanks, mechanical blocks, production and controls.
+Under **Customize > Health bars**, enable any of these: **Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools**. All start hidden. Each has its own position, size, opacity and label settings.
 
-Bars ignore schematic filters, marker pages and docked context. They use the controlled grid's saved reference; recovery/blueprint previews are labeled. No baseline or no blocks in a system shows an empty bar with an explanation. The normal Show/hide command hides the whole Marigold HUD, including bars. Damage colors follow Customize / Colors; healthy is blue.
+Bars run from **blue → yellow → orange → red → gray**, showing healthy, damaged, non-functional, missing and unreadable blocks. Segments count blocks equally, not hit points. Added blocks do not improve the baseline score, and replacing an expected block counts as missing that original block.
 
-## Returning to your ship
+Use **Customize > HUD layout > Hide ship display** to keep the bars without the schematic. **Hide HUD** hides everything. Bars describe the controlled ship's baseline regardless of schematic filters or docked ships.
 
-Profiles survive game restarts and server reconnects. Automatic matching is on by default and tries to select a unique saved layout once the ship has loaded. It preserves the saved baseline rather than capturing a new one.
+## Use a blueprint as your baseline
 
-Profiles have short numbers: use `/mg profiles` to list them and `/mg profile load 1` to load one. Clearing a baseline keeps its profile and number. If matching is uncertain, load a profile yourself from the corresponding cockpit. `/mg auto status` explains the current state; `/mg auto off` disables automatic matching persistently. `/mg profile detach` undoes a binding and prevents it from being selected again for that grid during the session, unless you use `/mg auto retry`.
+Open **Baseline > Import blueprint > Find blueprint**. Choose any combination of **Local, Workshop and Cloud**, enter part of the blueprint's title, and search. Workshop results come from files already cached on your computer.
 
-Identical copies cannot reliably be distinguished by layout alone. Nexus transfer handling uses conservative client-side matching; it passed the reported transfer tests, but ambiguous or heavily altered ships may still need manual loading.
+Load a result, choose its grid and matching cockpit, then **Preview** the alignment before selecting **Use baseline**. You can also enter the path to an XML blueprint file. **Omitted blocks** lists definitions unavailable in your current game.
 
-## Station mode
+Marigold supports plain or gzip-compressed XML `bp.sbc` files. Protobuf-only and archived blueprints are not supported. Blueprint scripts, inventories and ownership are never applied, and source files are never modified.
 
-Station mode is **off by default**. Enable it in Display or with `/mg station on` to show grids attached through locked connectors.
+## Come back to your ship
 
-Station mode belongs to the current grid/profile and defaults off on other ships. Docked grids with an unambiguous saved profile show their own damage outlines and report counts; unmatched grids remain context only. They never become part of the controlled ship's captured baseline. Rotor, hinge and piston subgrids are outside the current scope. Large docked groups have display limits; `/mg report` tells you when context is loading or limited.
+Saved profiles survive restarts and reconnects. Automatic matching tries to recognize a unique saved layout after the ship loads, including after server transfers. It does not capture a fresh baseline or erase missing sections.
 
-## Files and useful links
+Identical ships and heavily changed layouts may need manual selection in **Baseline > Saved ships**. Automatic matching can be disabled under **Customize > Preferences**.
 
-Profiles and preferences are stored locally in `%APPDATA%/Marigold`, with backups. Blueprint files are read-only; Marigold does not spawn blocks, run blueprint scripts or edit the world.
+If the original cockpit is gone, use **Baseline > Recovery tools** to preview alignment from surviving blocks. Inspect the result, adjust it if needed, and accept or cancel. In 0.12.6, this recovery alignment may need to be applied again after reconnecting. Saved versions can only be restored when their saved anchors match.
 
-- [All commands and detailed behavior](docs/COMMANDS.md)
-- [Testing to-do](TESTING-TODO.md)
-- [Roadmap and release status](ROADMAP.md)
-- [Release preparation](docs/RELEASE.md)
-- [Earlier development notes](docs/DEVELOPMENT-HISTORY.md)
+### Connector-docked ships
 
-## Build and install
+Enable **Show connector-docked ships** under **Customize > Preferences** to turn on station mode for the current ship. It is **off by default**.
 
-Development needs a .NET SDK, .NET Framework 4.8 reference assemblies, and a local Space Engineers installation. Automated checks currently target .NET 10; the plugin itself targets .NET Framework 4.8.
+Connected grids with a matching saved profile show their own damage outlines and report counts. Others appear as context. They do not become part of your ship's baseline or health bars. Rotor, hinge and piston subgrids are excluded.
+
+## Install
+
+Marigold targets **Pulsar Legacy / .NET Framework 4.8**.
+
+1. Close Space Engineers.
+2. Copy the built package's `plugin.dll`, `plugin.pdb` and `plugin.xml` into `%APPDATA%/Pulsar/Legacy/Local/Marigold` (an existing `MarigoldDev` folder also works).
+3. Start the game through Pulsar Legacy and enable Marigold. Restart if prompted.
+
+Enable only one Marigold installation at a time. Profiles and preferences live in **`%APPDATA%/Marigold`**; keep a copy of that folder before upgrading or moving computers.
+
+<details>
+<summary>Build a package from source</summary>
+
+Clone this repository and open PowerShell in its folder. Building requires a .NET SDK capable of running the .NET 10 checks, .NET Framework 4.8 reference assemblies and a local Space Engineers installation.
 
 ```powershell
 .\build.ps1
-# If your game is installed elsewhere:
+# Or specify your game's Bin64 folder:
 .\build.ps1 -Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'
 ```
 
-The build creates `artifacts/Marigold` with `plugin.dll`, `plugin.pdb` and `plugin.xml`. With the game closed, copy these into a folder such as `%APPDATA%/Pulsar/Legacy/Local/MarigoldDev`, enable the plugin and restart. Avoid enabling duplicate source and binary installations. Building alone never deploys or launches the game.
+The package is written to `artifacts/Marigold`. Building does not install the plugin or launch the game. The plugin itself targets .NET Framework 4.8; the automated checks use .NET 10.
 
-`verify-source.ps1` also compiles the production source selection without local-build defines. `prepare-release.ps1` prepares a commit-pinned PluginHub manifest after source changes are committed. These checks do not replace loading the source package in Pulsar or completing the in-game checklist.
+</details>
 
-Offensive recognizes loaded weapon definitions and weapon-targeting metadata, plus WeaponCore registrations when available. This includes weapons built on conveyor-sorter types. Existing captures need no conversion. A mod registering a utility device as a WeaponCore weapon may include that device in Offensive.
+## Help and feedback
 
-The control panel has three sections: **Ship** for everyday viewing and damage reports; **Baseline** for captures, blueprints, saved ships and recovery; **Customize** for layout, colors, health bars, filters, shortcuts and preferences. **Save display** opens the shared save/restore screen for defaults, this ship and named presets. Use **Back** to return to your previous page.
+Most actions are available through **`/mg ui`**. For chat commands, start with `/mg` or read the [command reference](docs/COMMANDS.md). `/marigold` is an alias; `/m` belongs to the game's whisper command.
 
-Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any combination of Local, Workshop and Cloud, enter part of its title (or leave blank), and Search. Use Previous/Next and click a result to load it.
+Found a problem? [Open an issue](https://github.com/Taeleus/Marigold/issues) with your Marigold version, steps to reproduce it, relevant mods and a screenshot if helpful.
+
+For project progress, see the [roadmap](ROADMAP.md) and [testing checklist](TESTING-TODO.md).
