@@ -213,6 +213,7 @@ namespace Marigold
             {"None - capture your ship or import a blueprint.","Ninguna: captura tu nave o importa un plano."}
             ,{"Recovery preview - inspect the ship above, adjust below","Recuperación: inspecciona la nave arriba y ajusta abajo"}
             ,{"Other candidate","Otra propuesta"}
+            ,{"Drag the preview to look around; buttons adjust the baseline","Arrastra la vista para inspeccionar; los botones ajustan la referencia"}
         };
         public static string Get(string language,string text)
         {

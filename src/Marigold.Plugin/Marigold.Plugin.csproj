@@ -7,7 +7,7 @@
     <LangVersion>7.3</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <Version>0.14.1</Version>
+    <Version>0.14.2</Version>
     <DefineConstants>$(DefineConstants);LOCAL_BUILD</DefineConstants>
     <Bin64 Condition="'$(Bin64)' == ''">D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</Bin64>
   </PropertyGroup>

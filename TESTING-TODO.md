@@ -365,3 +365,10 @@ Implemented the recovery-layout feedback above. Earlier results and notes are pr
 - [ ] Accept still requires confirmation; changing alignment after the first click resets confirmation. Cancel and successful acceptance return to Recovery tools. Back/Close must restore normal HUD size/position, health bars, view/zoom and spin preference.
 - [ ] Hide the ordinary schematic but leave health bars enabled, then start recovery. The recovery preview should still appear; bars stay out of its way temporarily and return afterward. Check a cross-anchor saved-version restore uses the same focused page.
 - [ ] Restart and verify your saved HUD layout is unchanged. The recovery camera/layout must not be saved into defaults, ship settings or presets.
+
+
+## 0.14.2 - Drag to inspect recovery
+
+- [ ] Hold the left mouse button inside the recovery image and drag horizontally/vertically. Only the camera should rotate; match count and baseline alignment must stay unchanged. Release, leave/reopen the page, and switch focus: no stuck dragging.
+- [ ] Start a click outside the image or on X/Y/Z adjustment buttons: it must not start camera dragging. Drag after Top/Left, then Reset view and zoom. Check sensitivity at your resolution.
+- [ ] Accept/cancel and close the panel. Ordinary HUD camera/layout and saved settings must remain unchanged. Baseline adjustments still use the buttons.

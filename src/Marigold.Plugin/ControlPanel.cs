@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Sandbox.Graphics;
 using Sandbox.Graphics.GUI;
 using VRage.Utils;
 using VRageMath;
@@ -38,6 +39,7 @@ namespace Marigold
             public void NotifyBlueprint(string message){Status(message);refreshBlueprint=true;}
             public bool RecoveryFocus {get{return tab==7;}}
             public readonly SchematicControls RecoveryView=new SchematicControls();
+            private bool draggingRecovery;private Vector2 recoveryMouse;
             private int healthBarSelected;
             private bool browseLocal=true,browseWorkshop,browseCloud;private string searchText="";private int browsePage;
             private int captureShortcut=-1;private MyGuiControlTextbox shortcutBox;
@@ -77,7 +79,7 @@ namespace Marigold
             {Button(-.28f,y,title,()=>Switch(next));Controls.Add(new MyGuiControlLabel(new Vector2(-.15f,y),text:T(description),textScale:.60f,maxWidth:.54f,isAutoEllipsisEnabled:true));}
             public override void RecreateControls(bool constructor)
             {
-                base.RecreateControls(constructor);pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
+                base.RecreateControls(constructor);draggingRecovery=false;pathBox=null;blueprintSearchBox=null;blueprintResultButtons=null;blueprintPageLabel=null;captureShortcut=-1;shortcutBox=null;
                 Label(-.4f,-.40f,"Marigold "+typeof(Plugin).Assembly.GetName().Version.ToString(3)+"  /  "+T(PageNames[tab]));
                 if(RecoveryFocus)
                 {
@@ -269,7 +271,7 @@ namespace Marigold
             }
             private void Alignment()
             {
-                Label(-.39f,-.345f,"Recovery preview - inspect the ship above, adjust below");
+                Label(-.39f,-.345f,"Drag the preview to look around; buttons adjust the baseline");
                 Button(-.30f,.09f,"X -",()=>AdjustRecovery("move x-"),.12f);Button(-.17f,.09f,"X +",()=>AdjustRecovery("move x+"),.12f);
                 Button(-.04f,.09f,"Y -",()=>AdjustRecovery("move y-"),.12f);Button(.09f,.09f,"Y +",()=>AdjustRecovery("move y+"),.12f);
                 Button(.22f,.09f,"Z -",()=>AdjustRecovery("move z-"),.12f);Button(.35f,.09f,"Z +",()=>AdjustRecovery("move z+"),.12f);
@@ -382,6 +384,22 @@ namespace Marigold
             public override bool Draw(){bool visible=base.Draw();if(visible)owner.DrawSafely();return visible;}
             public override bool Update(bool hasFocus)
             {
+                var mouseInput=VRage.Input.MyInput.Static;
+                if(!hasFocus || !RecoveryFocus || mouseInput==null || !mouseInput.IsLeftMousePressed())draggingRecovery=false;
+                else
+                {
+                    var cursor=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(MyGuiManager.MouseCursorPosition);
+                    var size=MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f,.37f));float side=Math.Min(size.X,size.Y);
+                    var center=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f,.365f));
+                    if(mouseInput.IsNewLeftMousePressed() && Math.Abs(cursor.X-center.X)<=side/2 && Math.Abs(cursor.Y-center.Y)<=side/2)
+                    {draggingRecovery=true;recoveryMouse=cursor;}
+                    if(draggingRecovery)
+                    {
+                        var delta=cursor-recoveryMouse;recoveryMouse=cursor;
+                        // Independent inspection camera: never modify the recovery anchor or saved HUD.
+                        if(side>0 && delta.LengthSquared()>0)RecoveryView.RotateView(delta.X/side*Math.PI,-delta.Y/side*Math.PI);
+                    }
+                }
                 if(hasFocus && captureShortcut>=0 && VRage.Input.MyInput.Static!=null)
                 {
                     var input=VRage.Input.MyInput.Static;
