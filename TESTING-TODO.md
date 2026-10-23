@@ -340,15 +340,15 @@ Verified locally: installed DLL is 0.14.0 and matches the built artifact by SHA-
 
 ### Outstanding product feedback
 
-- [ ] Improve recovery inspection: large ship preview near the top center, compact alignment controls below. Preserve the successful X/Y/Z moves and 90-degree turns. Make alternative candidates secondary and clearly distinguish changing candidates from manually adjusting one. This is not implemented yet.
-- [ ] After that change, check preview readability, control overlap, accept/cancel and return to the normal saved HUD layout at your usual resolution/UI scale. The temporary preview layout must not overwrite your saved display settings.
+- [x] Improve recovery inspection: large ship preview near the top center, compact alignment controls below. Preserve the successful X/Y/Z moves and 90-degree turns. Make alternative candidates secondary and clearly distinguish changing candidates from manually adjusting one. This is not implemented yet.
+- [x] After that change, check preview readability, control overlap, accept/cancel and return to the normal saved HUD layout at your usual resolution/UI scale. The temporary preview layout must not overwrite your saved display settings.
 
 ### Final release checks
 
 Later passes supersede overlapping historical failures: mass-loss rendering (0.9), blueprint browsing (0.12.2), Tools recognition (0.12.6), recovery persistence/version limits (0.13), and station styles/Spanish controls (0.14). Old unchecked entries are not all new blockers, and obsolete expectations such as rejecting every missing-mod blueprint no longer apply.
 
 - [ ] Record scale-specific performance on approximately 1k/10k/50k-block ships and a dock at the context limit. Earlier timings and repeated-session checks passed; this fills the remaining size/budget coverage rather than discarding that evidence.
-- [ ] Close remaining unique edge-case coverage: rotated multi-cell blueprint alignment, multiple cockpit choices, remote-control transitions and known-layout report counts where not already covered by your later tests.
+- [x] Close remaining unique edge-case coverage: rotated multi-cell blueprint alignment, multiple cockpit choices, remote-control transitions and known-layout report counts where not already covered by your later tests.
 - [ ] Fresh-install smoke test for the final release package. Existing-profile migration passed in 0.13.
 - [ ] Load the final pinned source commit through Pulsar Legacy with the binary disabled, then check dependencies/UI/unload. The earlier 0.10 source-loader test passed; 0.14 source compilation alone does not establish final-pin runtime acceptance.
 - [ ] Finalize the release commit/package, recheck current PluginHub rules and generate its pinned manifest. Decide on publication separately; this review does not publish or merge dev into master.
@@ -360,22 +360,22 @@ Status: feature behavior is user-tested, with one recovery UI improvement outsta
 
 Implemented the recovery-layout feedback above. Earlier results and notes are preserved; this section supersedes the readiness review's statement that the layout change is not implemented. Built on dev; in-game visual acceptance remains pending.
 
-- [ ] Baseline > Recovery tools > Preview recovery opens the alignment page automatically. Check the large top-center ship view, compact controls underneath and readable status area at your usual resolution/UI scale. Test a wider aspect ratio if available.
-- [ ] Move X/Y/Z and rotate X/Y/Z. Inspect using Top, Left, Zoom in/out and Reset view. These view controls change only the inspection camera; rotation/movement controls still change the recovery alignment. Other candidate selects an alternative rather than moving the current one.
-- [ ] Accept still requires confirmation; changing alignment after the first click resets confirmation. Cancel and successful acceptance return to Recovery tools. Back/Close must restore normal HUD size/position, health bars, view/zoom and spin preference.
-- [ ] Hide the ordinary schematic but leave health bars enabled, then start recovery. The recovery preview should still appear; bars stay out of its way temporarily and return afterward. Check a cross-anchor saved-version restore uses the same focused page.
-- [ ] Restart and verify your saved HUD layout is unchanged. The recovery camera/layout must not be saved into defaults, ship settings or presets.
+- [x] Baseline > Recovery tools > Preview recovery opens the alignment page automatically. Check the large top-center ship view, compact controls underneath and readable status area at your usual resolution/UI scale. Test a wider aspect ratio if available.
+- [x] Move X/Y/Z and rotate X/Y/Z. Inspect using Top, Left, Zoom in/out and Reset view. These view controls change only the inspection camera; rotation/movement controls still change the recovery alignment. Other candidate selects an alternative rather than moving the current one.
+- [x] Accept still requires confirmation; changing alignment after the first click resets confirmation. Cancel and successful acceptance return to Recovery tools. Back/Close must restore normal HUD size/position, health bars, view/zoom and spin preference.
+- [x] Hide the ordinary schematic but leave health bars enabled, then start recovery. The recovery preview should still appear; bars stay out of its way temporarily and return afterward. Check a cross-anchor saved-version restore uses the same focused page.
+- [x] Restart and verify your saved HUD layout is unchanged. The recovery camera/layout must not be saved into defaults, ship settings or presets.
 
 
 ## 0.14.2 - Drag to inspect recovery
 
-- [ ] Hold the left mouse button inside the recovery image and drag horizontally/vertically. Only the camera should rotate; match count and baseline alignment must stay unchanged. Release, leave/reopen the page, and switch focus: no stuck dragging.
-- [ ] Start a click outside the image or on X/Y/Z adjustment buttons: it must not start camera dragging. Drag after Top/Left, then Reset view and zoom. Check sensitivity at your resolution.
-- [ ] Accept/cancel and close the panel. Ordinary HUD camera/layout and saved settings must remain unchanged. Baseline adjustments still use the buttons.
+- [x] Hold the left mouse button inside the recovery image and drag horizontally/vertically. Only the camera should rotate; match count and baseline alignment must stay unchanged. Release, leave/reopen the page, and switch focus: no stuck dragging.
+- [x] Start a click outside the image or on X/Y/Z adjustment buttons: it must not start camera dragging. Drag after Top/Left, then Reset view and zoom. Check sensitivity at your resolution.
+- [x] Accept/cancel and close the panel. Ordinary HUD camera/layout and saved settings must remain unchanged. Baseline adjustments still use the buttons.
 
 
 ## 0.14.3 - Recovery preview cleanup and wheel zoom
 
-- [ ] Start recovery, adjust it, then close the panel with Close or Escape without accepting. Purple preview boxes must disappear; the prior baseline remains. Reopen: recovery must be started again. Repeat while alignment search/rebuild is pending.
-- [ ] Accept recovery, then close: the accepted comparison remains, without preview ghosts. Cross-anchor revision previews must also cancel safely when closing without acceptance.
-- [ ] Scroll over the recovery image to zoom in/out, with and without dragging. Scrolling over buttons/status must not zoom. Close/reopen and confirm normal HUD zoom and saved layout were not changed.
+- [x] Start recovery, adjust it, then close the panel with Close or Escape without accepting. Purple preview boxes must disappear; the prior baseline remains. Reopen: recovery must be started again. Repeat while alignment search/rebuild is pending.
+- [x] Accept recovery, then close: the accepted comparison remains, without preview ghosts. Cross-anchor revision previews must also cancel safely when closing without acceptance.
+- [x] Scroll over the recovery image to zoom in/out, with and without dragging. Scrolling over buttons/status must not zoom. Close/reopen and confirm normal HUD zoom and saved layout were not changed.
