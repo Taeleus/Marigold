@@ -445,7 +445,7 @@ namespace Marigold
                 double now=clock.Elapsed.TotalSeconds, elapsed=Math.Min(0.1, now-lastTime);
                 lastTime=now;
                 if(!controls.Visible) return;
-                if(controls.Spin) controls.Yaw=(controls.Yaw+elapsed*0.25)%(Math.PI*2);
+                if(controls.Spin && !(panel?.RecoveryFocus??false)) controls.Yaw=(controls.Yaw+elapsed*0.25)%(Math.PI*2);
                 if(pending!=null && pending.IsCompleted)
                 {
                     var result=pending.Result;
@@ -496,17 +496,27 @@ namespace Marigold
             {
                 long drawStart=Stopwatch.GetTimestamp();
                 Vector2 screen=MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One,true);
-                if(controls.SchematicVisible)
+                bool recoveryFocus=panel?.RecoveryFocus??false;
+                var view=recoveryFocus?panel.RecoveryView:controls;
+                if(controls.SchematicVisible || recoveryFocus)
                 {
                 float side=panel!=null?Math.Min(screen.X*.14f,screen.Y*.18f):controls.Expanded?Math.Min(screen.X*.6f,screen.Y*.7f*(float)(controls.Appearance.Size/.32)):Math.Min(screen.X*.6f,screen.Y*(float)controls.Appearance.Size);
                 float left=panel!=null?8:controls.Expanded?(screen.X-side)/2:8+(screen.X-side-24)*(float)controls.Appearance.X, top=panel!=null?(screen.Y-side)/2:8+(screen.Y-side-65)*(float)controls.Appearance.Y;
+                if(recoveryFocus)
+                {
+                    // Use the GUI safe area so preview and controls align on wide screens.
+                    var previewSize=MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f,.37f));
+                    side=Math.Min(previewSize.X,previewSize.Y);
+                    var previewCenter=MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f,.365f));
+                    left=previewCenter.X-side/2;top=previewCenter.Y-side/2;
+                }
                 var panelRect=new RectangleF(left-8,top-8,side+16,side+16);
                 MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,(byte)(255*controls.Appearance.Background)),0,false,false);
                 float half=side/2;
                 for(int i=0;i<points.Length;i++)
-                    rotated[i]=controls.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
+                    rotated[i]=view.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
                 byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*Math.Sin(clock.Elapsed.TotalSeconds*Math.PI));
-                MarkerFill.Build(rotated,shadedMarkers,controls.Zoom,side,fillBands);
+                MarkerFill.Build(rotated,shadedMarkers,view.Zoom,side,fillBands);
                 foreach(var band in fillBands)
                 {
                     var fill=new RectangleF(left+half+(float)band.X*half,top+half+(float)band.Y*half,
@@ -519,7 +529,7 @@ namespace Marigold
                 for(int b=0;b<points.Length;b+=2)
                     {
                         var a=rotated[b]; var c=rotated[b+1];
-                        double x0=a.X*controls.Zoom,y0=-a.Y*controls.Zoom,x1=c.X*controls.Zoom,y1=-c.Y*controls.Zoom;
+                        double x0=a.X*view.Zoom,y0=-a.Y*view.Zoom,x1=c.X*view.Zoom,y1=-c.Y*view.Zoom;
                         if(!SchematicGeometry.Clip(ref x0,ref y0,ref x1,ref y1))continue;
                         var from=new Vector2(left+half+(float)x0*half,top+half+(float)y0*half);
                         var to=new Vector2(left+half+(float)x1*half,top+half+(float)y1*half);
@@ -527,11 +537,11 @@ namespace Marigold
                         var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y)/2-0.5f,length,1);
                         MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]),(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
-                MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
+                if(!recoveryFocus)MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
                     useFullClientArea:true,maxTextWidth:controls.Expanded?.65f:.28f);
                 if(controls.Expanded && panel==null)MyGuiManager.DrawString("White",controls.Mode+" | "+controls.Category.Replace("weapons","Offensive")+" | "+controls.StateFilter+" | /mg report for counts",new Vector2((left-8)/screen.X,(top+side+32)/screen.Y),.5f,useFullClientArea:true,maxTextWidth:.65f);
                 }
-                DrawHealthBars(screen);
+                if(!recoveryFocus)DrawHealthBars(screen);
                 double drawMs=(Stopwatch.GetTimestamp()-drawStart)*1000.0/Stopwatch.Frequency;
                 if(drawSamples>=600) { drawSamples=0; drawTotalMs=drawMaxMs=0; }
                 drawSamples++; drawTotalMs+=drawMs; drawMaxMs=Math.Max(drawMaxMs,drawMs);

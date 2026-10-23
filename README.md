@@ -4,7 +4,7 @@ A ship schematic and damage display for **Space Engineers 1**, built for **Pulsa
 
 Marigold shows the grid you are piloting and compares it with a saved reference. Spot damaged or missing blocks, inspect your ship from cockpit-relative views, and use a blueprint as the layout your ship should have.
 
-**Stable: 0.12.6. Development: 0.14.0.** Development builds need the in-game checks in [TESTING-TODO.md](TESTING-TODO.md); 0.13.0 has not yet been tested in-game.
+**Stable: 0.12.6. Development: 0.14.1.** The 0.14.0 checklist has user-reported passes. The new 0.14.1 recovery layout and final release checks remain in [TESTING-TODO.md](TESTING-TODO.md).
 
 ## Get started
 
@@ -97,7 +97,7 @@ Find a blueprint under Baseline > Import blueprint > Find blueprint. Select any 
 
 ## Development recovery and versions
 
-`master` contains the tested 0.12.6 release; `dev` contains 0.14.0 recovery, version-management and UI changes awaiting game testing.
+`master` contains the tested 0.12.6 release; `dev` contains 0.14.1 recovery, version-management and UI changes with user-reported runtime passes; recovery-preview visual acceptance and release checks remain.
 
 After accepting recovery, Marigold remembers the surviving layout and its alignment to the original baseline. With automatic matching enabled, it can reuse that alignment after logout or transfer when the layout uniquely matches. Missing sections stay missing: recovery never captures the remnant as the new baseline. At least eight exact structural matches are needed for remembered recovery. Partial repairs and changed cockpit types are supported when the surrounding layout still matches. Identical ships, major changes or a relocated/reoriented cockpit may require recovery again. One accepted recovery is remembered per ship profile.
 
@@ -107,4 +107,4 @@ Capture/import automatically archive the previous baseline. Saved versions retai
 
 In Saved versions, **Save new version** creates a named copy; **Rename version** uses the name field; **Replace version** copies the active baseline into the selected slot and preserves the overwritten version. Rename/use/replace/delete require confirmation. Replacement needs a free slot.
 
-Before testing 0.13.0 or later, copy `%APPDATA%/Marigold` somewhere safe with the game closed. These builds read older profiles but save format 3, which 0.12.6 cannot read. To roll back, restore that complete pre-upgrade folder alongside the older plugin. Automated migration tests pass; in-game upgrade/reconnect tests remain in TESTING-TODO.md.
+Before testing 0.13.0 or later, copy `%APPDATA%/Marigold` somewhere safe with the game closed. These builds read older profiles but save format 3, which 0.12.6 cannot read. To roll back, restore that complete pre-upgrade folder alongside the older plugin. Automated migration tests pass; the upgrade/reconnect checks have user-reported passes in TESTING-TODO.md.

@@ -70,3 +70,15 @@ Adds partial-repair/cockpit-type recovery matching, explicit manual quarter turn
 Runtime acceptance remains pending in the appended 0.14 checklist, alongside the untested 0.13 checklist. The build does not deploy. Profile format remains 3; the full pre-0.13 data backup is still required for rollback to 0.12.6.
 
 Validation: binary build and all regression suites passed, including 32 recovery/reference lifecycle checks and 22 blueprint checks. All 35 manifest-selected files compiled without LOCAL_BUILD. NU1900 reports unavailable NuGet vulnerability data; no vulnerability audit is claimed. Runtime testing is pending.
+
+
+## October 23 readiness review after user testing
+
+The user reports all 12 0.14 checklist items passed and 10 of 11 0.13 items passed; the remaining 0.13 entry asks for a larger recovery preview with compact controls below. No functional failure is reported in those latest sections. Installed 0.14.0 DLL matches artifacts by SHA-256; package contents are only DLL/PDB/XML, and the manifest description is 964 characters. Historical validation text above describes its respective build and is not the current acceptance state.
+
+Do not publish as fully release-validated yet: recovery-preview usability needs implementation/retest, scale-specific performance and unique edge cases need final coverage, and the final pinned source package needs a live loader/fresh-install check. The 0.10 source-loader pass is retained as evidence but does not validate a newer pin. Current rules review and release packaging remain separate steps. See the consolidated readiness section in TESTING-TODO.md; original user notes are preserved.
+
+
+## 0.14.1 recovery preview
+
+The requested large top-center recovery preview and compact lower controls are implemented. Preview recovery navigates directly to alignment; X/Y/Z moves and quarter turns are retained, with alternative candidates secondary. The page uses an independent static inspection camera and temporarily suppresses health bars, without changing saved HUD layout. Accept/cancel return to recovery tools. The 0.14.1 checklist records pending visual acceptance; earlier readiness notes describe their respective point in time.

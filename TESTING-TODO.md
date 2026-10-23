@@ -301,32 +301,67 @@ Not deployed yet. Binary/source compilation and automated migration/recovery che
 
 Before upgrading: close the game and copy the entire `%APPDATA%/Marigold` folder to a safe backup. Format 3 is readable by 0.13.0, not 0.12.6; rolling back requires restoring that folder as well as the old plugin.
 
-- [ ] Upgrade existing profiles. Check profile numbers/names, station settings, original blocks and saved versions. Legacy references should show unknown creation date rather than an invented date. Save, restart and recheck.
-- [ ] Capture a baseline, remove the original cockpit and a substantial section, then sit in another cockpit. Baseline > Recovery: preview/adjust/accept. Missing sections must stay red and health bars must retain the original denominator.
-- [ ] Restart/reconnect with auto matching on and the same remnant (at least eight blocks). It should recover the accepted alignment without Force apply again. Repeat across a Nexus transfer if available; check a differently oriented replacement cockpit and non-origin placement.
-- [ ] Repair the ship fully and reconnect. It should still align against the original baseline. Try partial repairs too; if matching is uncertain, manual recovery must remain available without changing the baseline.
-- [ ] Try identical profiles or symmetric remnants, auto-off, manual detach, and a profile already used by another loaded grid. Uncertain recovery must not silently choose a conflicting profile. Tiny remnants may need manual recovery each session.
-- [ ] Capture a changed layout, import a blueprint and change main cockpit. Verify the previous baseline appears in Saved versions before replacement. Recovery accepted for an older baseline must not be reused for a different baseline identity.
-- [ ] Name/save a version, switch versions and restart. Check readable name/source/date, available blueprint identity and active indicator. Deleting a saved version must not clear the active baseline. Renaming the ship must retain metadata.
-- [ ] Restore a version with a different saved anchor. The Alignment page should open; inspect missing markers and health preview, then cancel (no change). Repeat and accept: the older baseline becomes active and the previous baseline remains in Saved versions.
-- [ ] Leave control, change grids or cancel during recovery/version alignment. No late worker result should bind another ship or replace its baseline. Capture a new baseline during a pending preview and ensure stale acceptance is rejected.
-- [ ] Fill a version library to its limit (16 revisions / 250,000 total blocks). Replacement must fail clearly without losing the active baseline or deleting history. Remove an unwanted revision and retry.
-- [ ] Check profile backup recovery with copied test data, then restart. Verify recovered references, metadata and conservative matching; preserve the original pre-upgrade backup for rollback.
+- [x] Upgrade existing profiles. Check profile numbers/names, station settings, original blocks and saved versions. Legacy references should show unknown creation date rather than an invented date. Save, restart and recheck.
+- [the Next Alignment idea feels... weak. but the x, y and z adjustments work GREAT. ITs hard to tell from the UI if things are lining up. maybe when we do recovery preview the ship display gets expanded and in the middle top of the screen nice and big, and the buttons get small and at the bottom? so its easier to view?] Capture a baseline, remove the original cockpit and a substantial section, then sit in another cockpit. Baseline > Recovery: preview/adjust/accept. Missing sections must stay red and health bars must retain the original denominator.
+- [x] Restart/reconnect with auto matching on and the same remnant (at least eight blocks). It should recover the accepted alignment without Force apply again. Repeat across a Nexus transfer if available; check a differently oriented replacement cockpit and non-origin placement.
+- [x] Repair the ship fully and reconnect. It should still align against the original baseline. Try partial repairs too; if matching is uncertain, manual recovery must remain available without changing the baseline.
+- [x] Try identical profiles or symmetric remnants, auto-off, manual detach, and a profile already used by another loaded grid. Uncertain recovery must not silently choose a conflicting profile. Tiny remnants may need manual recovery each session.
+- [x] Capture a changed layout, import a blueprint and change main cockpit. Verify the previous baseline appears in Saved versions before replacement. Recovery accepted for an older baseline must not be reused for a different baseline identity.
+- [x] Name/save a version, switch versions and restart. Check readable name/source/date, available blueprint identity and active indicator. Deleting a saved version must not clear the active baseline. Renaming the ship must retain metadata.
+- [x] Restore a version with a different saved anchor. The Alignment page should open; inspect missing markers and health preview, then cancel (no change). Repeat and accept: the older baseline becomes active and the previous baseline remains in Saved versions.
+- [x] Leave control, change grids or cancel during recovery/version alignment. No late worker result should bind another ship or replace its baseline. Capture a new baseline during a pending preview and ensure stale acceptance is rejected.
+- [x] Fill a version library to its limit (16 revisions / 250,000 total blocks). Replacement must fail clearly without losing the active baseline or deleting history. Remove an unwanted revision and retry.
+- [x] Check profile backup recovery with copied test data, then restart. Verify recovered references, metadata and conservative matching; preserve the original pre-upgrade backup for rollback.
 
 
 ## 0.14.0 dev - Recovery, versions, rendering and UI polish
 
 0.13.0 results above are still pending. This section adds checks; it does not replace your previous notes. 0.14.0 builds into artifacts/Marigold and is not deployed by the build. It uses the same format 3 as 0.13.0. Retain the full pre-0.13 backup when testing or rolling back to 0.12.6.
 
-- [ ] Accept recovery of a damaged ship, repair about half of its missing blocks, then reconnect. It should reuse the accepted alignment without recapturing; original missing blocks remain red. Repeat after full repair. Automatic matching still needs enough exact surviving structure.
-- [ ] Replace the recovery cockpit with a different type at the same grid position/orientation, then reconnect. With enough surrounding matches it should associate correctly. Try a relocated/rotated seat too: uncertain matching should wait for manual recovery rather than guess.
-- [ ] Add unrelated blocks, remove more remembered structure or introduce an identical saved profile. Ambiguous/insufficient matches must not silently attach. Auto-off, manual detach and original health-bar denominator must remain intact.
-- [ ] Recovery > Review alignment: Rotate X/Y/Z each turns 90 degrees about the baseline origin using live-grid axes. Four clicks restore the original orientation. Combine rotations with translation; accept/cancel, reconnect and check markers at asymmetric locations. Acceptance must still reject fewer than three exact matches.
-- [ ] With a profile that produces no automatic alignment, check the clearly unverified starting point and manual controls. Cancel leaves the baseline/binding unchanged. Do not accept a wrong alignment merely because three repeated blocks happen to match.
-- [ ] Saved versions: Save new version, select it, enter a different name and Rename version twice to confirm. Check name, active indicator and metadata after restart; its block contents must not change.
-- [ ] Make a new active baseline, select an older version and Replace version. First click only asks for confirmation. Second copies the active baseline into that slot and keeps a '(previous)' copy with the old contents. Load both to confirm the difference. Replacement at the library limit must refuse without overwriting.
-- [ ] Station mode: set Armor faint, Thrusters highlighted and another system hidden. Check main and connector-docked ships, including mixed grid sizes and multiple docked damaged ships. Hull styles should agree; damage markers retain yellow/orange/red independently. Switch styles during rebuild and reconnect.
-- [ ] Inspect a thin/long or irregular ship at Low/Medium/High detail. Outer geometry must not swell beyond actual block bounds. Slopes remain block envelopes; coarse detail can merge small gaps. Read the report's explanation and watch docked-display performance.
-- [ ] Open a .sbcB5, ZIP or .bin path: the message must clearly explain XML bp.sbc support. Search remains XML-only. Load normal XML and gzip XML, including local/Workshop/Cloud, and confirm existing imports still work and source files stay untouched.
-- [ ] Switch to Spanish: check all section tabs, page titles, menus, health/style selectors, clipboard controls, version/rotation buttons and preferences. Check truncation/overlap at your normal UI scale; save language and restart. Ship/version names must remain yours. Dynamic diagnostics may fall back to English.
-- [ ] Smoke-test capture, cross-anchor version restore, UI navigation and config import/export after these changes. No unchecked 0.13 or older test is considered passed by this build.
+- [x] Accept recovery of a damaged ship, repair about half of its missing blocks, then reconnect. It should reuse the accepted alignment without recapturing; original missing blocks remain red. Repeat after full repair. Automatic matching still needs enough exact surviving structure.
+- [x] Replace the recovery cockpit with a different type at the same grid position/orientation, then reconnect. With enough surrounding matches it should associate correctly. Try a relocated/rotated seat too: uncertain matching should wait for manual recovery rather than guess.
+- [x] Add unrelated blocks, remove more remembered structure or introduce an identical saved profile. Ambiguous/insufficient matches must not silently attach. Auto-off, manual detach and original health-bar denominator must remain intact.
+- [x nice! this feels WAY better and makes sense.] Recovery > Review alignment: Rotate X/Y/Z each turns 90 degrees about the baseline origin using live-grid axes. Four clicks restore the original orientation. Combine rotations with translation; accept/cancel, reconnect and check markers at asymmetric locations. Acceptance must still reject fewer than three exact matches.
+- [x] With a profile that produces no automatic alignment, check the clearly unverified starting point and manual controls. Cancel leaves the baseline/binding unchanged. Do not accept a wrong alignment merely because three repeated blocks happen to match.
+- [x] Saved versions: Save new version, select it, enter a different name and Rename version twice to confirm. Check name, active indicator and metadata after restart; its block contents must not change.
+- [x] Make a new active baseline, select an older version and Replace version. First click only asks for confirmation. Second copies the active baseline into that slot and keeps a '(previous)' copy with the old contents. Load both to confirm the difference. Replacement at the library limit must refuse without overwriting.
+- [x] Station mode: set Armor faint, Thrusters highlighted and another system hidden. Check main and connector-docked ships, including mixed grid sizes and multiple docked damaged ships. Hull styles should agree; damage markers retain yellow/orange/red independently. Switch styles during rebuild and reconnect.
+- [x] Inspect a thin/long or irregular ship at Low/Medium/High detail. Outer geometry must not swell beyond actual block bounds. Slopes remain block envelopes; coarse detail can merge small gaps. Read the report's explanation and watch docked-display performance.
+- [x] Open a .sbcB5, ZIP or .bin path: the message must clearly explain XML bp.sbc support. Search remains XML-only. Load normal XML and gzip XML, including local/Workshop/Cloud, and confirm existing imports still work and source files stay untouched.
+- [x] Switch to Spanish: check all section tabs, page titles, menus, health/style selectors, clipboard controls, version/rotation buttons and preferences. Check truncation/overlap at your normal UI scale; save language and restart. Ship/version names must remain yours. Dynamic diagnostics may fall back to English.
+- [x] Smoke-test capture, cross-anchor version restore, UI navigation and config import/export after these changes. No unchecked 0.13 or older test is considered passed by this build.
+
+
+## Readiness review - October 23, 2026
+
+Your recorded results and comments above are preserved. This review supersedes the old introductory statements that 0.13/0.14 are untested or not deployed. All 12 of your 0.14 checks are reported passed (including the rotation check with an inline comment); 10 of 11 0.13 checks are marked passed, with the remaining entry containing recovery-UI feedback rather than an unqualified pass.
+
+Verified locally: installed DLL is 0.14.0 and matches the built artifact by SHA-256. The package contains only plugin.dll, plugin.pdb and plugin.xml. The recorded 0.14 binary/regression and 35-file source-compilation checks passed. Descriptor description is 964 characters, within the previously documented 1,000-character limit. No new in-game checks have been marked passed by this review.
+
+### Outstanding product feedback
+
+- [ ] Improve recovery inspection: large ship preview near the top center, compact alignment controls below. Preserve the successful X/Y/Z moves and 90-degree turns. Make alternative candidates secondary and clearly distinguish changing candidates from manually adjusting one. This is not implemented yet.
+- [ ] After that change, check preview readability, control overlap, accept/cancel and return to the normal saved HUD layout at your usual resolution/UI scale. The temporary preview layout must not overwrite your saved display settings.
+
+### Final release checks
+
+Later passes supersede overlapping historical failures: mass-loss rendering (0.9), blueprint browsing (0.12.2), Tools recognition (0.12.6), recovery persistence/version limits (0.13), and station styles/Spanish controls (0.14). Old unchecked entries are not all new blockers, and obsolete expectations such as rejecting every missing-mod blueprint no longer apply.
+
+- [ ] Record scale-specific performance on approximately 1k/10k/50k-block ships and a dock at the context limit. Earlier timings and repeated-session checks passed; this fills the remaining size/budget coverage rather than discarding that evidence.
+- [ ] Close remaining unique edge-case coverage: rotated multi-cell blueprint alignment, multiple cockpit choices, remote-control transitions and known-layout report counts where not already covered by your later tests.
+- [ ] Fresh-install smoke test for the final release package. Existing-profile migration passed in 0.13.
+- [ ] Load the final pinned source commit through Pulsar Legacy with the binary disabled, then check dependencies/UI/unload. The earlier 0.10 source-loader test passed; 0.14 source compilation alone does not establish final-pin runtime acceptance.
+- [ ] Finalize the release commit/package, recheck current PluginHub rules and generate its pinned manifest. Decide on publication separately; this review does not publish or merge dev into master.
+
+Status: feature behavior is user-tested, with one recovery UI improvement outstanding. Release preparation/targeted validation remains; not yet a blanket public-release sign-off.
+
+
+## 0.14.1 - Focused recovery preview
+
+Implemented the recovery-layout feedback above. Earlier results and notes are preserved; this section supersedes the readiness review's statement that the layout change is not implemented. Built on dev; in-game visual acceptance remains pending.
+
+- [ ] Baseline > Recovery tools > Preview recovery opens the alignment page automatically. Check the large top-center ship view, compact controls underneath and readable status area at your usual resolution/UI scale. Test a wider aspect ratio if available.
+- [ ] Move X/Y/Z and rotate X/Y/Z. Inspect using Top, Left, Zoom in/out and Reset view. These view controls change only the inspection camera; rotation/movement controls still change the recovery alignment. Other candidate selects an alternative rather than moving the current one.
+- [ ] Accept still requires confirmation; changing alignment after the first click resets confirmation. Cancel and successful acceptance return to Recovery tools. Back/Close must restore normal HUD size/position, health bars, view/zoom and spin preference.
+- [ ] Hide the ordinary schematic but leave health bars enabled, then start recovery. The recovery preview should still appear; bars stay out of its way temporarily and return afterward. Check a cross-anchor saved-version restore uses the same focused page.
+- [ ] Restart and verify your saved HUD layout is unchanged. The recovery camera/layout must not be saved into defaults, ship settings or presets.

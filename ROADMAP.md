@@ -1,8 +1,8 @@
 # Marigold roadmap
 
-Updated October 23, 2026. Stable `master`: **0.12.6**. Development `dev`: **0.14.0**.
+Updated October 23, 2026. Stable `master`: **0.12.6**. Development `dev`: **0.14.1**.
 
-0.12.6 has user-reported runtime passes. 0.13.0 is installed but not yet tested. 0.14.0 is built for testing; compilation is not in-game acceptance. Original feedback and results remain in [TESTING-TODO.md](TESTING-TODO.md).
+0.14.0 is deployed and all 12 of its checklist entries have user-reported passes. The 0.13 checks pass except for one entry requesting a clearer recovery preview. That feedback is implemented in 0.14.1: a large top-center recovery display with compact controls below and an independent inspection camera. Visual acceptance is pending. Original feedback and results remain in [TESTING-TODO.md](TESTING-TODO.md).
 
 ## Implemented scope
 
@@ -20,7 +20,7 @@ Updated October 23, 2026. Stable `master`: **0.12.6**. Development `dev`: **0.14
 | Reports | Expected/observed/matching counts, damage states, structural completeness distinct from health, plus rendering/performance statistics |
 | Languages | English and Spanish controls, page titles and menu descriptions; unlocalized dynamic diagnostics fall back to English |
 
-These features cover the agreed first-release development scope. Runtime validation and fixes remain before release readiness.
+These features cover the agreed first-release development scope and the latest user-tested behavior. Recovery-preview visual acceptance and targeted release validation remain before release readiness.
 
 ## 0.14.0 closes the remaining development items
 
@@ -33,7 +33,7 @@ These features cover the agreed first-release development scope. Runtime validat
 
 ## Remaining release work
 
-1. **0.13/0.14 in-game acceptance.** Profile upgrades and backups; partial/full repairs; cockpit-type changes; manual alignment; revision rename/replace/restore; Spanish text fit; station styles and outlines. Fix findings without marking unchecked tests passed.
+1. **0.14.1 recovery-preview acceptance.** The enlarged preview and compact controls are implemented. Retest readability and confirm the independent preview camera and temporary layout leave saved HUD settings unchanged. The other 0.13/0.14 checklist items are reported passed.
 2. **Multiplayer edge cases.** Ambiguous/near-identical ships, symmetric remnants, controller loss, grid splits, delayed observations, reconnect/Nexus transfer, auto-off/manual detach and changing grids during pending work.
 3. **Blueprint edge cases.** Multiple grids/cockpits, rotated multi-cell blocks, missing/changed mods, cloud failures and cancel/switch during preview. Confirm XML-only guidance is useful for unsupported files.
 4. **Performance and cleanup.** Record live costs on approximately 1k/10k/50k-block ships and large connector docks. Check long sessions, repeated destruction/reconnect, observer subscriptions and worker cleanup. Add performance controls only if measurements justify them.

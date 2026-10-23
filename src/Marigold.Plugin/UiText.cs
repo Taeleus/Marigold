@@ -211,6 +211,8 @@ namespace Marigold
             {"Updated. Save display to keep this layout.","Actualizado. Guarda el diseño para conservarlo."},
             {"Position, size and opacity reset. Colors unchanged.","Posición, tamaño y opacidad restablecidos. Colores conservados."},
             {"None - capture your ship or import a blueprint.","Ninguna: captura tu nave o importa un plano."}
+            ,{"Recovery preview - inspect the ship above, adjust below","Recuperación: inspecciona la nave arriba y ajusta abajo"}
+            ,{"Other candidate","Otra propuesta"}
         };
         public static string Get(string language,string text)
         {
