@@ -388,3 +388,11 @@ Fixes marker pagination hiding yellow/orange faults behind growing missing-block
 - [ ] With over 128 missing blocks, damage surviving blocks yellow and disable others structurally orange. Both colors must remain outlined on every marker page while health bars retain full totals. Individual translucent fills are still paginated.
 - [ ] Sustain PDC damage through multiple updates, then repair/remove damaged blocks. Overview states must update/clear correctly without losing entire surviving damage categories. Check `/mg report` and filters; filtering a state intentionally hides it.
 - [ ] Check performance on a heavily damaged large ship with all states visible and station mode on/off. Record worker/HUD timing; overview budgets are per state.
+
+
+## 0.14.5 - All primary fault fills
+
+Supersedes 0.14.4's paginated-fill limitation. Yellow/orange/red highlights now cover every filtered primary fault on every page. Up to 1,024 regions per state are drawn; above that, nearby same-state bounds merge conservatively instead of omitting blocks. This can shade gaps within merged regions on extremely damaged ships.
+
+- [ ] Repeat sustained combat with over 128 missing/damaged blocks. Yellow, orange and red fills must persist across marker pages and agree with health bars. Repair/remove blocks and verify obsolete fills disappear.
+- [ ] Test a heavily damaged large grid: no category should lose all fills because red dominates. Check frame cost and dense-region merging. Filters still intentionally hide excluded states/systems.

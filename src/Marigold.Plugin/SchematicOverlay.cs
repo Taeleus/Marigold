@@ -319,13 +319,18 @@ namespace Marigold
                         var ghost=OutlineGeometry.Build(ghostBoxes,0,frame);
                         geometry.AddRange(ghost.Points);for(int i=0;i<ghost.Points.Length/2;i++)kinds.Add(ChangeKind.Replaced);
                     }
+                    // Every primary fault gets fill coverage, independent of marker pages.
+                    // Dense same-state regions merge rather than dropping later blocks.
+                    foreach(var kind in new[]{ChangeKind.Damaged,ChangeKind.Missing,ChangeKind.NonFunctional})
+                        foreach(var region in MarkerFill.Regions(visible,kind))
+                        {shaded.Add(geometry.Count);AddMarker(geometry,kinds,region,frame.Value);}
                     for(int i=0;i<shown;i++)
                     {
                         var change=visible[start+i];
-                        if(change.Kind==ChangeKind.Damaged || change.Kind==ChangeKind.NonFunctional || change.Kind==ChangeKind.Missing)shaded.Add(geometry.Count);
+                        if(change.Kind==ChangeKind.Damaged || change.Kind==ChangeKind.NonFunctional || change.Kind==ChangeKind.Missing)continue;
                         AddMarker(geometry,kinds,change,frame.Value);
                     }
-                    result.Report=comparison.Summary+". All matching fault regions outlined across every page. Individual shaded marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
+                    result.Report=comparison.Summary+". All matching damage, missing and non-functional regions highlighted across every page (dense fills may merge). Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
                 result.Report+="\nSchematic uses block envelopes, not model meshes. Coarse detail can merge small gaps; use High detail for inspection.";
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
