@@ -209,7 +209,9 @@ namespace Marigold
                 Button(.32f,-.15f,"Apply color",()=>{var colors=owner.controls.Appearance.Colors.Split(',');colors[(int)choice.GetSelectedKey()]=value.Text;owner.controls.Appearance.Set("colors",string.Join(",",colors));Status("Color updated. Save display to keep it.");});
                 Button(-.21f,-.02f,owner.controls.Appearance.Pulse>0?"Stop missing pulse":"Pulse missing blocks",()=>{owner.controls.Appearance.Pulse=owner.controls.Appearance.Pulse>0?0:1;RecreateControls(false);});
                 Button(.21f,-.02f,"Restore colors",()=>{owner.controls.Appearance.Colors=new HudAppearance().Colors;RecreateControls(false);});
-                Label(-.39f,.09f,"Health bars keep healthy blocks blue and use these damage colors.");
+                Button(0,.07f,owner.controls.Appearance.NewDamagePulse?"New damage pulse: On":"New damage pulse: Off",()=>{owner.controls.Appearance.NewDamagePulse=!owner.controls.Appearance.NewDamagePulse;RecreateControls(false);});
+                Label(-.39f,.15f,"Orange/red alerts pulse for four seconds. Yellow stays steady.");
+                Label(-.39f,.20f,"Health bars keep healthy blocks blue and use these damage colors.");
             }
             private void HealthBars()
             {
@@ -229,6 +231,17 @@ namespace Marigold
                 Button(.21f,.08f,"Reset this bar",()=>{owner.controls.HealthBars.Bars[healthBarSelected]=new HealthBarSettings().Bars[healthBarSelected];RecreateControls(false);});
                 Label(-.39f,.15f,"X/Y/opacity: 0-1; width: .05-.8; height: .005-.08");
                 Label(-.39f,.19f,"Utility includes systems without a dedicated bar. Added blocks excluded; replacements count red.");
+                if(healthBarSelected==2)
+                {
+                    Label(-.39f,.25f,"Separate power sections (unchecked types stay in Other):");
+                    for(int i=0;i<3;i++)
+                    {
+                        int bit=1<<i;float x=-.36f+i*.27f;
+                        var check=new MyGuiControlCheckbox{Position=new Vector2(x,.30f),IsChecked=(layout.PowerMask & bit)!=0};
+                        check.IsCheckedChanged+=c=>{layout.PowerMask=c.IsChecked?layout.PowerMask|bit:layout.PowerMask & ~bit;};Controls.Add(check);
+                        Label(x+.035f,.30f,ShipHealth.PowerNames[i]);
+                    }
+                }
             }
             private void Appearance()
             {
@@ -242,7 +255,7 @@ namespace Marigold
                 Label(-.39f,-.07f,"Position and opacity: 0 to 1. Size: 0.12 to 0.7.");
                 Choice(-.21f,.02f,"Schematic layout","compact expanded",owner.controls.Expanded?"expanded":"compact","layout");
                 Choice(.21f,.02f,"Outline detail","low medium high",owner.controls.DetailName,"detail");
-                Button(0,.13f,"Reset HUD layout",()=>{var colors=owner.controls.Appearance.Colors;double pulse=owner.controls.Appearance.Pulse;owner.controls.Appearance=new HudAppearance{Colors=colors,Pulse=pulse};RecreateControls(false);Status("Position, size and opacity reset. Colors unchanged.");});
+                Button(0,.13f,"Reset HUD layout",()=>{var colors=owner.controls.Appearance.Colors;bool fresh=owner.controls.Appearance.NewDamagePulse;double pulse=owner.controls.Appearance.Pulse;owner.controls.Appearance=new HudAppearance{Colors=colors,Pulse=pulse,NewDamagePulse=fresh};RecreateControls(false);Status("Position, size and opacity reset. Colors unchanged.");});
             }
             private void Systems()
             {

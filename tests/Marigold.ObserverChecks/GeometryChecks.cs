@@ -25,6 +25,19 @@ internal static class GeometryChecks
     }
     public static void Run()
     {
+        // As destruction grows beyond a whole detail page, both surviving fault layers remain.
+        var faults=new List<BlockChange>();var combatFrame=new Box3(new Point3(-.5,-.5,-.5),new Point3(1024.5,2.5,.5));
+        faults.Add(new BlockChange{Kind=ChangeKind.Damaged,Bounds=Block(0,1,0)});
+        faults.Add(new BlockChange{Kind=ChangeKind.NonFunctional,Bounds=Block(0,2,0)});
+        for(int wave=0;wave<8;wave++)
+        {
+            for(int i=0;i<128;i++)faults.Add(new BlockChange{Kind=ChangeKind.Missing,Bounds=Block(wave*128+i,0,0)});
+            Check(OutlineGeometry.Faults(faults,ChangeKind.Damaged,combatFrame).Points.Length==24,"Yellow survives growing missing counts beyond page limit");
+            Check(OutlineGeometry.Faults(faults,ChangeKind.NonFunctional,combatFrame).Points.Length==24,"Orange survives growing missing counts beyond page limit");
+        }
+        faults.RemoveAll(c=>c.Kind==ChangeKind.Damaged);
+        Check(OutlineGeometry.Faults(faults,ChangeKind.Damaged,combatFrame).Points.Length==0,"Repaired fault layer clears rather than retaining stale damage");
+
         Check(OutlineGeometry.Build(new Box3[0],1).Points.Length==0,"Empty model");
         var cube=OutlineGeometry.Build(new[]{Block(0,0,0)},1);
         Check(cube.Points.Length==24,"Cube has twelve edges");

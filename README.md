@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-This page describes **Marigold 0.14.3**. Marigold is under active development.
+This page describes **Marigold 0.14.8**. Marigold is under active development.
 
 ## Your first ship
 
@@ -32,7 +32,9 @@ The baseline stays fixed as your ship takes damage or gets repaired. Capture aga
 
 A block detached from your ship counts as missing even if it is floating nearby. Switching a block off or losing power does not make it orange.
 
-The display is a schematic built from block bounds, rather than a detailed model.
+Yellow stays steady and faint so serious damage is easier to spot. Newly non-functional or missing blocks can pulse more vividly for four seconds, using one shared rhythm across the display. Toggle **New damage pulse** under **Customize > Colors**; the gentler ongoing missing-block pulse has its own setting. Save display to keep your choices.
+
+Damage fills remain visible across marker pages. On extremely damaged ships, nearby same-color regions may merge and shade gaps between blocks. The display is a schematic built from block bounds, rather than a detailed model.
 
 ## Make the HUD yours
 
@@ -53,6 +55,8 @@ Shortcuts are optional and start unbound. The interface offers English and Spani
 Under **Customize > Health bars**, enable any of these: **Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools**. All start hidden. Each has its own position, size, opacity and label settings.
 
 Bars run from **blue → yellow → orange → red → gray**, showing healthy, damaged, non-functional, missing and unreadable blocks. Segments count blocks equally, not hit points. Added blocks do not improve the baseline score, and replacing an expected block counts as missing that original block.
+
+For **Power**, check **Reactors**, **Batteries** or **Solar** to give those types separate labeled sections, in that order. Unselected types and other power sources stay in **Other**. Section widths reflect block counts, and each section uses the same health colors. These options start off and save with your layout.
 
 Use **Customize > HUD layout > Hide ship display** to keep the bars without the schematic. **Hide HUD** hides everything. Bars describe the controlled ship's baseline regardless of schematic filters or docked ships.
 
@@ -110,6 +114,13 @@ Clone this repository and open PowerShell in its folder. Building requires a .NE
 The package is written to `artifacts/Marigold`. Building does not install the plugin or launch the game. The plugin itself targets .NET Framework 4.8; the automated checks use .NET 10.
 
 </details>
+
+## Known issues being investigated
+
+- Recovery-preview buttons may have cursor alignment or overlap issues at some display settings.
+- Repair recognition after importing a blueprint baseline has been reported and needs investigation.
+
+Fresh-damage alerts apply to the main ship; connector-docked context does not pulse. See the [roadmap](ROADMAP.md) for remaining work.
 
 ## Help and feedback
 

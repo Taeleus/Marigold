@@ -13,6 +13,12 @@ namespace Marigold
 
     internal static class OutlineGeometry
     {
+        // Overview includes every matching fault, independently of paginated individual markers.
+        internal static OutlineModel Faults(IList<BlockChange> changes,ChangeKind kind,Box3 frame)
+        {
+            var boxes=new List<Box3>();foreach(var change in changes)if(change.Kind==kind)boxes.Add(change.Bounds);
+            return Build(boxes,2,frame);
+        }
         private const int CellLimit = 100000;
         internal static int LineLimit(int detail) { return detail == 0 ? 768 : detail == 1 ? 2048 : 4096; }
 

@@ -10,6 +10,24 @@ namespace Marigold
     internal static class MarkerFill
     {
         public const int Budget=4096;
+        internal const int RegionsPerState=1024;
+        internal static List<BlockChange> Regions(IList<BlockChange> changes,ChangeKind kind)
+        {
+            var selected=new List<BlockChange>();foreach(var c in changes)if(c.Kind==kind)selected.Add(c);
+            if(selected.Count<=RegionsPerState)return selected;
+            var bounds=selected[0].Bounds;foreach(var c in selected)bounds=SchematicGeometry.Union(bounds,c.Bounds);
+            for(double size=1;;size*=2)
+            {
+                var groups=new Dictionary<Point3,Box3>();
+                foreach(var c in selected)
+                {
+                    var b=c.Bounds;var key=new Point3(Math.Floor(((b.Min.X+b.Max.X)/2-bounds.Min.X)/size),Math.Floor(((b.Min.Y+b.Max.Y)/2-bounds.Min.Y)/size),Math.Floor(((b.Min.Z+b.Max.Z)/2-bounds.Min.Z)/size));
+                    Box3 old;groups[key]=groups.TryGetValue(key,out old)?SchematicGeometry.Union(old,b):b;
+                }
+                if(groups.Count>RegionsPerState)continue;
+                var result=new List<BlockChange>();foreach(var b in groups.Values)result.Add(new BlockChange{Kind=kind,Bounds=b});return result;
+            }
+        }
         // Fill the projected silhouette once, rather than alpha-blending six overlapping faces.
         public static void Build(Point3[] projected,int[] starts,double zoom,double pixels,List<FillBand> bands)
         {

@@ -10,6 +10,37 @@ internal static class HealthBarChecks
     {return new BlockSample{Position=new Point3(i,0,0),Bounds=new Box3(new Point3(i-.5,-.5,-.5),new Point3(i+.5,.5,.5)),Definition="MyObjectBuilder_"+type+"/Test",Forward=0,Up=4,MaxIntegrity=100,Integrity=100,BuildIntegrity=100,HasFunctionalState=true,IsFunctional=true};}
     public static void Run()
     {
+        var pulseBlock=Block(200,"Reactor");var pulseReference=new[]{pulseBlock};var pulse=new DamagePulse();
+        var region=new BlockChange{Bounds=pulseBlock.Bounds,Kind=ChangeKind.Damaged};
+        pulse.Observe(pulseReference,pulseReference,0);Check(double.IsNegativeInfinity(pulse.Start(region)),"Loading does not pulse");
+        var hit=pulseBlock;hit.Integrity=75;pulse.Observe(pulseReference,new[]{hit},.5);
+        Check(double.IsNegativeInfinity(pulse.Start(region)) && !DamagePulse.VisibleFor(ChangeKind.Damaged),"Yellow damage never pulses");
+        hit.IsFunctional=false;pulse.Observe(pulseReference,new[]{hit},1);
+        Check(DamagePulse.VisibleFor(ChangeKind.NonFunctional) && DamagePulse.VisibleFor(ChangeKind.Missing),"Orange and red retain fresh alerts");
+        Check(pulse.Start(region)==1 && DamagePulse.Strength(1,1)==1 && DamagePulse.Strength(1,1.5)==0,"Fresh damage has one-second cycles");
+        foreach(double time in new[]{2.0,2.25,2.5,2.75,3.0})Check(DamagePulse.Strength(1,time)==DamagePulse.Strength(1.73,time) && DamagePulse.Strength(1,time)==DamagePulse.Wave(time),"Staggered hits and normal missing pulse share the same global phase");
+        Check(DamagePulse.Strength(1,5)==0 && DamagePulse.Strength(2,5)==1,"Expiration stays individual while rhythm stays shared");
+        hit.Integrity=50;pulse.Observe(pulseReference,new[]{hit},2);Check(pulse.Start(region)==1,"Continuous fire does not freeze pulse phase");
+        pulse.Observe(pulseReference,new[]{hit},5);Check(double.IsNegativeInfinity(pulse.Start(region)) && DamagePulse.Strength(1,5)==0,"Pulse expires after four seconds without a new hit");
+        hit.Integrity=25;pulse.Observe(pulseReference,new[]{hit},6);Check(pulse.Start(region)==6,"Later damage retriggers");
+        pulse.Observe(pulseReference,pulseReference,7);Check(double.IsNegativeInfinity(pulse.Start(region)),"Repair clears pulse");
+        pulse.Observe(pulseReference,new BlockSample[0],8);Check(pulse.Start(region)==8,"New missing block pulses");
+        pulse.Observe(new[]{pulseBlock},new BlockSample[0],9);Check(double.IsNegativeInfinity(pulse.Start(region)),"Changing baseline suppresses false alerts");
+        var pulseSettings=new SchematicControls();pulseSettings.Appearance.NewDamagePulse=false;var pulseLoaded=new SchematicControls();DisplaySettings.Import(DisplaySettings.Export(pulseSettings),pulseLoaded);Check(!pulseLoaded.Appearance.NewDamagePulse,"Pulse toggle round trips independently");
+        var powerBaseline=new[]{Block(100,"Reactor"),Block(101,"BatteryBlock"),Block(102,"SolarPanel"),Block(103,"WindTurbine"),Block(104,"HydrogenEngine")};
+        var powerLive=(BlockSample[])powerBaseline.Clone();var damagedPower=powerLive[1];damagedPower.Integrity=50;powerLive[1]=damagedPower;
+        var power=ShipHealth.Build(powerBaseline,new[]{powerLive[1],powerLive[2],powerLive[3],powerLive[4]});
+        for(int mask=0;mask<8;mask++)
+        {
+            var sections=power.PowerSections(mask);
+            for(int state=0;state<5;state++){int sum=0;for(int type=0;type<4;type++)sum+=sections[type,state];Check(sum==power.Counts[2,state],"Every selection retains all power states");}
+            Check(sections[(mask&1)!=0?0:3,3]==1,"Missing reactor stays in its selected or generic section");
+            Check(sections[(mask&2)!=0?1:3,1]==1,"Damaged battery stays in its selected or generic section");
+            var config=new SchematicControls();config.HealthBars.Bars[2].PowerMask=mask;var roundtrip=new SchematicControls();DisplaySettings.Import(DisplaySettings.Export(config),roundtrip);
+            Check(roundtrip.HealthBars.Bars[2].PowerMask==mask,"Power selection survives clipboard and saved format");
+        }
+        Check(HealthBarLayout.Parse("False,True,0.75,0.48,0.22,0.014,1").PowerMask==0,"Old layouts retain unsplit power bars");
+        Check(ShipHealth.PowerType("MyObjectBuilder_Reactor/ModdedFusion")==0 && ShipHealth.PowerType("MyObjectBuilder_CubeBlock/ReactorDecoration")==3,"Power classification uses builder type, not subtype hints");
         var baseline=new[]{Block(0,"CubeBlock"),Block(1,"BatteryBlock"),Block(2,"Thrust"),Block(3,"Conveyor"),Block(4,"CargoContainer"),Block(5,"ShipDrill"),Block(6,"ShipWelder"),Block(7,"ShipGrinder"),Block(8,"CubeBlock")};
         var toolcore=baseline[8];toolcore.Definition="MyObjectBuilder_CubeBlock/DeepWelderTypeIIToolcoreSmall";baseline[8]=toolcore;
         var live=new List<BlockSample>(baseline);var b=live[1];b.Integrity=50;live[1]=b;b=live[2];b.Integrity=10;b.IsFunctional=false;live[2]=b;live.RemoveAt(3);b=live[3];b.Integrity=double.NaN;live[3]=b;b=live[4];b.Definition="Replacement";live[4]=b;live.Add(Block(99,"Reactor"));
