@@ -379,3 +379,12 @@ Implemented the recovery-layout feedback above. Earlier results and notes are pr
 - [x] Start recovery, adjust it, then close the panel with Close or Escape without accepting. Purple preview boxes must disappear; the prior baseline remains. Reopen: recovery must be started again. Repeat while alignment search/rebuild is pending.
 - [x] Accept recovery, then close: the accepted comparison remains, without preview ghosts. Cross-anchor revision previews must also cancel safely when closing without acceptance.
 - [x] Scroll over the recovery image to zoom in/out, with and without dragging. Scrolling over buttons/status must not zoom. Close/reopen and confirm normal HUD zoom and saved layout were not changed.
+
+
+## 0.14.4 - Whole-ship combat fault visibility
+
+Fixes marker pagination hiding yellow/orange faults behind growing missing-block counts. Every filtered fault state now has an always-visible region outline, independent of the 128 individual shaded markers per page. Overview geometry remains bounded and may simplify dense regions; this does not promise unlimited per-block fill detail or zero scan latency.
+
+- [ ] With over 128 missing blocks, damage surviving blocks yellow and disable others structurally orange. Both colors must remain outlined on every marker page while health bars retain full totals. Individual translucent fills are still paginated.
+- [ ] Sustain PDC damage through multiple updates, then repair/remove damaged blocks. Overview states must update/clear correctly without losing entire surviving damage categories. Check `/mg report` and filters; filtering a state intentionally hides it.
+- [ ] Check performance on a heavily damaged large ship with all states visible and station mode on/off. Record worker/HUD timing; overview budgets are per state.

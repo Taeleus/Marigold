@@ -307,9 +307,12 @@ namespace Marigold
                     int pages=Math.Max(1,(visible.Count+127)/128),actualPage=Math.Min(page,pages),start=(actualPage-1)*128;
                     result.Page=actualPage;
                     int shown=Math.Min(128,Math.Max(0,visible.Count-start));
-                    // The whole missing footprint stays visible independently of detail-marker pages.
-                    var absent=new List<Box3>();foreach(var change in visible)if(change.Kind==ChangeKind.Missing)absent.Add(change.Bounds);
-                    if(absent.Count>0){var missing=OutlineGeometry.Build(absent,2,frame);geometry.AddRange(missing.Points);for(int i=0;i<missing.Points.Length/2;i++)kinds.Add(ChangeKind.Missing);}
+                    // Whole-ship fault layers must never depend on the 128-detail-marker page.
+                    foreach(var kind in new[]{ChangeKind.Missing,ChangeKind.Damaged,ChangeKind.NonFunctional,ChangeKind.Replaced,ChangeKind.Added,ChangeKind.Unknown})
+                    {
+                        var overview=OutlineGeometry.Faults(visible,kind,frame.Value);geometry.AddRange(overview.Points);
+                        for(int i=0;i<overview.Points.Length/2;i++)kinds.Add(kind);
+                    }
                     if(preview)
                     {
                         var ghostBoxes=new List<Box3>();foreach(var block in reference)if(DisplayFilter.CategoryMatches(block.Definition,category))ghostBoxes.Add(block.Bounds);
@@ -322,7 +325,7 @@ namespace Marigold
                         if(change.Kind==ChangeKind.Damaged || change.Kind==ChangeKind.NonFunctional || change.Kind==ChangeKind.Missing)shaded.Add(geometry.Count);
                         AddMarker(geometry,kinds,change,frame.Value);
                     }
-                    result.Report=comparison.Summary+". All matching missing regions outlined. Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
+                    result.Report=comparison.Summary+". All matching fault regions outlined across every page. Individual shaded marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
                 result.Report+="\nSchematic uses block envelopes, not model meshes. Coarse detail can merge small gaps; use High detail for inspection.";
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
