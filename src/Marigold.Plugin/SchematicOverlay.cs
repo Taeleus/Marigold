@@ -25,6 +25,8 @@ namespace Marigold
         private GridObservation observation;
         private int observationRevision=-1;
         private Point3[] points = new Point3[0];
+        private readonly DamagePulse damagePulse=new DamagePulse();
+        private double[] pulseStarts=new double[0];
         private int[] shadedMarkers=new int[0];
         private readonly List<FillBand> fillBands=new List<FillBand>();
         private ChangeKind[] lineKinds = new ChangeKind[0];
@@ -217,7 +219,7 @@ namespace Marigold
         private Color LineColor(ChangeKind kind, byte missingAlpha,byte weight=100)
         {
             uint rgb=controls.Appearance.Color((int)kind);
-            int alpha=kind==ChangeKind.Missing?missingAlpha:kind==ChangeKind.Damaged?150:kind==ChangeKind.Hull?110:kind==ChangeKind.Unknown?220:240;
+            int alpha=kind==ChangeKind.Missing?missingAlpha:kind==ChangeKind.Damaged?90:kind==ChangeKind.Hull?110:kind==ChangeKind.Unknown?220:240;
             return new Color((byte)(rgb>>16),(byte)(rgb>>8),(byte)rgb,(byte)Math.Min(255,alpha*controls.Appearance.Outline*weight/100));
         }
 
@@ -248,12 +250,14 @@ namespace Marigold
             public byte[] Weights;
             public string Report;
             public StationGrid[] Station;
+            public BlockSample[] Snapshot,Reference;
+            public readonly List<BlockChange> Regions=new List<BlockChange>();
         }
 
         private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station,string styles)
         {
             var timer=Stopwatch.StartNew();
-            var result=new BuildResult { Generation=version, Count=snapshot.Length, Station=station,Preview=preview };
+            var result=new BuildResult { Snapshot=snapshot,Reference=reference,Generation=version, Count=snapshot.Length, Station=station,Preview=preview };
             try
             {
                 result.Health=ShipHealth.Build(reference,snapshot);
@@ -323,7 +327,7 @@ namespace Marigold
                     // Dense same-state regions merge rather than dropping later blocks.
                     foreach(var kind in new[]{ChangeKind.Damaged,ChangeKind.Missing,ChangeKind.NonFunctional})
                         foreach(var region in MarkerFill.Regions(visible,kind))
-                        {shaded.Add(geometry.Count);AddMarker(geometry,kinds,region,frame.Value);}
+                        {result.Regions.Add(region);shaded.Add(geometry.Count);AddMarker(geometry,kinds,region,frame.Value);}
                     for(int i=0;i<shown;i++)
                     {
                         var change=visible[start+i];
@@ -382,7 +386,7 @@ namespace Marigold
             CancelBlueprintPreview();
             ResetAssociation();CancelRecovery();stationStatus="";
             lastObservation=null;lastObservationGeneration=-1;
-            grid=next;health=new ShipHealth();healthPreview=false;
+            damagePulse.Reset();pulseStarts=new double[0];grid=next;health=new ShipHealth();healthPreview=false;
             bool auto=controls.AutoAssociate;string language=controls.Language;
             try{DisplaySettings.Reset(controls);DisplaySettings.Load(settingsPath,controls);}catch(Exception e){MyLog.Default.WriteLine("[Marigold] Display defaults: "+e.Message);}controls.AutoAssociate=auto;controls.Language=language;
             Reference savedBinding;if(grid!=null && references.TryGetValue(grid,out savedBinding))LoadShipSettings(savedBinding.ProfileId);
@@ -465,6 +469,14 @@ namespace Marigold
                         foreach(var docked in result.Station)if(docked.MatchedProfile!=null)stationBaselines[docked.EntityId]=new StationGrid {Baseline=docked.Baseline,MatchedProfile=docked.MatchedProfile};
                         controls.Page=result.Page;
                         health=result.Health;healthPreview=result.Preview;
+                        pulseStarts=new double[result.Kinds.Length];for(int i=0;i<pulseStarts.Length;i++)pulseStarts[i]=double.NegativeInfinity;
+                        if(result.Preview)damagePulse.Reset();
+                        else
+                        {
+                            damagePulse.Observe(result.Reference,result.Snapshot,now);
+                            for(int i=0;i<result.Regions.Count;i++)
+                            {double start=damagePulse.Start(result.Regions[i]);int first=result.ShadedMarkers[i]/2;for(int j=first;j<first+12;j++)pulseStarts[j]=start;}
+                        }
                         points=result.Points; lineWeights=result.Weights;lineKinds=result.Kinds; shadedMarkers=result.ShadedMarkers; comparisonReport=result.Report;
                         rotated=new Point3[points.Length];
                         buildMs=result.Milliseconds; cellSize=result.CellSize;
@@ -523,7 +535,8 @@ namespace Marigold
                 float half=side/2;
                 for(int i=0;i<points.Length;i++)
                     rotated[i]=view.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
-                byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*Math.Sin(clock.Elapsed.TotalSeconds*Math.PI));
+                double pulseTime=clock.Elapsed.TotalSeconds;
+                byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*(2*DamagePulse.Wave(pulseTime)-1));
                 MarkerFill.Build(rotated,shadedMarkers,view.Zoom,side,fillBands);
                 foreach(var band in fillBands)
                 {
@@ -531,7 +544,8 @@ namespace Marigold
                         (float)band.Width*half,(float)band.Height*half);
                     var kind=lineKinds[band.MarkerStart/2];
                     var shade=LineColor(kind,missingAlpha);
-                    shade.A=(byte)((kind==ChangeKind.Missing?missingAlpha/4:kind==ChangeKind.Damaged?25:60)*controls.Appearance.Fill);
+                    double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(kind) && band.MarkerStart/2<pulseStarts.Length?DamagePulse.Strength(pulseStarts[band.MarkerStart/2],pulseTime):0;
+                    shade.A=(byte)Math.Min(255,((kind==ChangeKind.Missing?missingAlpha/4:kind==ChangeKind.Damaged?12:60)+150*flash)*controls.Appearance.Fill);
                     MyRenderProxy.DrawSprite(Texture,ref fill,null,shade,0,false,false);
                 }
                 for(int b=0;b<points.Length;b+=2)
@@ -542,8 +556,13 @@ namespace Marigold
                         var from=new Vector2(left+half+(float)x0*half,top+half+(float)y0*half);
                         var to=new Vector2(left+half+(float)x1*half,top+half+(float)y1*half);
                         var delta=to-from; float length=delta.Length(); if(length<0.25f)continue;
-                        var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y)/2-0.5f,length,1);
-                        MyRenderProxy.DrawSprite(Texture,ref line,null,LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]),(float)Math.Atan2(delta.Y,delta.X),false,false);
+
+                        var lineColor=LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]);
+                        double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(lineKinds[b/2]) && b/2<pulseStarts.Length?DamagePulse.Strength(pulseStarts[b/2],pulseTime):0;
+                        lineColor.A=(byte)Math.Min(255,lineColor.A+105*flash*controls.Appearance.Outline);
+                        float thickness=1+(float)flash;
+                        var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y-thickness)/2,length,thickness);
+                        MyRenderProxy.DrawSprite(Texture,ref line,null,lineColor,(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
                 if(!recoveryFocus)MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,
                     useFullClientArea:true,maxTextWidth:controls.Expanded?.65f:.28f);
