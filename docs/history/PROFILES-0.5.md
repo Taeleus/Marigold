@@ -1,3 +1,5 @@
+> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+
 # Profiles and cockpit anchors — 0.5
 
 ## First setup

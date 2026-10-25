@@ -6,6 +6,7 @@
     <DefineConstants>LOCAL_BUILD</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Marigold.Plugin/FillRaster.cs" Link="FillRaster.cs" />
     <Compile Include="../../src/Marigold.Plugin/DamagePulse.cs" Link="DamagePulse.cs" />
     <Compile Include="../../src/Marigold.Plugin/ReferenceHistory.cs" Link="ReferenceHistory.cs" />
     <Compile Include="../../src/Marigold.Plugin/OffensiveDefinitions.cs" Link="OffensiveDefinitions.cs" />

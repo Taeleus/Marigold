@@ -30,6 +30,9 @@ namespace Marigold
         private int[] shadedMarkers=new int[0];
         private readonly List<FillBand> fillBands=new List<FillBand>();
         private ChangeKind[] lineKinds = new ChangeKind[0];
+        private bool[] drawLine=new bool[0];
+        private int renderedLines,renderedFills,unmergedFills;
+        private readonly FillRaster fillRaster=new FillRaster();
         private Point3[] rotated = new Point3[0];
         private bool dirty, faulted;
         private int cooldown, reconcile;
@@ -230,7 +233,7 @@ namespace Marigold
         private int drawSamples;
         private string Statistics()
         {
-            return (dirty || pending!=null ? "Rebuild pending; displayed model: " : "") + "Requested detail " + controls.DetailName + "; " + points.Length/2 + " lines; cell " + cellSize +
+            return (dirty || pending!=null ? "Rebuild pending; displayed model: " : "") + "Requested detail " + controls.DetailName + "; " + points.Length/2 + " geometry lines / "+renderedLines+" rendered / "+renderedFills+" fills (from "+unmergedFills+"); cell " + cellSize +
                 "; snapshot " + snapshotMs.ToString("F2") + " ms; worker " + buildMs.ToString("F2") +
                 " ms; HUD CPU mean/max " + (drawSamples==0 ? "no samples" :
                 (drawTotalMs/drawSamples).ToString("F2") + "/" + drawMaxMs.ToString("F2") + " ms (" + drawSamples + " draws)") +
@@ -254,7 +257,7 @@ namespace Marigold
             public readonly List<BlockChange> Regions=new List<BlockChange>();
         }
 
-        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station,string styles)
+        private static BuildResult Build(BlockSample[] snapshot, BlockSample[] reference, int version, int detail, string mode, string category, string stateFilter, int page, bool preview, StationGrid[] station,string styles,bool outlineOnly)
         {
             var timer=Stopwatch.StartNew();
             var result=new BuildResult { Snapshot=snapshot,Reference=reference,Generation=version, Count=snapshot.Length, Station=station,Preview=preview };
@@ -314,6 +317,7 @@ namespace Marigold
                     // Whole-ship fault layers must never depend on the 128-detail-marker page.
                     foreach(var kind in new[]{ChangeKind.Missing,ChangeKind.Damaged,ChangeKind.NonFunctional,ChangeKind.Replaced,ChangeKind.Added,ChangeKind.Unknown})
                     {
+                        if(!outlineOnly && (kind==ChangeKind.Missing || kind==ChangeKind.Damaged || kind==ChangeKind.NonFunctional))continue; // Filled boxes already include complete outlines.
                         var overview=OutlineGeometry.Faults(visible,kind,frame.Value);geometry.AddRange(overview.Points);
                         for(int i=0;i<overview.Points.Length/2;i++)kinds.Add(kind);
                     }
@@ -325,7 +329,7 @@ namespace Marigold
                     }
                     // Every primary fault gets fill coverage, independent of marker pages.
                     // Dense same-state regions merge rather than dropping later blocks.
-                    foreach(var kind in new[]{ChangeKind.Damaged,ChangeKind.Missing,ChangeKind.NonFunctional})
+                    if(!outlineOnly)foreach(var kind in new[]{ChangeKind.Damaged,ChangeKind.Missing,ChangeKind.NonFunctional})
                         foreach(var region in MarkerFill.Regions(visible,kind))
                         {result.Regions.Add(region);shaded.Add(geometry.Count);AddMarker(geometry,kinds,region,frame.Value);}
                     for(int i=0;i<shown;i++)
@@ -334,7 +338,7 @@ namespace Marigold
                         if(change.Kind==ChangeKind.Damaged || change.Kind==ChangeKind.NonFunctional || change.Kind==ChangeKind.Missing)continue;
                         AddMarker(geometry,kinds,change,frame.Value);
                     }
-                    result.Report=comparison.Summary+". All matching damage, missing and non-functional regions highlighted across every page (dense fills may merge). Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
+                    result.Report=comparison.Summary+(outlineOnly?". Outline-only mode: merged fault contours, no translucent fills.":". All matching damage, missing and non-functional regions highlighted across every page (dense fills may merge).")+" Detail marker page "+actualPage+"/"+pages+"; "+shown+" shown of "+visible.Count+" matching filters. Mode "+mode+"; system "+category+"; filter "+stateFilter+".";
                 }
                 result.Report+="\nSchematic uses block envelopes, not model meshes. Coarse detail can merge small gaps; use High detail for inspection.";
                 if(stationReports.Count>0)result.Report+="\nDocked grids: "+string.Join("; ",stationReports);
@@ -479,6 +483,19 @@ namespace Marigold
                         }
                         points=result.Points; lineWeights=result.Weights;lineKinds=result.Kinds; shadedMarkers=result.ShadedMarkers; comparisonReport=result.Report;
                         rotated=new Point3[points.Length];
+                        // Remove identical same-state edges, retaining the latest alert on shared boundaries.
+                        drawLine=new bool[lineKinds.Length];renderedLines=0;
+                        var unique=new Dictionary<ChangeKind,Dictionary<Point3,Dictionary<Point3,int>>>();
+                        for(int i=0;i<lineKinds.Length;i++)
+                        {
+                            var a=points[i*2];var b=points[i*2+1];
+                            if(a.X>b.X || (a.X==b.X && (a.Y>b.Y || (a.Y==b.Y && a.Z>b.Z)))){var swap=a;a=b;b=swap;}
+                            Dictionary<Point3,Dictionary<Point3,int>> first;Dictionary<Point3,int> second;int prior;
+                            if(!unique.TryGetValue(lineKinds[i],out first))unique[lineKinds[i]]=first=new Dictionary<Point3,Dictionary<Point3,int>>();
+                            if(!first.TryGetValue(a,out second))first[a]=second=new Dictionary<Point3,int>();
+                            if(second.TryGetValue(b,out prior) && lineWeights[prior]==lineWeights[i]){pulseStarts[prior]=Math.Max(pulseStarts[prior],pulseStarts[i]);continue;}
+                            second[b]=i;drawLine[i]=true;renderedLines++;
+                        }
                         buildMs=result.Milliseconds; cellSize=result.CellSize;
                         drawSamples=0; drawTotalMs=drawMaxMs=0;
                         MyLog.Default.WriteLine("[Marigold] Schematic worker: "+result.Count+" blocks, "+result.Cells+" cells, "+result.Milliseconds.ToString("F1")+" ms.");
@@ -499,7 +516,7 @@ namespace Marigold
                     lastObservation=snapshot;lastObservationGeneration=generation;
                     int version=generation, detail=controls.Detail,page=controls.Page;
                     string mode=controls.Mode,category=controls.Category,stateFilter=controls.StateFilter;bool preview=recoveryPreview!=null || previewBlocks!=null;
-                    string styles=controls.SystemStyles;pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station,styles));
+                    string styles=controls.SystemStyles;bool outlineOnly=!controls.Appearance.DrawFills && !(panel?.RecoveryFocus??false);pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station,styles,outlineOnly));
                     snapshotMs=timer.Elapsed.TotalMilliseconds;
                     dirty=false; cooldown=30;
                     MyLog.Default.WriteLine("[Marigold] Schematic snapshot: "+snapshot.Length+" blocks, "+timer.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");
@@ -533,23 +550,35 @@ namespace Marigold
                 var panelRect=new RectangleF(left-8,top-8,side+16,side+16);
                 MyRenderProxy.DrawSprite(Texture,ref panelRect,null,new Color(5,18,25,(byte)(255*controls.Appearance.Background)),0,false,false);
                 float half=side/2;
+                // Projection is linear. Evaluate trigonometry three times per frame, not per endpoint.
+                var axisX=view.Project(SchematicGeometry.ToBasis(new Point3(1,0,0),cockpitRight,cockpitUp,cockpitBackward));
+                var axisY=view.Project(SchematicGeometry.ToBasis(new Point3(0,1,0),cockpitRight,cockpitUp,cockpitBackward));
+                var axisZ=view.Project(SchematicGeometry.ToBasis(new Point3(0,0,1),cockpitRight,cockpitUp,cockpitBackward));
                 for(int i=0;i<points.Length;i++)
-                    rotated[i]=view.Project(SchematicGeometry.ToBasis(points[i],cockpitRight,cockpitUp,cockpitBackward));
+                {var p=points[i];rotated[i]=new Point3(p.X*axisX.X+p.Y*axisY.X+p.Z*axisZ.X,p.X*axisX.Y+p.Y*axisY.Y+p.Z*axisZ.Y,p.X*axisX.Z+p.Y*axisY.Z+p.Z*axisZ.Z);}
                 double pulseTime=clock.Elapsed.TotalSeconds;
-                byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*(2*DamagePulse.Wave(pulseTime)-1));
-                MarkerFill.Build(rotated,shadedMarkers,view.Zoom,side,fillBands);
+                double pulseWave=DamagePulse.Wave(pulseTime);
+                byte missingAlpha=(byte)(205+35*controls.Appearance.Pulse*(2*pulseWave-1));
+                if(recoveryFocus || controls.Appearance.DrawFills)MarkerFill.Build(rotated,shadedMarkers,view.Zoom,side,fillBands);else fillBands.Clear();
+                unmergedFills=fillBands.Count;
+                fillRaster.Merge(fillBands,lineKinds,pulseStarts,pulseTime,controls.Appearance.NewDamagePulse);
+                renderedFills=0;
                 foreach(var band in fillBands)
                 {
                     var fill=new RectangleF(left+half+(float)band.X*half,top+half+(float)band.Y*half,
                         (float)band.Width*half,(float)band.Height*half);
                     var kind=lineKinds[band.MarkerStart/2];
                     var shade=LineColor(kind,missingAlpha);
-                    double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(kind) && band.MarkerStart/2<pulseStarts.Length?DamagePulse.Strength(pulseStarts[band.MarkerStart/2],pulseTime):0;
+                    double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(kind) && band.MarkerStart/2<pulseStarts.Length?(pulseTime-pulseStarts[band.MarkerStart/2]>=0 && pulseTime-pulseStarts[band.MarkerStart/2]<4?pulseWave:0):0;
                     shade.A=(byte)Math.Min(255,((kind==ChangeKind.Missing?missingAlpha/4:kind==ChangeKind.Damaged?12:60)+150*flash)*controls.Appearance.Fill);
+                    renderedFills++;
                     MyRenderProxy.DrawSprite(Texture,ref fill,null,shade,0,false,false);
                 }
+                renderedLines=0;
                 for(int b=0;b<points.Length;b+=2)
                     {
+                        if(!recoveryFocus && !controls.Appearance.DrawHull && lineKinds[b/2]==ChangeKind.Hull)continue;
+                        if(b/2<drawLine.Length && !drawLine[b/2])continue;
                         var a=rotated[b]; var c=rotated[b+1];
                         double x0=a.X*view.Zoom,y0=-a.Y*view.Zoom,x1=c.X*view.Zoom,y1=-c.Y*view.Zoom;
                         if(!SchematicGeometry.Clip(ref x0,ref y0,ref x1,ref y1))continue;
@@ -558,10 +587,11 @@ namespace Marigold
                         var delta=to-from; float length=delta.Length(); if(length<0.25f)continue;
 
                         var lineColor=LineColor(lineKinds[b/2],missingAlpha,lineWeights[b/2]);
-                        double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(lineKinds[b/2]) && b/2<pulseStarts.Length?DamagePulse.Strength(pulseStarts[b/2],pulseTime):0;
+                        double flash=controls.Appearance.NewDamagePulse && DamagePulse.VisibleFor(lineKinds[b/2]) && b/2<pulseStarts.Length?(pulseTime-pulseStarts[b/2]>=0 && pulseTime-pulseStarts[b/2]<4?pulseWave:0):0;
                         lineColor.A=(byte)Math.Min(255,lineColor.A+105*flash*controls.Appearance.Outline);
                         float thickness=1+(float)flash;
                         var line=new RectangleF((from.X+to.X-length)/2,(from.Y+to.Y-thickness)/2,length,thickness);
+                        renderedLines++;
                         MyRenderProxy.DrawSprite(Texture,ref line,null,lineColor,(float)Math.Atan2(delta.Y,delta.X),false,false);
                     }
                 if(!recoveryFocus)MyGuiManager.DrawString("White",caption+" | "+(controls.Category=="all"?"All systems":controls.Category=="none"?"No systems":controls.Category.Replace("weapons","Offensive").Replace(",",", "))+" | "+(controls.StateFilter=="all"?"All states":controls.StateFilter=="broken"?"Non-functional":controls.StateFilter),new Vector2((left-8)/screen.X,(top+side+12)/screen.Y),0.55f,

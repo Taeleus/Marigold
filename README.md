@@ -2,9 +2,9 @@
 
 **See your ship. Find the damage. Know what's missing.**
 
-Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
+Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-This page describes **Marigold 0.14.8**. Marigold is under active development.
+Current release candidate: **0.14.14 for Pulsar Legacy**. Interim support is experimental and untested in-game.
 
 ## Your first ship
 
@@ -32,7 +32,7 @@ The baseline stays fixed as your ship takes damage or gets repaired. Capture aga
 
 A block detached from your ship counts as missing even if it is floating nearby. Switching a block off or losing power does not make it orange.
 
-Yellow stays steady and faint so serious damage is easier to spot. Newly non-functional or missing blocks can pulse more vividly for four seconds, using one shared rhythm across the display. Toggle **New damage pulse** under **Customize > Colors**; the gentler ongoing missing-block pulse has its own setting. Save display to keep your choices.
+Yellow stays steady and faint so serious damage is easier to spot. Newly non-functional or missing blocks can pulse more vividly for four seconds, using one shared rhythm across the display. Toggle **Fresh pulse** under **Customize > Preferences > Performance options**; the gentler ongoing missing-block pulse has its own setting. Save display to keep your choices.
 
 Damage fills remain visible across marker pages. On extremely damaged ships, nearby same-color regions may merge and shade gaps between blocks. The display is a schematic built from block bounds, rather than a detailed model.
 
@@ -49,6 +49,8 @@ Views follow your saved cockpit orientation. Combine system filters to focus on 
 Use **Save display** to save your setup as the default, for this ship, or as a named preset. Closing the panel alone does not save display edits. **Customize > Share config** lets you copy and paste layouts, health bars, colors and filters through the clipboard; ship baselines and shortcuts are not included.
 
 Shortcuts are optional and start unbound. The interface offers English and Spanish, with English fallback for some controls and diagnostic messages.
+
+**Customize > Preferences > Performance options** offers Full display, Outlines only, Faults with fills and Fault outlines only. Lighter modes skip translucent fills and/or healthy hull context while retaining filtered fault coverage and unchanged health counts. Save display keeps the choice. Automatic matching now requires at least 75% overlap, a clear lead and stable observations; ambiguous ships still need manual selection.
 
 ### Optional health bars
 
@@ -92,33 +94,35 @@ Connected grids with a matching saved profile show their own damage outlines and
 
 ## Install
 
-Marigold targets **Pulsar Legacy / .NET Framework 4.8**.
+The supported release target is **Pulsar Legacy / .NET Framework 4.8**. Interim builds are experimental and are outside the initial PluginHub submission.
 
-1. Close Space Engineers.
-2. Copy the built package's `plugin.dll`, `plugin.pdb` and `plugin.xml` into `%APPDATA%/Pulsar/Legacy/Local/Marigold` (an existing `MarigoldDev` folder also works).
-3. Start the game through Pulsar Legacy and enable Marigold. Restart if prompted.
+1. Close Space Engineers and back up `%APPDATA%/Marigold` (profiles and preferences).
+2. Copy the Legacy package's plugin.dll, plugin.pdb and plugin.xml into `%APPDATA%/Pulsar/Legacy/Local/Marigold`. An existing MarigoldDev folder also works. Enable only one copy per launcher.
+3. Start the matching launcher, enable Marigold and restart if prompted. Sit in a cockpit and open `/mg ui`.
 
-Enable only one Marigold installation at a time. Profiles and preferences live in **`%APPDATA%/Marigold`**; keep a copy of that folder before upgrading or moving computers. **Upgrading from 0.12.6:** newer builds save a profile format the old version cannot read. To roll back, restore both the older plugin and your pre-upgrade data-folder backup.
+For trusted downloaded packages blocked with error **0x80131515**, right-click the ZIP, open Properties, check Unblock, apply and extract again. Alternatively unblock the installed DLL in Properties. Check the log's Flavour and Runtime lines when reporting launch problems.
+
+Profiles are shared between launchers. Upgrading from 0.12.6 changes the profile format; rollback requires the older plugin and the complete pre-upgrade data backup.
 
 <details>
-<summary>Build a package from source</summary>
+<summary>Build from source</summary>
 
-Clone this repository and open PowerShell in its folder. Building requires a .NET SDK capable of running the .NET 10 checks, .NET Framework 4.8 reference assemblies and a local Space Engineers installation.
+Requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies and a local Space Engineers Bin64 directory. In PowerShell:
 
 ```powershell
-.\build.ps1
-# Or specify your game's Bin64 folder:
-.\build.ps1 -Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'
+./build.ps1 -Runtime Legacy
+./verify-source.ps1 -Runtime Legacy
+# Optional game location:
+./build.ps1 -Runtime Legacy -Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'
 ```
 
-The package is written to `artifacts/Marigold`. Building does not install the plugin or launch the game. The plugin itself targets .NET Framework 4.8; the automated checks use .NET 10.
+The Legacy package is written to `artifacts/Marigold`. Builds do not deploy. Use `./verify-source.ps1 -Runtime Legacy` to check the source compilation path.
 
 </details>
 
-## Known issues being investigated
+## Current limitations
 
-- Recovery-preview buttons may have cursor alignment or overlap issues at some display settings.
-- Repair recognition after importing a blueprint baseline has been reported and needs investigation.
+Large damaged ships can still make filled rendering expensive; choose an outline mode under **Customize > Preferences > Performance options** for lower drawing cost.
 
 Fresh-damage alerts apply to the main ship; connector-docked context does not pulse. See the [roadmap](ROADMAP.md) for remaining work.
 
@@ -129,3 +133,6 @@ Most actions are available through **`/mg ui`**. For chat commands, start with `
 Found a problem? [Open an issue](https://github.com/Taeleus/Marigold/issues) with your Marigold version, steps to reproduce it, relevant mods and a screenshot if helpful.
 
 For project progress, see the [roadmap](ROADMAP.md).
+
+
+See the [documentation index](docs/INDEX.md) and [performance testing procedure](docs/PERFORMANCE-TEST.md).

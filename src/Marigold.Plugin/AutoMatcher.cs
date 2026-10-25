@@ -36,7 +36,7 @@ namespace Marigold
                 }
             }
             matches.Sort((a,b)=>b.Score.CompareTo(a.Score));
-            if(matches.Count==0 || matches[0].Score<.90)return result;
+            if(matches.Count==0 || matches[0].Score<.75)return result;
             if(matches.Count>1 && matches[0].Score-matches[1].Score<.08){result.Message="Ambiguous profiles or cockpit alignment. Select manually.";return result;}
             result=matches[0];result.Message="Unique layout match; waiting for stable observations.";return result;
         }
@@ -50,16 +50,21 @@ namespace Marigold
             return Math.Min((double)retained/remembered.Length,(double)expected/current.Length);
         }
         private static double Score(BlockSample[] expected,BlockSample[] current)
-        {return (double)Math.Min(expected.Length,current.Length)/Math.Max(expected.Length,current.Length)<.82?0:ProfileSuggestions.Score(expected,current);}
+        {return (double)Math.Min(expected.Length,current.Length)/Math.Max(expected.Length,current.Length)<.75?0:ProfileSuggestions.Score(expected,current);}
     }
 
     internal sealed class MatchStability
     {
         private string key;private BlockSample[] sample;
         public void Reset(){key=null;sample=null;}
+        internal static bool SameStructure(BlockSample[] a,BlockSample[] b)
+        {
+            if(a==null || b==null || a.Length!=b.Length)return false;
+            return RecoveryMatcher.Score(a,b)==a.Length;
+        }
         public bool Observe(string candidate,BlockSample[] current)
         {
-            bool stable=candidate!=null && candidate==key && ObservationCache.Same(sample,current);
+            bool stable=candidate!=null && candidate==key && SameStructure(sample,current);
             key=candidate;sample=current;return stable;
         }
     }

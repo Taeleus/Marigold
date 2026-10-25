@@ -1,3 +1,5 @@
+> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+
 # Milestone 1 in-game acceptance
 
 All items below are pending. Record game version, Pulsar version, runtime, result and relevant log excerpt when testing.

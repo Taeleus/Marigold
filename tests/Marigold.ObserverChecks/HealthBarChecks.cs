@@ -10,6 +10,19 @@ internal static class HealthBarChecks
     {return new BlockSample{Position=new Point3(i,0,0),Bounds=new Box3(new Point3(i-.5,-.5,-.5),new Point3(i+.5,.5,.5)),Definition="MyObjectBuilder_"+type+"/Test",Forward=0,Up=4,MaxIntegrity=100,Integrity=100,BuildIntegrity=100,HasFunctionalState=true,IsFunctional=true};}
     public static void Run()
     {
+        for(int mode=0;mode<4;mode++)
+        {
+            var configured=new SchematicControls();configured.Appearance.Rendering=mode;var restoredMode=new SchematicControls();DisplaySettings.Import(DisplaySettings.Export(configured),restoredMode);
+            Check(restoredMode.Appearance.Rendering==mode && restoredMode.Appearance.DrawFills==((mode&1)==0) && restoredMode.Appearance.DrawHull==((mode&2)==0),"Performance modes persist and select intended layers");
+        }
+        var projection=new SchematicControls();Check(projection.Detail==2,"New displays default to High");
+        foreach(string command in new[]{"/mg reset","/mg top","/mg bottom","/mg left","/mg right"})
+        {
+            projection.Execute(command);
+            var x=projection.Project(new Point3(1,0,0));var y=projection.Project(new Point3(0,1,0));var z=projection.Project(new Point3(0,0,1));
+            var p=new Point3(-.23,.71,.39);var actual=projection.Project(p);
+            Check(Math.Abs(actual.X-(p.X*x.X+p.Y*y.X+p.Z*z.X))<1e-12 && Math.Abs(actual.Y-(p.X*x.Y+p.Y*y.Y+p.Z*z.Y))<1e-12,"Axis projection preserves cockpit views");
+        }
         var pulseBlock=Block(200,"Reactor");var pulseReference=new[]{pulseBlock};var pulse=new DamagePulse();
         var region=new BlockChange{Bounds=pulseBlock.Bounds,Kind=ChangeKind.Damaged};
         pulse.Observe(pulseReference,pulseReference,0);Check(double.IsNegativeInfinity(pulse.Start(region)),"Loading does not pulse");

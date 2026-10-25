@@ -4,7 +4,7 @@ Historical implementation and validation notes. For current behavior, use README
 
 # Marigold
 
-Space Engineers 1 client engineering HUD prototype. Start with [ROADMAP.md](ROADMAP.md) for milestones and acceptance gates.
+Space Engineers 1 client engineering HUD prototype. Start with [ROADMAP.md](../../ROADMAP.md) for milestones and acceptance gates.
 
 ## Current implementation
 
@@ -12,11 +12,11 @@ Version 0.7.0 targets Pulsar Legacy / .NET Framework 4.8, compiled against the l
 
 Controller changes, closed grids, session unload and disposal clear the schematic. Grid name changes update without waiting for geometry rebuilding. The view defaults and cockpit-relative view commands are unchanged.
 
-A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](docs/PROFILES-0.5.md). Local blueprint import with an explicit alignment preview, system/state filters, live/reference/compare modes, expanded layout and saved display preferences are included. See [current commands](docs/COMMANDS.md) and the editable [testing to-do](TESTING-TODO.md). Full block meshes, a graphical settings editor, and mechanical construct comparison are not implemented. Connector-only station context and conservative automatic layout reassociation are implemented in 0.7; actual Nexus behavior remains unverified. No custom networking or world edits. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
+A rotating hull-envelope outline is now included, with coplanar seams removed and collinear edges merged. Persistent ship profiles, cockpit anchors and reference capture/comparison are included; see [Profiles and anchors](PROFILES-0.5.md). Local blueprint import with an explicit alignment preview, system/state filters, live/reference/compare modes, expanded layout and saved display preferences are included. See [current commands](../COMMANDS.md) and the editable [testing to-do](../../TESTING-TODO.md). Full block meshes, a graphical settings editor, and mechanical construct comparison are not implemented. Connector-only station context and conservative automatic layout reassociation are implemented in 0.7; actual Nexus behavior remains unverified. No custom networking or world edits. The game may suppress normal notifications in some UI/HUD modes. Remote control, multiplayer behavior and exact rendering appearance still require in-game checks.
 
 ## Build and checks
 
-For current controls see [Control correction 0.2.1](docs/CONTROLS-0.2.1.md). Original Ctrl+Alt shortcuts are removed; use local chat /mg commands. For current geometry and performance controls see [Outline 0.3](docs/OUTLINE-0.3.md). The plugin uses Pulsar's already-installed Harmony 2.4.2; a second Harmony DLL is deliberately not shipped in the local package.
+For current controls see [Control correction 0.2.1](CONTROLS-0.2.1.md). Original Ctrl+Alt shortcuts are removed; use local chat /mg commands. For current geometry and performance controls see [Outline 0.3](OUTLINE-0.3.md). The plugin uses Pulsar's already-installed Harmony 2.4.2; a second Harmony DLL is deliberately not shipped in the local package.
 
 From this folder in PowerShell:
 
@@ -32,7 +32,7 @@ Validation on October 21, 2026:
 
 - Release plugin build against installed game DLLs: passed, zero warnings/errors.
 - 13 lifecycle checks using small game API doubles: passed. These exercise notification reuse/text refresh, switching, exit, closed grids, unload/reload, failure recovery and idempotent cleanup.
-- Game source inspection: see [docs/API-EVIDENCE.md](docs/API-EVIDENCE.md).
+- Game source inspection: see [docs/API-EVIDENCE.md](../API-EVIDENCE.md).
 - Plugin and game-code skill preparation: completed successfully (both reported DONE). Game-code property search and plugin registry search smoke checks passed. Optional Graphify generation was disabled.
 - Version 0.1 user-confirmed in-game: loading, name/count display on Lemon Drop (2,252 blocks) and OPS Miner (396 blocks), and immediate cockpit rename updates. Other checklist items remain pending.
 - Version 0.2: 24 geometry checks pass in addition to the 13 observer checks. User confirmed rotating display and seamless grid switching in 0.2. The old keybinds failed and were replaced in 0.2.1. User subsequently confirmed chat controls and cockpit-relative snap views in 0.2.2; performance remains pending.
@@ -43,7 +43,7 @@ The build produces `artifacts/Marigold/plugin.dll`, `plugin.pdb` and `plugin.xml
 
 For a later manual test, with the game closed, place that package directory under Pulsar's `Legacy/Local` directory, enable **Marigold (prototype)** in the plugin list, and launch Legacy. For the previously observed installation this would be `%APPDATA%/Pulsar/Legacy/Local/MarigoldDev`. Verify the directory against your active Pulsar installation before copying. Avoid enabling both a binary package and source-folder version simultaneously. The development installation is MarigoldDev. Restart the game after replacing the package; live reload is not supported.
 
-After a session, look for `[Marigold]` entries in the normal game log. Disable the plugin to stop it loading. Follow [docs/IN-GAME-CHECKLIST.md](docs/IN-GAME-CHECKLIST.md) before marking milestone 1 complete.
+After a session, look for `[Marigold]` entries in the normal game log. Disable the plugin to stop it loading. Follow [docs/IN-GAME-CHECKLIST.md](IN-GAME-CHECKLIST.md) before marking milestone 1 complete.
 
 ## Source boundaries
 
@@ -118,15 +118,15 @@ Implemented `/mg anchor`, persistent `/mg capture`, `/mg profiles`, `/mg profile
 
 0.5.0 validation: Release build completed with zero warnings/errors. Passed 119 profile persistence/alignment checks plus the existing observer, comparison, fill, geometry and control checks. Installed assembly 0.5.0.0 into MarigoldDev with SHA-256 verification of all package files; previous package retained under artifacts/backup-before-0.5.0. In-game save/reload and Nexus transfer validation remain pending.
 
-## 0.6.0 — Blueprint import and engineering display controls
+## 0.6.0 â€” Blueprint import and engineering display controls
 
 Adds bounded plain/gzip SBC import, explicit grid/cockpit pairing, unsaved alignment preview and accepted persistent baselines. Adds system isolation, change filters, marker pagination, live/reference/compare modes, compact/expanded layouts, explicit saved preferences and cockpit-relative profile suggestions. Unchanged observations reuse geometry; game-thread snapshots still run periodically. Suggestions never select a profile automatically.
 
-Release build passed with zero warnings/errors. Automated checks: 12 observer lifecycle, 16 blueprint parser/command, 45 display/settings/suggestion, 119 profile persistence/alignment, 5 fill, 29 snapshot comparison, 6,973 geometry and 403 command/orientation checks. Pure checks and API doubles do not validate the live renderer, imported game definition conversion, multiplayer replication or Nexus transfers. User testing is deferred in [TESTING-TODO.md](TESTING-TODO.md); no unchecked item is considered validated.
+Release build passed with zero warnings/errors. Automated checks: 12 observer lifecycle, 16 blueprint parser/command, 45 display/settings/suggestion, 119 profile persistence/alignment, 5 fill, 29 snapshot comparison, 6,973 geometry and 403 command/orientation checks. Pure checks and API doubles do not validate the live renderer, imported game definition conversion, multiplayer replication or Nexus transfers. User testing is deferred in [TESTING-TODO.md](../../TESTING-TODO.md); no unchecked item is considered validated.
 
 Installed assembly 0.6.0.0 into the authorized Pulsar `Legacy/Local/MarigoldDev` folder. DLL, PDB and metadata SHA-256 hashes match the built package. The previous package is preserved under `artifacts/backup-before-0.6.0`. Restart the game to load the new version.
 
-## 0.7.0 — Connector station context and automatic reassociation
+## 0.7.0 â€” Connector station context and automatic reassociation
 
 Station mode defaults off and follows locked connector links only. It renders up to 8 additional grids/100,000 context blocks at their relative transforms and sizes; captures and comparison counts remain controlled-grid-only. Mechanical subgrids are excluded at the user's request.
 

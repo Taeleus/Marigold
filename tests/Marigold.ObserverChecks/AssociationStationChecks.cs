@@ -25,7 +25,8 @@ internal static class AssociationStationChecks
         Check(AutoMatcher.Find(damaged,new[]{a},profiles,2.5).ProfileId==profile.Id,"Damage does not change layout identity");
         var missing=new List<BlockSample>(original);missing.RemoveRange(0,5);
         Check(AutoMatcher.Find(missing.ToArray(),new[]{a},profiles,2.5).ProfileId==profile.Id,"Small losses tolerated");
-        missing.RemoveRange(0,20);Check(AutoMatcher.Find(missing.ToArray(),new[]{a},profiles,2.5).ProfileId==null,"Large loss remains manual");
+        missing.RemoveRange(0,20);Check(AutoMatcher.Find(missing.ToArray(),new[]{a},profiles,2.5).ProfileId==profile.Id,"75 percent overlap qualifies");
+        missing.RemoveAt(0);Check(AutoMatcher.Find(missing.ToArray(),new[]{a},profiles,2.5).ProfileId==null,"Below 75 percent remains manual");
         Check(AutoMatcher.Find(original,new[]{a},profiles,.5).ProfileId==null,"Grid sizes never mixed");
         var wrong=a;wrong.Definition="DifferentCockpit";Check(AutoMatcher.Find(original,new[]{wrong},profiles,2.5).ProfileId==null,"Cockpit definition required");
         Check(AutoMatcher.Find(Ship(7),new[]{a},profiles,2.5).ProfileId==null,"Tiny partial observations rejected");
@@ -34,8 +35,13 @@ internal static class AssociationStationChecks
         Check(AutoMatcher.Find(original,new[]{a},profiles,2.5).ProfileId==null,"Identical saved profiles never auto-selected");
         var near=(BlockSample[])original.Clone();near[3].Definition="Changed";twin.Blocks=near;
         Check(AutoMatcher.Find(original,new[]{a},profiles,2.5).ProfileId==null,"Near tie requires manual choice");
+        var eightyFour=new List<BlockSample>(original);eightyFour.RemoveRange(84,16);
+        Check(AutoMatcher.Find(eightyFour.ToArray(),new[]{a},new List<ShipProfile>{profile},2.5).ProfileId==profile.Id,"84 percent occupied-seat overlap qualifies");
+        var reordered=(BlockSample[])original.Clone();Array.Reverse(reordered);
+        Check(MatchStability.SameStructure(original,reordered),"Enumeration order cannot reset structural matching");
+        Check(!MatchStability.SameStructure(original,eightyFour.ToArray()),"Actual structural changes still reset matching");
         var stable=new MatchStability();Check(!stable.Observe(profile.Id,original),"First observation waits");Check(stable.Observe(profile.Id,original),"Repeated observation ready");
-        Check(!stable.Observe(profile.Id,damaged),"Changing observations reset stability");stable.Reset();Check(!stable.Observe(profile.Id,damaged),"Reconnect resets stability");Check(!stable.Observe(null,damaged),"No candidate never accepted");
+        Check(stable.Observe(profile.Id,damaged),"Health changes do not reset structural stability");stable.Reset();Check(!stable.Observe(profile.Id,damaged),"Reconnect resets stability");Check(!stable.Observe(null,damaged),"No candidate never accepted");
         var station=new StationGrid {Blocks=Ship(1),Origin=new Point3(10,0,0),X=new Point3(0,0,-.2),Y=new Point3(0,.2,0),Z=new Point3(.2,0,0)};
         var bounds=station.Bounds(station.Blocks[0].Bounds);
         Check(Math.Abs(bounds.Min.X-9.9)<1e-9 && Math.Abs(bounds.Max.Z-.1)<1e-9,"Small-to-large grid rotated bounds");

@@ -1,27 +1,22 @@
-# Marigold testing checklist
+# Release acceptance
 
-Current build: **0.14.8**, deployed October 24, 2026.
+**Marigold 0.14.14 — Pulsar Legacy. Updated October 25, 2026.**
 
-Your detailed results, comments and original checkboxes are preserved in the [testing history](docs/TESTING-HISTORY-through-0.14.8.md). Later results supersede older overlapping failures and expectations; untested cases are not automatically passed.
+## User-reported passes
 
-## Reported issues to investigate
+- [x] Blueprint baselines recognize repairs block by block.
+- [x] Automatic baseline matching works after the occupied-seat and stability fixes.
+- [x] Recovery controls and inspection camera work correctly.
+- [x] Rendering/performance modes, pulse settings, saved configuration and final regressions work.
+- [x] Deleted profile numbers are reused for new baselines.
+- [x] Performance comparisons completed; outline modes are effective. Further marginal rendering work is deferred.
 
-- [ ] **Recovery preview controls:** reproduce cursor/button misalignment or overlapping X/Y/Z, view and zoom controls. Record resolution and UI scale, then retest hitboxes after the fix. Earlier preview tests passed, but this later report remains open.
-- [ ] **Blueprint baseline repairs:** import and accept a blueprint, damage/remove blocks, then weld/replace them. Check repaired blocks become healthy without recapturing; repeat after reload and recovery. Record blueprint source and exact steps if it fails.
+## Final distribution checks
 
-## Release checks still open
+- [ ] Load the final committed source pin through Pulsar Legacy with the local DLL disabled.
+- [ ] Fresh-install smoke test of the final package, preserving existing data/backups.
+- [ ] Validate the Legacy descriptor against current PluginHub checks, then submit its PR when ready.
 
-- [ ] Record performance on approximately 1k/10k/50k-block ships, including sustained heavy damage and station mode on/off at the dock context limit. Include worker/HUD timings and visible coverage.
-- [ ] Fresh-install smoke test using the final package. Existing-profile migration has earlier passing results.
-- [ ] Load the final pinned source through Pulsar Legacy with the local binary disabled. Check dependencies, UI and unload; source compilation alone is not runtime acceptance.
-- [ ] Recheck current PluginHub rules, including what station mode reveals about connector-linked grids. Prepare the final release package and source-pinned manifest. Publication is a separate step.
+Interim runtime testing is deferred and outside this release. No additional feature work is currently planned for Legacy.
 
-## Latest user-reported passes
-
-- [x] Recovery preview layout, drag inspection, wheel zoom, cancellation cleanup and saved HUD isolation (0.14.1–0.14.3). Later button-alignment report above remains open.
-- [x] Damage outlines and primary fills remain visible through sustained combat and across marker pages (0.14.4–0.14.5).
-- [x] Power bar sections, all checkbox combinations, damage attribution, layout and persistence (0.14.6).
-- [x] Fresh-alert toggle, timing, shared rhythm, loading/preview behavior and persistence (0.14.7).
-- [x] Yellow stays steady and faint; orange/red remain prominent with synchronized fresh alerts (0.14.8). This replaces the earlier yellow-pulse expectation.
-
-Automated build, regression and source-compilation checks passed for 0.14.8. They do not replace the release checks above. Consult the history for older edge-case evidence before closing an item.
+Detailed prior results: [testing through 0.14.8](docs/history/TESTING-HISTORY-through-0.14.8.md), [testing through 0.14.14](docs/history/TESTING-HISTORY-through-0.14.14.md), [performance results](docs/PERFORMANCE-RESULTS.md).

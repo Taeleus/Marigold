@@ -52,11 +52,16 @@ namespace Marigold
             if(existing!=null && profile.Blocks==existing.Blocks && string.IsNullOrEmpty(profile.ReferenceId))
             {profile.ReferenceId=existing.ReferenceId;profile.ReferenceName=existing.ReferenceName;profile.Source=existing.Source;profile.BlueprintIdentity=existing.BlueprintIdentity;profile.CreatedUtcTicks=existing.CreatedUtcTicks;}
             if(profile.Blocks!=null && string.IsNullOrEmpty(profile.ReferenceId)){profile.ReferenceId=Guid.NewGuid().ToString("N");profile.CreatedUtcTicks=DateTime.UtcNow.Ticks;if(string.IsNullOrEmpty(profile.Source))profile.Source="capture";if(string.IsNullOrEmpty(profile.ReferenceName))profile.ReferenceName="Baseline "+DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");}
-            profile.Number=existing==null?nextNumber:existing.Number;
+            profile.Number=existing==null?LowestAvailable(profiles):existing.Number;
             if(existing!=null && !updateStation)profile.Station=existing.Station;
             var next=new List<ShipProfile>(profiles);
             next.RemoveAll(p=>p.Id==profile.Id);next.Add(profile);
             Save(next);
+        }
+        private static int LowestAvailable(IList<ShipProfile> list)
+        {
+            var used=new HashSet<int>();foreach(var p in list)used.Add(p.Number);
+            int number=1;while(used.Contains(number))number++;return number;
         }
         public void Delete(string id)
         { var next=new List<ShipProfile>(profiles);next.RemoveAll(p=>p.Id==id);Save(next); }
@@ -75,7 +80,7 @@ namespace Marigold
         {
             if(Warning!=null)throw new InvalidOperationException(Warning);
             Validate(next);
-            int following=nextNumber;foreach(var p in next)following=Math.Max(following,checked(p.Number+1));
+            int following=LowestAvailable(next);
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             string temp=path+"."+Guid.NewGuid().ToString("N")+".tmp";
             try

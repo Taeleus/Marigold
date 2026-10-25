@@ -1,18 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <AssemblyName>Marigold</AssemblyName>
     <RootNamespace>Marigold</RootNamespace>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>7.3</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <Version>0.14.8</Version>
+    <Version>0.14.14</Version>
     <DefineConstants>$(DefineConstants);LOCAL_BUILD</DefineConstants>
     <Bin64 Condition="'$(Bin64)' == ''">D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</Bin64>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.Linq" Condition="'$(TargetFramework)' == 'net48'" />
     <Reference Include="Sandbox.Graphics"><HintPath>$(Bin64)\Sandbox.Graphics.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="VRage.Input"><HintPath>$(Bin64)\VRage.Input.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="VRage.Render"><HintPath>$(Bin64)\VRage.Render.dll</HintPath><Private>false</Private></Reference>

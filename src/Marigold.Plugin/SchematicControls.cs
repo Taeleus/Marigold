@@ -19,7 +19,7 @@ namespace Marigold
         public HealthBarSettings HealthBars=new HealthBarSettings();
         public HudAppearance Appearance=new HudAppearance();
         public void RotateView(double yaw,double pitch){Spin=false;planView=false;rotatingView=true;Yaw+=yaw;Pitch=Math.Max(-Math.PI/2,Math.Min(Math.PI/2,Pitch+pitch));}
-        public int Detail = 1;
+        public int Detail = 2;
         public string Language="en";
         public string SystemStyles=DisplayFilter.DefaultStyles;
         public string Mode="compare", Category="all", StateFilter="all";

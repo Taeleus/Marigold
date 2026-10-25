@@ -82,8 +82,15 @@ internal static class ProfileChecks
             var separate=Path.Combine(directory,"counter");var counter=new ProfileStore(separate);
             var numbered=new ShipProfile {Id=Guid.NewGuid().ToString("N"),Name="Station",GridSize=2.5,Anchor=anchor,Blocks=local,Station=true};counter.Put(numbered);counter.Delete(numbered.Id);counter=new ProfileStore(separate);
             var nextProfile=new ShipProfile {Id=Guid.NewGuid().ToString("N"),Name="Ship",GridSize=2.5,Anchor=anchor,Blocks=local};counter.Put(nextProfile);
-            Check(nextProfile.Number==2,"Deleted highest ID is not reused after restart");
-            nextProfile.Station=true;counter.Put(nextProfile,true);Check(new ProfileStore(separate).Find("2").Station,"Station flag persists per profile");
+            Check(nextProfile.Number==1,"Deleting all profiles resets displayed numbering after restart");
+            nextProfile.Station=true;counter.Put(nextProfile,true);Check(new ProfileStore(separate).Find("1").Station,"Station flag persists per profile");
+            var gapA=nextProfile.Copy();gapA.Id=Guid.NewGuid().ToString("N");counter.Put(gapA);
+            var gapB=nextProfile.Copy();gapB.Id=Guid.NewGuid().ToString("N");counter.Put(gapB);
+            Check(gapA.Number==2 && gapB.Number==3,"New profiles use distinct free numbers");
+            counter.Delete(gapA.Id);counter=new ProfileStore(separate);
+            var replacement=nextProfile.Copy();replacement.Id=Guid.NewGuid().ToString("N");counter.Put(replacement);
+            Check(replacement.Number==2 && counter.Find("3").Id==gapB.Id,"Middle gap reused without renumbering surviving profiles");
+            Check(replacement.Id!=gapA.Id,"Reused display number keeps a distinct persistent identity");
             var healthy=SnapshotComparison.HealthyBaseline(local);Check(healthy[0].Integrity==100 && healthy[0].BuildIntegrity==100 && local[0].Integrity==80,"Capture normalizes health without mutating observations");
             var controls=new SchematicControls();bool send=true;string response;
             Check(controls.TryHandle("/mg anchor",ref send,out response) && !send && controls.ReferenceAction=="anchor","Anchor command local");

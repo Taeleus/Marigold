@@ -4,22 +4,24 @@
 
   <Id>7db0d53e-7572-4cbc-911e-25fa26ef182c</Id>
 
-  <FriendlyName>Marigold 0.14.8 (prototype)</FriendlyName>
+  <FriendlyName>Marigold 0.14.14</FriendlyName>
 
   <Author>Taeleus</Author>
 
   <Tooltip>See your ship's layout and spot damaged or missing blocks.</Tooltip>
 
-  <Description>See your ship's layout and spot damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture saves a full-health baseline and anchor; local, Workshop and cloud XML blueprints can also supply the expected layout.
+  <Description>See your ship's layout and find damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture a baseline or import a local, cached Workshop or cloud XML blueprint.
 
-Yellow means damaged, orange non-functional and pulsing red missing. Customize the HUD, combine system filters, assign shortcuts and save per-ship displays or named baseline versions. Save a new version, rename it or replace it while preserving its previous contents.
+Yellow marks damage, orange non-functional blocks and red missing blocks. Optional health bars show Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Customize colors, pulses, views, filters and layout. Outline modes reduce drawing cost on large damaged ships.
 
-If the original cockpit is destroyed, Recovery tools find surviving-block alignments. Rotate or move the preview, then accept to remember it for reconnects. Baselines never update automatically. Reconnect matching is conservative; ambiguous ships may need manual selection.
+Save ship profiles, named baseline versions and display presets. Profiles persist across sessions; automatic matching recognizes sufficiently similar layouts. Recovery tools let you inspect, adjust and accept alignment when the original cockpit is gone. Baselines never update automatically.
 
-Station mode is off by default and shows connector-docked grids with matched profiles. Rotor/piston subgrids are excluded. Prototype: new features need in-game testing. /marigold is an alias for /mg.</Description>
+Connector-docked context is optional and off by default. Rotor, hinge and piston subgrids are excluded. Supports Pulsar Legacy. /marigold is an alias for /mg.</Description>
 
   <NuGetReferences><PackageReference Include="Lib.Harmony" Version="2.4.2" /></NuGetReferences>
 
   <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
+
+  <Runtimes>CLR</Runtimes>
 
 </PluginData>

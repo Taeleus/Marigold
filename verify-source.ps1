@@ -1,4 +1,4 @@
-param([string]$Bin64='D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64')
+param([string]$Bin64='D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64', [ValidateSet('Both','Legacy','Interim')][string]$Runtime='Both')
 $ErrorActionPreference='Stop'
 $env:DOTNET_CLI_HOME=Join-Path $PSScriptRoot '.cache\dotnet'
 $env:NUGET_PACKAGES=Join-Path $PSScriptRoot '.cache\nuget'
@@ -7,7 +7,7 @@ if($manifest.PluginData.Description.Length -gt 1000){throw 'PluginHub descriptio
 $sourceFiles=@()
 foreach($directory in $manifest.PluginData.SourceDirectories.Directory){
 if($directory -ne 'src/Marigold.Plugin'){throw 'Unexpected production source directory.'}
-$sourceFiles+=Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot $directory) -Filter *.cs -File
+$sourceFiles+=Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot $directory) -Filter *.cs -File -Recurse | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
 }
 if($sourceFiles.Count -eq 0){throw 'No production source files.'}
 $check=Join-Path $PSScriptRoot 'artifacts\SourceCheck'
@@ -23,7 +23,11 @@ foreach($file in $sourceFiles){$node=$project.CreateElement('Compile');$node.Set
 $null=$project.Project.AppendChild($group)
 $projectPath=Join-Path $check 'SourceCheck.csproj'
 $project.Save($projectPath)
-dotnet build $projectPath -c Release --nologo -v minimal -p:UseSharedCompilation=false "-p:Bin64=$Bin64"
-if($LASTEXITCODE -ne 0){throw 'Source-only compilation failed.'}
+$frameworks = switch ($Runtime) { 'Legacy' { @('net48') } 'Interim' { @('net10.0') } default { @('net48','net10.0') } }
+foreach($framework in $frameworks) {
+    dotnet build $projectPath -c Release -f $framework --nologo -v minimal -p:UseSharedCompilation=false "-p:Bin64=$Bin64"
+    if($LASTEXITCODE -ne 0){throw "Source-only compilation failed for $framework."}
+    Write-Output "PASS: source compilation for $framework."
+}
 Write-Output "PASS: $($sourceFiles.Count) manifest-selected source files compiled without LOCAL_BUILD or generated assembly attributes."
 Write-Output 'This checks source compilation; live Pulsar loading still requires the in-game checklist.'

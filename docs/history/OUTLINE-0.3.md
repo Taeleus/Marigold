@@ -1,3 +1,5 @@
+> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+
 # Outline 0.3
 
 The renderer now extracts exposed faces from occupied grid cells, cancels shared coplanar edges, and merges contiguous collinear segments. It no longer draws overlapping spatial-group envelopes. At cell size 1, grid-cell gaps, recesses and openings are preserved. Sealed cavity boundaries can still appear because this is a transparent wireframe, without hidden-line removal.

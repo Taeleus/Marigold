@@ -64,7 +64,7 @@ namespace Marigold
             private void Label(float x,float y,string text)
             {Controls.Add(new MyGuiControlLabel(new Vector2(x,y),text:T(text),textScale:.65f,maxWidth:.78f,isAutoEllipsisEnabled:true));}
             private void Button(float x,float y,string text,Action action,float width=.19f)
-            {Controls.Add(new MyGuiControlButton(new Vector2(x,y),size:new Vector2(width,.042f),text:new StringBuilder(T(text)),textScale:.62f,onButtonClick:b=>{try{action();}catch(Exception e){Status(e.Message);}}));}
+            {Controls.Add(new MyGuiControlButton(new Vector2(x,y),visualStyle:RecoveryFocus?VRage.Game.MyGuiControlButtonStyleEnum.Rectangular:VRage.Game.MyGuiControlButtonStyleEnum.Default,size:new Vector2(width,.042f),text:new StringBuilder(T(text)),textScale:.62f,onButtonClick:b=>{try{action();}catch(Exception e){Status(e.Message);}}));}
             private MyGuiControlCombobox Combo(float x,float y,string[] items,int selected,Action<int> change=null)
             {
                 var combo=new MyGuiControlCombobox(new Vector2(x,y),new Vector2(.34f,.04f),openAreaItemsCount:6);
@@ -82,7 +82,7 @@ namespace Marigold
             private void Switch(int next){if(next==tab)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;history.Push(tab);tab=next;confirm=null;Status("");RecreateControls(false);}
             private void Back(){if(history.Count==0)return;if(RecoveryFocus)owner.EndPanelRecovery();if(pathBox!=null)path=pathBox.Text;tab=history.Pop();confirm=null;Status("");RecreateControls(false);}
             private int Section {get{return tab==1 || tab==2 || tab==6 || tab==7 || tab==10 || tab==15 || tab==18?1:tab==0 || tab==3 || tab==14?0:2;}}
-            private static readonly string[] PageNames={"Ship","Baseline","Baseline / Import blueprint","Ship / View","Customize / HUD layout","Customize / System filters","Baseline / Saved versions","Baseline / Recovery alignment","Customize / Health bars","Customize","Baseline / Saved ships","Customize / Shortcuts","Customize / Preferences","Save display","Ship / Diagnostics","Baseline / Recovery","Customize / Colors","Customize / Share config","Baseline / Find blueprint"};
+            private static readonly string[] PageNames={"Ship","Baseline","Baseline / Import blueprint","Ship / View","Customize / HUD layout","Customize / System filters","Baseline / Saved versions","Baseline / Recovery alignment","Customize / Health bars","Customize","Baseline / Saved ships","Customize / Shortcuts","Customize / Preferences","Save display","Ship / Diagnostics","Baseline / Recovery","Customize / Colors","Customize / Share config","Baseline / Find blueprint","Customize / Preferences / Performance"};
             private void MenuRow(float y,string title,string description,int next)
             {Button(-.28f,y,title,()=>Switch(next));Controls.Add(new MyGuiControlLabel(new Vector2(-.15f,y),text:T(description),textScale:.60f,maxWidth:.54f,isAutoEllipsisEnabled:true));}
             public override void RecreateControls(bool constructor)
@@ -101,7 +101,7 @@ namespace Marigold
                 if(tab!=13)Button(0,.40f,"Save display...",()=>Switch(13));
                 Button(.32f,.40f,"Close",()=>CloseScreen());
                 output=new MyGuiControlMultilineText(new Vector2(0,.29f),new Vector2(.8f,.14f),textScale:.60f,drawScrollbarH:false,contents:new StringBuilder(status));Controls.Add(output);
-                switch(tab){case 0:Display();break;case 1:Baseline();break;case 2:Blueprints();break;case 3:Views();break;case 4:Appearance();break;case 5:Systems();break;case 6:Library();break;case 7:Alignment();break;case 8:HealthBars();break;case 9:Customize();break;case 10:Profiles();break;case 11:Shortcuts();break;case 12:Preferences();break;case 13:SavedDisplays();break;case 14:Diagnostics();break;case 15:Recovery();break;case 16:Colors();break;case 17:ClipboardConfig();break;case 18:BlueprintBrowser();break;}
+                switch(tab){case 0:Display();break;case 1:Baseline();break;case 2:Blueprints();break;case 3:Views();break;case 4:Appearance();break;case 5:Systems();break;case 6:Library();break;case 7:Alignment();break;case 8:HealthBars();break;case 9:Customize();break;case 10:Profiles();break;case 11:Shortcuts();break;case 12:Preferences();break;case 13:SavedDisplays();break;case 14:Diagnostics();break;case 15:Recovery();break;case 16:Colors();break;case 17:ClipboardConfig();break;case 18:BlueprintBrowser();break;case 19:Performance();break;}
             }
             private void Choice(float x,float y,string label,string values,string selected,string command)
             {Label(x-.17f,y-.032f,label);var items=values.Split(' ');if(Array.IndexOf(items,selected)<0){var extended=new List<string>(items);extended.Add(selected);items=extended.ToArray();}Combo(x,y,Array.ConvertAll(items,item=>item.Contains(",")?"Multiple systems":item=="none"?"No systems":item=="weapons"?"Offensive":item=="broken"?"Non-functional":item=="all"?"All":item=="faults"?"Damage & missing":System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(item)),Array.IndexOf(items,selected),i=>Run(command+" "+items[i]));}
@@ -143,7 +143,7 @@ namespace Marigold
                 MenuRow(-.11f,"Health bars","Choose which bars to show and arrange them.",8);
                 MenuRow(-.04f,"System filters","Combine systems and adjust their outline styles.",5);
                 MenuRow(.03f,"Shortcuts","Assign keyboard controls.",11);
-                MenuRow(.10f,"Preferences","Docked ships, automatic matching and language.",12);
+                MenuRow(.10f,"Preferences","Performance, automatic matching, docks and language.",12);
                 MenuRow(.17f,"Share config","Copy or paste display and health-bar settings.",17);
             }
             private void ClipboardConfig()
@@ -170,7 +170,9 @@ namespace Marigold
                 Choice(.21f,-.19f,"Automatically match saved ships","off on",owner.controls.AutoAssociate?"on":"off","auto");
                 Label(-.39f,-.09f,"Station mode includes connector docks, not rotors or pistons.");
                 Label(-.17f,-.01f,"Language");Combo(0,.03f,new[]{"English","Español"},owner.controls.Language=="es"?1:0,i=>{Run("language "+(i==1?"es":"en"));RecreateControls(false);});
-                Button(0,.14f,"Save preferences",()=>Run("settings save"));
+                Button(-.21f,.14f,"Performance options",()=>Switch(19));
+                Button(.21f,.14f,"Save preferences",()=>Run("settings save"));
+                Label(-.39f,.20f,"Performance options include rendering and both damage pulses.");
             }
             private void SavedDisplays()
             {
@@ -207,9 +209,8 @@ namespace Marigold
                 var value=new MyGuiControlTextbox(new Vector2(.11f,-.15f),owner.controls.Appearance.Colors.Split(',')[0],maxLength:6,textScale:.65f){Size=new Vector2(.19f,.04f)};Controls.Add(value);
                 choice.ItemSelected+=()=>value.Text=owner.controls.Appearance.Colors.Split(',')[(int)choice.GetSelectedKey()];
                 Button(.32f,-.15f,"Apply color",()=>{var colors=owner.controls.Appearance.Colors.Split(',');colors[(int)choice.GetSelectedKey()]=value.Text;owner.controls.Appearance.Set("colors",string.Join(",",colors));Status("Color updated. Save display to keep it.");});
-                Button(-.21f,-.02f,owner.controls.Appearance.Pulse>0?"Stop missing pulse":"Pulse missing blocks",()=>{owner.controls.Appearance.Pulse=owner.controls.Appearance.Pulse>0?0:1;RecreateControls(false);});
-                Button(.21f,-.02f,"Restore colors",()=>{owner.controls.Appearance.Colors=new HudAppearance().Colors;RecreateControls(false);});
-                Button(0,.07f,owner.controls.Appearance.NewDamagePulse?"New damage pulse: On":"New damage pulse: Off",()=>{owner.controls.Appearance.NewDamagePulse=!owner.controls.Appearance.NewDamagePulse;RecreateControls(false);});
+                Button(0,-.02f,"Restore colors",()=>{owner.controls.Appearance.Colors=new HudAppearance().Colors;RecreateControls(false);});
+                Button(0,.07f,"Pulse settings in Preferences",()=>Switch(19));
                 Label(-.39f,.15f,"Orange/red alerts pulse for four seconds. Yellow stays steady.");
                 Label(-.39f,.20f,"Health bars keep healthy blocks blue and use these damage colors.");
             }
@@ -255,7 +256,18 @@ namespace Marigold
                 Label(-.39f,-.07f,"Position and opacity: 0 to 1. Size: 0.12 to 0.7.");
                 Choice(-.21f,.02f,"Schematic layout","compact expanded",owner.controls.Expanded?"expanded":"compact","layout");
                 Choice(.21f,.02f,"Outline detail","low medium high",owner.controls.DetailName,"detail");
-                Button(0,.13f,"Reset HUD layout",()=>{var colors=owner.controls.Appearance.Colors;bool fresh=owner.controls.Appearance.NewDamagePulse;double pulse=owner.controls.Appearance.Pulse;owner.controls.Appearance=new HudAppearance{Colors=colors,Pulse=pulse,NewDamagePulse=fresh};RecreateControls(false);Status("Position, size and opacity reset. Colors unchanged.");});
+                Button(0,.10f,"Reset HUD layout",()=>{var colors=owner.controls.Appearance.Colors;bool fresh=owner.controls.Appearance.NewDamagePulse;double pulse=owner.controls.Appearance.Pulse;owner.controls.Appearance=new HudAppearance{Colors=colors,Pulse=pulse,NewDamagePulse=fresh};RecreateControls(false);Status("Position, size and opacity reset. Colors unchanged.");});
+
+            }
+            private void Performance()
+            {
+                Label(-.39f,-.25f,"Reduce drawing cost on heavily damaged ships.");
+                Combo(0,-.15f,new[]{"Full display","Outlines only","Faults with fills","Fault outlines only"},owner.controls.Appearance.Rendering,i=>{owner.controls.Appearance.Rendering=i;owner.RefreshReference("Rendering mode changed.");Status("Updated. Save display to keep this setting.");});
+                Label(-.39f,-.04f,"Outlines only skips translucent shading. Fault modes hide hull context.");
+                Label(-.39f,.03f,"Every filtered fault remains represented; health counts stay the same.");
+                Button(-.21f,.10f,owner.controls.Appearance.Pulse>0?"Missing pulse: On":"Missing pulse: Off",()=>{owner.controls.Appearance.Pulse=owner.controls.Appearance.Pulse>0?0:1;RecreateControls(false);});
+                Button(.21f,.10f,owner.controls.Appearance.NewDamagePulse?"Fresh pulse: On":"Fresh pulse: Off",()=>{owner.controls.Appearance.NewDamagePulse=!owner.controls.Appearance.NewDamagePulse;RecreateControls(false);});
+                Label(-.39f,.18f,"Save display keeps these settings. Recovery uses full rendering.");
             }
             private void Systems()
             {

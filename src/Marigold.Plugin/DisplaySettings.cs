@@ -7,7 +7,7 @@ namespace Marigold
     internal static class DisplaySettings
     {
         public static void Reset(SchematicControls c)
-        { c.HealthBars=new HealthBarSettings();c.Appearance=new HudAppearance();c.SystemStyles=DisplayFilter.DefaultStyles;c.Detail=1;c.Mode="compare";c.Category="all";c.StateFilter="all";c.Expanded=false;c.Zoom=.85;c.Visible=true;c.SchematicVisible=true;c.Page=1;c.Station=false;c.AutoAssociate=true;c.Language="en"; }
+        { c.HealthBars=new HealthBarSettings();c.Appearance=new HudAppearance();c.SystemStyles=DisplayFilter.DefaultStyles;c.Detail=2;c.Mode="compare";c.Category="all";c.StateFilter="all";c.Expanded=false;c.Zoom=.85;c.Visible=true;c.SchematicVisible=true;c.Page=1;c.Station=false;c.AutoAssociate=true;c.Language="en"; }
         public static void Load(string path,SchematicControls c)
         {
             if(!File.Exists(path))return;

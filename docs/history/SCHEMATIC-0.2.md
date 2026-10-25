@@ -1,3 +1,5 @@
+> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+
 # Schematic prototype 0.2
 
 Enter a ship controller to see an automatically rotating cyan outline in the upper-right HUD. The previous name/count notification remains. This is a main-grid spatial schematic, not a full mesh hologram. Large ships are grouped into at most 256 bounding cells; every block contributes to an envelope, but empty spaces can be filled by coarse grouping. Small/modded blocks use their grid-aligned Min/Max envelope. No occlusion or category filtering yet.

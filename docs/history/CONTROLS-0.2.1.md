@@ -1,3 +1,5 @@
+> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+
 # Controls: updated for 0.2.2
 
 The old Ctrl+Alt shortcuts have been removed. They were not verified safe and did not work in the user's runtime. The user confirmed automatic rotation and seamless switching between grids in 0.2.
@@ -25,7 +27,7 @@ While seated/controlling a ship, open chat using your normal chat key (Enter by 
 | `/mg reset` | Restore default cockpit-relative orientation, zoom and automatic spin |
 | `/mg left` / `right` / `top` / `bottom` | Snap to the named cockpit-relative side; stop spin and preserve zoom |
 | `/mg in` / `/mg out` | Zoom one step |
-| `/mg zoom 1.5` | Set zoom, range 0.25–3 |
+| `/mg zoom 1.5` | Set zoom, range 0.25â€“3 |
 
 Use the full `/mg` prefix for each command. Responses appear locally. Commands work even when the schematic is hidden or you leave a cockpit; the model itself requires a controlled grid. Bindings do not alter the game's controls or consume movement/function keys. Commands are attached during the world session and detached on unload/disposal. If another plugin claims the same command prefix earlier, that could interfere; no exhaustive audit of third-party plugins was performed.
 
