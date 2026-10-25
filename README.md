@@ -6,6 +6,8 @@ Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running t
 
 Current release candidate: **0.14.14 for Pulsar Legacy**. Interim support is experimental and untested in-game.
 
+See the [changelog](CHANGELOG.md) for changes in each version.
+
 ## Your first ship
 
 With Marigold installed and enabled:
