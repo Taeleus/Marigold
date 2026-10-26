@@ -5,6 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <DefineConstants>LOCAL_BUILD</DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="../../src/Marigold.Plugin/DataPaths.cs" Link="DataPaths.cs" />
     <Compile Include="../../src/Marigold.Plugin/FillRaster.cs" Link="FillRaster.cs" />

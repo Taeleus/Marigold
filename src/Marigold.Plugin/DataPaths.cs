@@ -12,10 +12,13 @@ namespace Marigold
         {
             if (string.IsNullOrWhiteSpace(userDataPath) || !Path.IsPathRooted(userDataPath))
                 throw new InvalidOperationException("The game's user data folder is not initialized.");
-
             string root = Path.Combine(Path.GetFullPath(userDataPath), "Storage", "Marigold");
-            if (File.Exists(root)) throw new IOException("Marigold's data folder is occupied by a file: " + root);
-            return new DataPaths { Root = root };
+            if (File.Exists(root))
+                throw new IOException("Marigold's data folder is occupied by a file: " + root);
+            return new DataPaths
+            {
+                Root = root
+            };
         }
     }
 }

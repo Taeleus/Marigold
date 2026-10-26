@@ -10,12 +10,11 @@ using VRage.Utils;
 [assembly: AssemblyVersion("0.14.16.0")]
 [assembly: AssemblyFileVersion("0.14.16.0")]
 #endif
-
 namespace Marigold
 {
     public sealed class Plugin : IPlugin
     {
-        private readonly OffensiveDefinitions offensiveDefinitions=new OffensiveDefinitions();
+        private readonly OffensiveDefinitions offensiveDefinitions = new OffensiveDefinitions();
         private MySession session;
         private MySession unloadingSession;
         private MyCubeGrid grid;
@@ -27,7 +26,6 @@ namespace Marigold
         {
             if (initialized)
                 return;
-
             initialized = true;
             MySession.OnUnloading += OnUnloading;
             try
@@ -41,6 +39,7 @@ namespace Marigold
                 schematic = null;
                 MyLog.Default.WriteLineAndConsole("[Marigold] Schematic initialization failed: " + exception);
             }
+
             MyLog.Default.WriteLineAndConsole("[Marigold] Ship observer initialized (0.14.16).");
         }
 
@@ -48,7 +47,6 @@ namespace Marigold
         {
             if (!initialized)
                 return;
-
             try
             {
                 var currentSession = MySession.Static;
@@ -67,7 +65,6 @@ namespace Marigold
 
                 if (session == null || ReferenceEquals(session, unloadingSession) || failed)
                     return;
-
                 offensiveDefinitions.Update();
                 var controller = session.ControlledEntity?.Entity as IMyShipController;
                 var currentGrid = controller?.CubeGrid as MyCubeGrid;
@@ -84,7 +81,6 @@ namespace Marigold
                 }
 
                 schematic?.Update(grid, controller);
-
             }
             catch (Exception exception)
             {
@@ -114,7 +110,6 @@ namespace Marigold
         {
             if (!initialized)
                 return;
-
             initialized = false;
             MySession.OnUnloading -= OnUnloading;
             offensiveDefinitions.Dispose();
@@ -126,5 +121,3 @@ namespace Marigold
         }
     }
 }
-
-
