@@ -146,3 +146,5 @@ For project progress, see the [roadmap](ROADMAP.md).
 
 
 See the [documentation index](docs/INDEX.md) and [performance testing procedure](docs/PERFORMANCE-TEST.md).
+
+Marigold is available under the [MIT License](LICENSE).
