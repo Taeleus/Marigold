@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-Current release candidate: **0.14.14 for Pulsar Legacy**. Development **0.14.15** addresses PluginHub review feedback and has not replaced the submitted release. Interim support is experimental and untested in-game.
+Current release candidate: **0.14.14 for Pulsar Legacy**. Development **0.14.16** addresses PluginHub review feedback and has not replaced the submitted release. Interim support is experimental and untested in-game.
 
 See the [changelog](CHANGELOG.md) for changes in each version.
 
@@ -98,7 +98,7 @@ Connected grids with a matching saved profile show their own damage outlines and
 
 The supported release target is **Pulsar Legacy / .NET Framework 4.8**. Interim builds are experimental and are outside the initial PluginHub submission.
 
-1. Close Space Engineers and back up your Marigold data folder (see below). If upgrading from 0.14.14 or earlier, also keep `%APPDATA%/Marigold`.
+1. Close Space Engineers and back up your Marigold data folder (see below).
 2. Copy the Legacy package's plugin.dll, plugin.pdb and plugin.xml into `%APPDATA%/Pulsar/Legacy/Local/Marigold`. An existing MarigoldDev folder also works. Enable only one copy per launcher.
 3. Start the matching launcher, enable Marigold and restart if prompted. Sit in a cockpit and open `/mg ui`.
 
@@ -106,13 +106,11 @@ For trusted downloaded packages blocked with error **0x80131515**, right-click t
 
 ### Profiles and settings
 
-Development 0.14.15 stores all Marigold data under the game's selected user-data folder: **`<game user data>/Storage/Marigold`**. With the default game settings, this is **`%APPDATA%/SpaceEngineers/Storage/Marigold`**. A custom `-appdata` location gets its own Marigold data. Local blueprint search uses that same game's `Blueprints/local` folder.
+Marigold stores profiles, settings, shortcuts, presets, versions, recovery data and backups under **`<game user data>/Storage/Marigold`**. With the default game settings, this is **`%APPDATA%/SpaceEngineers/Storage/Marigold`**. A custom `-appdata` location gets its own data. Local blueprint search uses that same game's `Blueprints/local` folder.
 
-On the default game-data location, the first upgrade copies the complete old `%APPDATA%/Marigold` folder into the new location **only if the destination is absent**. Profiles, displays, shortcuts, presets, baseline versions, recovery data and backups are included. The original folder is left intact. Existing destination data is never overwritten or merged.
+Marigold uses only this active game-data location. It does not search for, import or migrate data from previous locations. If the active folder is absent, it starts with a fresh setup; leftover files elsewhere do not affect it.
 
-A custom `-appdata` setup does not automatically import the shared old folder. To transfer it, close the game, back up both locations, and copy the complete old Marigold folder to `<custom appdata>/Storage/Marigold` only when that destination is absent. If it already exists, keep the datasets separate rather than merging files.
-
-Back up the complete active data folder before upgrades or moving computers. Upgrading from 0.12.6 changes the profile format; rollback requires the older plugin and the complete pre-upgrade data backup. Versions through 0.14.14 continue using the old `%APPDATA%/Marigold` location.
+Back up the complete active folder before upgrades or moving computers.
 
 <details>
 <summary>Build from source</summary>

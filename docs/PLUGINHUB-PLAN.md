@@ -2,7 +2,7 @@
 
 Target: StarCpt/PluginHub, base `main`. Proposed file: `Plugins/Marigold.xml`. Plugin source remains in public Taeleus/Marigold. No PR is created by this document.
 
-Use the existing ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, author Taeleus, repository Taeleus/Marigold and exact tested master commit. Runtime restriction: `CLR` (Pulsar Legacy). Use `src/Marigold.Plugin` as the sole production SourceDirectories entry. Development 0.14.15 removes the redundant manifest Harmony declaration because Pulsar provides it; the local project keeps its build-time package reference. No game DLLs, local skill files or build outputs belong in the PR.
+Use the existing ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, author Taeleus, repository Taeleus/Marigold and exact tested master commit. Runtime restriction: `CLR` (Pulsar Legacy). Use `src/Marigold.Plugin` as the sole production SourceDirectories entry. Development 0.14.16 removes the redundant manifest Harmony declaration because Pulsar provides it; the local project keeps its build-time package reference. No game DLLs, local skill files or build outputs belong in the PR.
 
 Preparation: run Legacy build/regressions and source checks; generate descriptor with `prepare-release.ps1`; verify one RepoId/Commit/Runtimes element, description <=1,000 characters and existing GUID. Test the exact pinned source in Legacy with the local binary disabled, plus fresh install. Check the current upstream validator/rules before creating the PR.
 
@@ -16,4 +16,4 @@ References: https://github.com/StarCpt/PluginHub and https://github.com/StarCpt/
 
 Reference submission: [Taeleus TetherSE PR #260](https://github.com/StarCpt/PluginHub/pull/260), merged. Follow its GUID + RepoId + full source Commit + CLR structure and concise behavior/validation description. Current [client template](https://github.com/CometWorks/client-plugin-template) confirms CLR runtime spelling and explicit source directories. Existing Marigold project layout need not be renamed to match template folders; the manifest is authoritative.
 
-Review fixes in development 0.14.15 honor game-selected data paths with non-destructive migration and remove routine rebuild logging. Master and the open PR remain pinned to 0.14.14 until the fixes are accepted.
+Review fixes in development 0.14.16 use only the game-selected data root, with no migration or old-location fallback, and remove routine rebuild logging. Master and the open PR remain pinned to 0.14.14 until the fixes are accepted.

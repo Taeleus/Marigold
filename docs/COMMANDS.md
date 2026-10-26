@@ -1,4 +1,4 @@
-# Marigold commands — 0.14.15 development
+# Marigold commands — 0.14.16 development
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -121,10 +121,10 @@ Remembered recovery can accept partial repairs when its remnant and expected-lay
 The renderer shows block envelopes rather than model meshes. Coarse detail may merge small gaps; outer extents are clamped to the actual hull. Docked-grid styles share a 768-line hull budget per grid. Damage markers retain state colors. See [blueprint formats](BLUEPRINT-FORMATS.md) for XML support and PB/archive limitations.
 
 
-## Data location and upgrades
+## Data location
 
-Development 0.14.15 uses one root for profiles, display preferences, shortcuts, presets, revisions, recovery data and backups: `<MyFileSystem.UserDataPath>/Storage/Marigold`. At the default game location this is `%APPDATA%/SpaceEngineers/Storage/Marigold`. Local blueprint search uses the game's selected `Blueprints/local` folder, including custom `-appdata` setups.
+Profiles, display preferences, shortcuts, presets, revisions, recovery data and backups all use `<MyFileSystem.UserDataPath>/Storage/Marigold`. The default is `%APPDATA%/SpaceEngineers/Storage/Marigold`; custom `-appdata` locations are honored. Local blueprint search uses the active game's `Blueprints/local` folder.
 
-For the default game location only, an absent new destination is populated once from the complete old `%APPDATA%/Marigold` tree. Migration copies and verifies the data before publishing the destination, preserves the old folder and never merges into or overwrites existing new data. Custom `-appdata` setups remain isolated. To transfer old data into one, close the game, back up both folders, and copy the complete source tree only to an absent `<custom appdata>/Storage/Marigold` destination.
+There is no migration or fallback to another data location. Marigold starts fresh when its active folder is absent. Existing files elsewhere are ignored.
 
-Routine schematic rebuilds no longer write snapshot/worker lines to the game log. `/mg stats` still reports those timings when requested, and failures remain logged. The new paths apply to 0.14.15; older builds continue using `%APPDATA%/Marigold`.
+Routine schematic rebuilds do not write snapshot/worker lines to the game log. `/mg stats` still reports timings when requested, and failures remain logged.

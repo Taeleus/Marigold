@@ -366,10 +366,9 @@ namespace Marigold
 
         public void Init()
         {
-            var paths=DataPaths.Initialize(VRage.FileSystem.MyFileSystem.UserDataPath,Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+            var paths=DataPaths.Initialize(VRage.FileSystem.MyFileSystem.UserDataPath);
             settingsPath=System.IO.Path.Combine(paths.Root,"display.txt");
             profileStore=new ProfileStore(paths.Root);
-            if(paths.Notice!=null)MyLog.Default.WriteLineAndConsole("[Marigold] "+paths.Notice);
             try { DisplaySettings.Load(settingsPath,controls); } catch(Exception e) { MyLog.Default.WriteLineAndConsole("[Marigold] Display settings: "+e.Message); }
             if(profileStore.Warning!=null)MyLog.Default.WriteLineAndConsole("[Marigold] "+profileStore.Warning);
             harmony = new Harmony(PatchId);
