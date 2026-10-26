@@ -387,7 +387,7 @@ namespace Marigold
                 if(!browseLocal && !browseWorkshop && !browseCloud){Status("Select at least one source.");return;}
                 bool local=browseLocal,workshop=browseWorkshop;string query=searchText;
                 var cloud=browseCloud?CloudBlueprints.List():new string[0];
-                string localRoot=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"SpaceEngineers","Blueprints","local");
+                string localRoot=Sandbox.Game.GUI.MyBlueprintUtils.BLUEPRINT_FOLDER_LOCAL;
                 string workshopRoot=Path.Combine(new DirectoryInfo(VRage.FileSystem.MyFileSystem.ContentPath).Parent.Parent.Parent.FullName,"workshop","content","244850");
                 catalog=Task.Run(()=>{var sources=new List<BlueprintCatalog.Listing>();if(local)sources.Add(BlueprintCatalog.Scan(localRoot));if(workshop)sources.Add(BlueprintCatalog.Scan(workshopRoot));sources.Add(new BlueprintCatalog.Listing{Paths=cloud,Names=Array.ConvertAll(cloud,BlueprintCatalog.CloudName)});return BlueprintCatalog.Merge(sources.ToArray(),query);});
                 Status("Searching selected sources. Click a result to load it.");

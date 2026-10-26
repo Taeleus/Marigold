@@ -8,7 +8,7 @@ namespace Marigold
     {
         private readonly string[] hotkeys=new string[5];
         private bool hotkeysLoaded;
-        private static string HotkeyPath { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Marigold","hotkeys.txt"); } }
+        private string HotkeyPath { get { return Path.Combine(DataRoot,"hotkeys.txt"); } }
         private static bool ParseHotkey(string text,out MyKeys key,out int modifiers)
         {
             key=MyKeys.None;modifiers=0;if(string.IsNullOrWhiteSpace(text))return true;

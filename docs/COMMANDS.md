@@ -1,12 +1,12 @@
-# Marigold commands — 0.14.0
+# Marigold commands — 0.14.15 development
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
 ## Start and save a baseline
 
-Sit in the cockpit you want as the permanent alignment anchor. Run `/mg capture`; it creates the cockpit anchor automatically and assumes full health. Profiles are stored outside the game folders in `%APPDATA%/Marigold/profiles.bin`, with a previous-version backup. Capturing again intentionally replaces that profile's baseline after preserving the old reference in Saved versions.
+Sit in the cockpit you want as the permanent alignment anchor. Run `/mg capture`; it creates the cockpit anchor automatically and assumes full health. Profiles are stored in `<game user data>/Storage/Marigold/profiles.bin`, with a previous-version backup. The default is `%APPDATA%/SpaceEngineers/Storage/Marigold/profiles.bin`; a custom `-appdata` folder is honored. Capturing again intentionally replaces that profile's baseline after preserving the old reference in Saved versions.
 
-Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold searches up to 16 cockpit candidates for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile load ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 90% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must be unchanged, and the current sample is rechecked before acceptance. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
+Automatic matching is enabled by default. After reconnect or world transfer, control the ship and allow several seconds for stable observations. Marigold prefers the occupied cockpit; when there is no occupied cockpit candidate it considers up to 16 cockpits for a unique saved layout match and announces its selection. If it cannot choose, sit in the corresponding cockpit, run `/mg profiles` or `/mg profile suggest`, then `/mg profile load ID`. Suggestions measure structural overlap around your seated cockpit. They do not establish ship identity; identical builds can tie. Automatic matching requires at least 8 blocks, 75% structural overlap and an 8-percentage-point lead over alternative profile/cockpit matches. Two matching observations must retain the same structure, and the current sample is rechecked before acceptance. Health-only changes and enumeration order do not reset structural stability. Names and runtime IDs do not determine the choice. This is client-side layout recognition, not a Nexus identity API; an unsaved identical copy can still match. Actual Nexus compatibility needs in-game testing.
 
 `/mg clear` removes the selected baseline but keeps its profile/anchor. `/mg profile detach` unbinds the live ship and suppresses automatic selection for it until session unload or `/mg auto retry`. `/mg profile delete ID` deletes that saved profile. `/mg recover` explicitly restores the database backup after a load problem; it clears live bindings so you can reselect.
 
@@ -66,7 +66,7 @@ States: `all faults missing damaged broken added replaced unknown`. `broken` mea
 
 Yellow is faint damage, orange is non-functional, pulsing red is absent from the observed grid, green is added, purple is replaced, and gray is unreadable integrity data. Reference/preview data never changes the game world.
 
-Preferences live in `%APPDATA%/Marigold/display.txt`; saving retains the previous file as `.bak`. Corrupt preferences are preserved and logged, with defaults used at startup. Saving is explicit. View orientation/spin and marker page are transient so each launch starts with the familiar default orientation.
+Preferences live in `<game user data>/Storage/Marigold/display.txt`; saving retains the previous file as `.bak`. Corrupt preferences are preserved and logged, with defaults used at startup. Saving is explicit. View orientation/spin and marker page are transient so each launch starts with the familiar default orientation.
 
 ## Station mode and automatic association
 
@@ -84,7 +84,7 @@ Local discovery includes nested folders (depth 16, 2,000 folders, 500 results) a
 
 Capture/clear/delete/recover and blueprint acceptance require a second identical panel click. Chat commands execute directly. Ship changes close the panel.
 
-Customize > Shortcuts lets you assign shortcuts for cycle-system, cycle-marker and expanded layout. Enter a key name such as `Ctrl+Shift+F6`, or blank to unbind. Defaults are unbound; Marigold does not consume the game's bindings. Shortcuts are saved separately in `%APPDATA%/Marigold/hotkeys.txt` and ignored while chat or a menu is open.
+Customize > Shortcuts lets you assign shortcuts for cycle-system, cycle-marker and expanded layout. Enter a key name such as `Ctrl+Shift+F6`, or blank to unbind. Defaults are unbound; Marigold does not consume the game's bindings. Shortcuts are saved separately in `<game user data>/Storage/Marigold/hotkeys.txt` and ignored while chat or a menu is open.
 
 Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regions remain outlined regardless of individual marker pagination; category/state filters still apply.
 
@@ -96,7 +96,7 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 `/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station hulls use the same category visibility and brightness styles.
 
-Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time and toggles missing-block pulse. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
+Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time. Customize > Preferences > Performance options contains both missing-block and fresh-damage pulse toggles. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
 Library saves independent named baselines. Capture/import and loading archive the previous active baseline when needed; deleting a revision leaves the active baseline intact. Versions show source/date and active identity. Cross-anchor restore opens a recovery preview and changes the active baseline only after acceptance. Limits: 16 revisions and 250,000 total blocks per library.
 
@@ -116,6 +116,15 @@ Bars count baseline block states: healthy blue, damaged yellow, non-functional o
 
 Baseline > Saved versions: **Save new version** creates a named copy of the active baseline. **Rename version** uses the name input to rename the selected copy without changing its blocks. **Replace version** copies the active baseline into the selected slot and preserves the overwritten copy in another slot. Use/rename/replace/delete require a second click. A full library refuses replacement before overwriting anything; remove an unwanted version first.
 
-Remembered recovery accepts partial repairs when at least 90% of its saved remnant survives and at least 90% of observed blocks match the full baseline, with eight exact matches in each comparison. A changed cockpit type can match on surrounding structure. Ambiguity, auto-off, manual-detach and stable-observation safeguards remain. The original baseline and missing-block denominator never shrink to fit the remnant.
+Remembered recovery can accept partial repairs when its remnant and expected-layout checks meet the 75% automatic threshold, with eight exact matches in each comparison. A changed cockpit type can match on surrounding structure. Ambiguity, auto-off, manual-detach and stable-observation safeguards remain. The original baseline and missing-block denominator never shrink to fit the remnant.
 
 The renderer shows block envelopes rather than model meshes. Coarse detail may merge small gaps; outer extents are clamped to the actual hull. Docked-grid styles share a 768-line hull budget per grid. Damage markers retain state colors. See [blueprint formats](BLUEPRINT-FORMATS.md) for XML support and PB/archive limitations.
+
+
+## Data location and upgrades
+
+Development 0.14.15 uses one root for profiles, display preferences, shortcuts, presets, revisions, recovery data and backups: `<MyFileSystem.UserDataPath>/Storage/Marigold`. At the default game location this is `%APPDATA%/SpaceEngineers/Storage/Marigold`. Local blueprint search uses the game's selected `Blueprints/local` folder, including custom `-appdata` setups.
+
+For the default game location only, an absent new destination is populated once from the complete old `%APPDATA%/Marigold` tree. Migration copies and verifies the data before publishing the destination, preserves the old folder and never merges into or overwrites existing new data. Custom `-appdata` setups remain isolated. To transfer old data into one, close the game, back up both folders, and copy the complete source tree only to an absent `<custom appdata>/Storage/Marigold` destination.
+
+Routine schematic rebuilds no longer write snapshot/worker lines to the game log. `/mg stats` still reports those timings when requested, and failures remain logged. The new paths apply to 0.14.15; older builds continue using `%APPDATA%/Marigold`.

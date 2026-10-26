@@ -1,6 +1,6 @@
 # Marigold roadmap
 
-Updated October 25, 2026. Release candidate: **0.14.14**, targeting **Pulsar Legacy / .NET Framework 4.8**.
+Updated October 25, 2026. Submitted candidate: **0.14.14**. Review fixes: **0.14.15 on dev**, targeting **Pulsar Legacy / .NET Framework 4.8**.
 
 ## Completed and user-verified
 
@@ -8,15 +8,15 @@ Ship schematic and health bars; Power sections; damage fills, outlines and pulse
 
 Heavy-damage performance has been measured. Outline modes provide lower cost; further marginal fill optimization is deferred to preserve current appearance and behavior. [Results](docs/PERFORMANCE-RESULTS.md).
 
-## Legacy release / PluginHub
+## PluginHub review follow-up — 0.14.15 on dev
 
-1. Commit and push tested changes to dev, merge into master.
-2. Generate the Legacy-only descriptor pinned to the final full commit SHA; retain the existing plugin ID and Taeleus author/repository details.
-3. Test that exact pin through Pulsar Legacy with the local binary disabled, and smoke-test a fresh installation. Preserve existing data/backups.
-4. Validate the descriptor against current StarCpt/PluginHub requirements and prepare a PR adding `Plugins/Marigold.xml`.
-5. Submit when ready, address review findings, and keep the tested source pin stable during review.
+- Use the game's selected user-data folder for every Marigold data file and the game's canonical local blueprint folder for Local search.
+- Migrate the complete old data tree safely for the default game-data location only when the new destination is absent. Preserve originals and keep custom `-appdata` setups isolated.
+- Remove routine per-rebuild log messages while retaining requested statistics and error logging.
+- Remove the descriptor's redundant Harmony declaration; retain the local build dependency.
+- Verify migration, custom data/blueprint paths and log behavior using the [review-fix checklist](TESTING-TODO.md).
 
-No additional product decisions are needed to draft the PR. [Submission plan](docs/PLUGINHUB-PLAN.md), [active acceptance](TESTING-TODO.md).
+Master and [PluginHub PR #285](https://github.com/StarCpt/PluginHub/pull/285) remain on 0.14.14 until the dev fixes are validated. Then commit the tested fixes, merge when requested, update the source pin and report the validation results. The final pinned-source load through Legacy and fresh-install smoke test remain distribution checks.
 
 ## Deferred / known limits
 

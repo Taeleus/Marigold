@@ -2,7 +2,17 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-The current release candidate is **0.14.14 for Pulsar Legacy**. Interim remains experimental and untested in-game.
+The submitted release candidate is **0.14.14 for Pulsar Legacy**. **0.14.15 is in development on dev**. Interim remains experimental and untested in-game.
+
+## 0.14.15 — in development
+
+- Moved profiles, preferences, shortcuts, presets, versions and recovery data under the game's selected user-data folder, honoring custom `-appdata` locations.
+- Local blueprint search now follows the game's own local blueprint folder.
+- Added a one-time verified copy of existing data for the default game-data location when the new destination is absent. Original files are preserved; custom installations and existing destinations remain separate.
+- Removed routine snapshot/worker rebuild messages from the game log. Requested `/mg stats` output and error logging remain available.
+- Removed the redundant Harmony dependency from the Pulsar descriptor; local builds retain their compile-time dependency.
+
+These changes are not deployed and the PluginHub source pin has not been updated.
 
 ## 0.14.14
 

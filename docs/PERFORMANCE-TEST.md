@@ -17,7 +17,7 @@ Prepare named saves for approximately 1k, 10k and 50k baseline blocks. For each 
 5. On the enabled build compare schematic+bars, bars-only and hidden HUD. Hidden HUD is not equivalent to disabling the plugin. Test static view and spinning separately, then station mode off/on using the fixed dock save.
 6. Repeat the sustained-fire trial with the same setup and duration. Record whether updates lag or any damage category disappears. Check after fire stops that the final report, bars and display settle to the expected state.
 
-`/mg stats` reports last snapshot/worker time and displayed-model HUD CPU mean/max, with up to 600 draws per statistics window; rebuilds reset draw samples. It does not report GPU time, total plugin overhead or a true percentile. Capture several samples; do not present its maximum as p99. Rebuild-pending messages mean timings describe the previous model. Game logs can reveal slow rebuilds but are not a complete profiler.
+`/mg stats` reports last snapshot/worker time and displayed-model HUD CPU mean/max, with up to 600 draws per statistics window; rebuilds reset draw samples. It does not report GPU time, total plugin overhead or a true percentile. Capture several samples; do not present its maximum as p99. Rebuild-pending messages mean timings describe the previous model. Routine rebuild timings are no longer logged starting in 0.14.15. Explicit `/mg stats` requests still log the displayed timings; error logs remain. These are not a complete profiler.
 
 ## Record results
 

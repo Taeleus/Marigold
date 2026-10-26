@@ -73,6 +73,7 @@ internal static class Program
         AssociationStationChecks.Run();
         InterfaceObservationChecks.Run();
         ProfileChecks.Run();
+        DataPathChecks.Run();
         FillChecks.Run();
         SnapshotChecks.Run();
         GeometryChecks.Run();

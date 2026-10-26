@@ -366,8 +366,10 @@ namespace Marigold
 
         public void Init()
         {
-            profileStore=new ProfileStore(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Marigold"));
-            settingsPath=System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Marigold","display.txt");
+            var paths=DataPaths.Initialize(VRage.FileSystem.MyFileSystem.UserDataPath,Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+            settingsPath=System.IO.Path.Combine(paths.Root,"display.txt");
+            profileStore=new ProfileStore(paths.Root);
+            if(paths.Notice!=null)MyLog.Default.WriteLineAndConsole("[Marigold] "+paths.Notice);
             try { DisplaySettings.Load(settingsPath,controls); } catch(Exception e) { MyLog.Default.WriteLineAndConsole("[Marigold] Display settings: "+e.Message); }
             if(profileStore.Warning!=null)MyLog.Default.WriteLineAndConsole("[Marigold] "+profileStore.Warning);
             harmony = new Harmony(PatchId);
@@ -498,7 +500,6 @@ namespace Marigold
                         }
                         buildMs=result.Milliseconds; cellSize=result.CellSize;
                         drawSamples=0; drawTotalMs=drawMaxMs=0;
-                        MyLog.Default.WriteLine("[Marigold] Schematic worker: "+result.Count+" blocks, "+result.Cells+" cells, "+result.Milliseconds.ToString("F1")+" ms.");
                     }
                 }
                 if(++reconcile>=(references.ContainsKey(grid) || controls.Station?60:600)) { dirty=true; reconcile=0; }
@@ -519,7 +520,6 @@ namespace Marigold
                     string styles=controls.SystemStyles;bool outlineOnly=!controls.Appearance.DrawFills && !(panel?.RecoveryFocus??false);pending=Task.Run(()=>Build(snapshot,baseline,version,detail,mode,category,stateFilter,page,preview,station,styles,outlineOnly));
                     snapshotMs=timer.Elapsed.TotalMilliseconds;
                     dirty=false; cooldown=30;
-                    MyLog.Default.WriteLine("[Marigold] Schematic snapshot: "+snapshot.Length+" blocks, "+timer.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");
                 }
             }
             catch(Exception e) { Fail(e); }
