@@ -31,12 +31,12 @@ namespace Marigold
                 return bar;
             }
 
-            private void ConfirmCustomAction(string key, Action action)
+            private void ConfirmCustomAction(string key, Action action, string prompt = null)
             {
                 if (confirm != key)
                 {
                     confirm = key;
-                    Status("Click the same action again to confirm. No changes yet.");
+                    Status(prompt ?? "Click the same action again to confirm. No changes yet.");
                     return;
                 }
                 confirm = null;
@@ -84,12 +84,12 @@ namespace Marigold
                     customBarDraft = SelectedCustomBar().Copy();
                     Switch(22);
                 });
-                Button(-.21f, .03f, "Refresh group members", () =>
+                Button(-.21f, .03f, "Update tracked blocks", () =>
                 {
                     var bar = SelectedCustomBar();
                     if (string.IsNullOrEmpty(bar.GroupName))
                     {
-                        Status("Single-block selections stay fixed. Create a new bar to choose a different block.");
+                        Status("Single-block bars update damage and repairs automatically. Create another bar to track a different block.");
                         return;
                     }
                     ConfirmCustomAction("refresh-custom-" + bar.Id, () =>
@@ -97,7 +97,7 @@ namespace Marigold
                         string message = owner.RefreshCustomGroup(bar);
                         RecreateControls(false);
                         Status(message);
-                    });
+                    }, "Update the tracked list to the group's current blocks? Members absent from that list stop counting. Click again to confirm.");
                 });
                 Button(.21f, .03f, "Delete custom bar", () =>
                 {
@@ -110,8 +110,8 @@ namespace Marigold
                         Status(message);
                     });
                 });
-                Label(-.39f, .11f, "Missing members stay counted until you deliberately refresh the group.");
-                Label(-.39f, .17f, "Custom bars save with this ship and its baseline versions.");
+                Label(-.39f, .11f, "Damage and repairs update automatically.");
+                Label(-.39f, .17f, "After editing a terminal group, use Update tracked blocks.");
             }
 
             private void CreateCustomBar()
@@ -123,10 +123,10 @@ namespace Marigold
                 };
                 Controls.Add(name);
                 FieldLabel(-.38f, -.155f, "Selection type");
-                FieldLabel(.025f, -.155f, "Find by name", .23f);
-                var search = new MyGuiControlTextbox(new Vector2(.145f, -.115f), customSearch, maxLength: 128, textScale: .65f)
+                FieldLabel(.04f, -.155f, "Find by name");
+                var search = new MyGuiControlTextbox(new Vector2(.21f, -.115f), customSearch, maxLength: 128, textScale: .65f)
                 {
-                    Size = new Vector2(.24f, .04f)
+                    Size = new Vector2(.34f, .04f)
                 };
                 Controls.Add(search);
                 Combo(-.21f, -.115f, new[] { "Single block", "Terminal group" }, customGroupSource ? 1 : 0, i =>
@@ -138,24 +138,24 @@ namespace Marigold
                     customSourceIndex = 0;
                     RecreateControls(false);
                 });
-                Button(.35f, -.115f, "Find", () =>
+                Button(-.28f, -.015f, "Find", () =>
                 {
                     customName = name.Text;
                     customSearch = search.Text;
                     customSources = null;
                     customSourceIndex = 0;
                     RecreateControls(false);
-                }, .13f);
+                });
                 if (customSources == null)
                     customSources = owner.CustomBarSources(customGroupSource, customSearch);
                 var names = new string[customSources.Count];
                 for (int i = 0; i < names.Length; i++)
                     names[i] = customSources[i].Name;
-                FieldLabel(-.36f, -.055f, customGroupSource ? "Terminal group" : "Block", .72f);
-                var choice = Combo(0, -.015f, names, customSourceIndex, i => customSourceIndex = i);
-                choice.Size = new Vector2(.72f, .04f);
-                Label(-.39f, .06f, "Only matching saved-baseline blocks become members.");
-                Label(-.39f, .105f, "Destroyed members remain tracked even if the terminal group disappears.");
+                FieldLabel(-.145f, -.055f, customGroupSource ? "Terminal group" : "Block", .53f);
+                var choice = Combo(.12f, -.015f, names, customSourceIndex, i => customSourceIndex = i);
+                choice.Size = new Vector2(.53f, .04f);
+                Label(-.39f, .06f, "Only blocks in your saved baseline are tracked.");
+                Label(-.39f, .105f, "Damage and repairs update automatically.");
                 Button(-.21f, .18f, "Create bar", () =>
                 {
                     int index = (int)choice.GetSelectedKey();

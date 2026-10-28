@@ -140,7 +140,7 @@ namespace Marigold
             {
                 source = CustomBarSources(true, source.GroupName).Find(item => item.GroupName == source.GroupName);
                 if (source == null)
-                    throw new InvalidOperationException("The terminal group was not found. Saved members remain tracked.");
+                    throw new InvalidOperationException("Terminal group not found. This bar keeps its saved block list and continues updating damage and repairs.");
             }
 
             var selected = new List<BlockSample>();
@@ -196,13 +196,13 @@ namespace Marigold
         private string RefreshCustomGroup(CustomHealthBar bar)
         {
             if (string.IsNullOrEmpty(bar.GroupName))
-                return "This bar tracks a fixed block selection. Create a new bar to select a different block.";
+                return "Single-block bars update damage and repairs automatically. Create another bar to track a different block.";
             var source = CustomBarSources(true, bar.GroupName).Find(item => item.GroupName == bar.GroupName);
             if (source == null)
-                return "The terminal group was not found. Saved members remain tracked.";
+                return "Terminal group not found. This bar keeps its saved block list and continues updating damage and repairs.";
             var members = CustomBarMembers(source);
             SaveCustomBar(CustomHealthBars.Refresh(bar, members));
-            return "Group membership refreshed from matching baseline blocks. Missing former members are no longer counted.";
+            return "Tracked blocks updated from the terminal group. Damage and repairs continue to update automatically.";
         }
 
         private void DrawCustomHealthBars(Vector2 screen)

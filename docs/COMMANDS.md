@@ -1,4 +1,4 @@
-# Marigold commands — 0.14.16 development
+# Marigold commands — 0.15.1
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -76,7 +76,7 @@ Preferences live in `<game user data>/Storage/Marigold/display.txt`; saving reta
 
 Station changes save to the selected ship profile, or remain session-local until capture creates one. Auto and language changes save display preferences. Station is never restored from global display settings. `/mg auto off` persists and retains an existing binding.
 
-## Graphical interface (0.9)
+## Graphical interface
 
 Use `/mg ui` for Ship, Baseline and Customize. Capture creates an anchor and full-health baseline in one step. Profiles have stable numeric IDs; old GUIDs and `profile select` remain accepted. Clear removes only the baseline; Delete removes the profile.
 
@@ -100,6 +100,8 @@ Focusing on selected systems now retains the others as faint outlines. **Customi
 
 Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time. Customize > Preferences > Performance options contains both missing-block and fresh-damage pulse toggles. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
+In **Customize > Colors**, **Choose color visually...** opens a hue strip and a saturation/brightness square for the selected state. The swatches show the draft and original colors. **Set RGB** updates the picker from an exact six-digit value; **Use color** applies the selection, while Back/Cancel discards it. **Save display** keeps an applied color. The same picker is available under **Health bars > Bar colors**; applying an independent bar color disables outline matching.
+
 Library saves independent named baselines. Capture/import and loading archive the previous active baseline when needed; deleting a revision leaves the active baseline intact. Versions show source/date and active identity. Cross-anchor restore opens a recovery preview and changes the active baseline only after acceptance. Limits: 16 revisions and 250,000 total blocks per library.
 
 Customize > Shortcuts accepts common punctuation/digits and press-to-bind Ctrl/Alt/Shift combinations. Escape cancels; blank unbinds. Show/hide and Open panel are new actions. The game still receives keys.
@@ -115,7 +117,7 @@ Bars count baseline block states: healthy blue, damaged yellow, non-functional o
 
 **Health bars > Bar colors** changes the healthy segment color or links it to the healthy schematic outline. Other segments use the state colors. Power's reactor/battery/solar choices are under **Power sections**. Save display keeps these settings.
 
-**Health bars > Custom bars** creates up to 16 bars for a named terminal block or an existing main-grid terminal group. Find selections by name; only currently present blocks matching the saved baseline become members. Membership stays fixed when blocks or groups disappear, so destroyed/replaced members stay red and repairs return healthy. **Refresh group members** requires confirmation and replaces membership with the current matching group selection.
+**Health bars > Custom bars** creates up to 16 bars for a named terminal block or an existing main-grid terminal group. Find selections by name; only currently present blocks matching the saved baseline become members. Damage and repairs update automatically: destroyed/replaced blocks stay red, and repaired blocks return healthy even if the terminal group disappears. Use **Update tracked blocks** only after adding/removing blocks in a terminal group and wanting this bar to follow the changed list. It requires confirmation and replaces the tracked list with the group's current matching baseline blocks; former members absent from that list stop counting.
 
 Custom-bar edits preview immediately and use **Save bar**, independently from Save display. Leaving the editor discards unsaved edits. Members, names and layouts belong to the ship and its saved baseline versions, not shared display presets/clipboard layouts. Recovery and changing the main cockpit preserve the coordinate alignment. A new capture/import starts new custom-bar selections, while the previous ones remain in the archived baseline.
 

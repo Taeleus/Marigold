@@ -2,7 +2,13 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-Current development build: **0.15.0 for Pulsar Legacy**, awaiting in-game testing. Interim remains experimental and untested in-game.
+Latest version: **0.15.1 for Pulsar Legacy**. Interim remains experimental and untested in-game.
+
+## 0.15.1
+
+- Added a visual color picker for schematic states and healthy health bars. Choose a color with the hue strip and color square, compare it with the original, or enter an exact RGB value.
+- Fixed the custom-bar search box overlapping the **Find** button.
+- Renamed the group action to **Update tracked blocks**. Damage and repairs update automatically; this action only changes which group members the bar tracks.
 
 ## 0.15.0
 

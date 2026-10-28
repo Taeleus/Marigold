@@ -1,8 +1,16 @@
 # Marigold roadmap
 
-Updated October 28, 2026. Development build: **0.15.0** on `dev`, targeting **Pulsar Legacy / .NET Framework 4.8**. The PluginHub submission stays on the reviewed master version until these additions are tested.
+Updated October 28, 2026. Current version: **0.15.1**, targeting **Pulsar Legacy / .NET Framework 4.8**. Usability testing is complete; the PluginHub source pin is managed separately.
 
-## 0.15.0 usability improvements — ready for in-game testing
+## 0.15.1 usability follow-up — complete
+
+- Visual color selection for schematic states and healthy health bars, with a hue strip, saturation/brightness square, comparison swatches and exact RGB entry.
+- Custom-bar search controls no longer share the same space with the Find button.
+- **Update tracked blocks** explains group membership changes separately from automatic damage/repair updates.
+
+User testing passed color selection, cancel/save persistence and the custom-bar page. The earlier menu-label and Power sections check also passed. Results are recorded in the [completed checklist](TESTING-TODO.md).
+
+## 0.15.0 usability improvements
 
 - Adjustable faint outlines retain the rest of the ship when focusing on selected systems, respecting hidden styles and fault-only rendering.
 - Shared orange/red brightness pulses make fresh faults more visible; yellow remains steady.
@@ -11,7 +19,7 @@ Updated October 28, 2026. Development build: **0.15.0** on `dev`, targeting **Pu
 - Custom health bars track a selected block or terminal group, with saved membership, explicit refresh and individual layout controls.
 - Profiles and saved baseline versions retain custom bars; recovery and cockpit re-anchoring preserve their coordinates.
 
-Automated checks cover settings compatibility, fault states, membership persistence, revisions and recovery. Visual clarity, panel layout and the full in-game selection workflow still need the short [0.15.0 checklist](TESTING-TODO.md).
+Automated checks cover settings compatibility, fault states, membership persistence, revisions and recovery. User testing passed system context, pulse feedback, healthy colors, menu layout, custom-bar creation/repair and persistence/recovery.
 
 ## Completed and user-verified
 

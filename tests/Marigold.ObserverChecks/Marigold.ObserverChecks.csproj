@@ -16,6 +16,7 @@
     <Compile Include="../../src/Marigold.Plugin/HealthBarSettings.cs" Link="HealthBarSettings.cs" />
     <Compile Include="../../src/Marigold.Plugin/CustomHealthBars.cs" Link="CustomHealthBars.cs" />
     <Compile Include="../../src/Marigold.Plugin/HudAppearance.cs" Link="HudAppearance.cs" />
+    <Compile Include="../../src/Marigold.Plugin/ColorPickerState.cs" Link="ColorPickerState.cs" />
     <Compile Include="../../src/Marigold.Plugin/KeyNames.cs" Link="KeyNames.cs" />
     <Compile Include="../../src/Marigold.Plugin/RecoveryMatcher.cs" Link="RecoveryMatcher.cs" />
     <Compile Include="../../src/Marigold.Plugin/Plugin.cs" Link="Plugin.cs" />

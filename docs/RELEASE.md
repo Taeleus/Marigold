@@ -1,6 +1,8 @@
 # Legacy release procedure
 
-Release candidate: **0.14.16**. Initial PluginHub submission targets **Legacy/CLR only**. Interim and dual-package publication are deferred.
+Current version: **0.15.1**. PluginHub publication targets **Legacy/CLR only**. Interim and dual-package publication are deferred.
+
+Building locally requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies and the installed Space Engineers Bin64 folder. The build scripts accept `-Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'` if you need to specify the game location.
 
 1. Run `./build.ps1 -Runtime Legacy` and `./verify-source.ps1 -Runtime Legacy` against the tested code. Preserve warnings accurately; unavailable vulnerability data is not a clean dependency audit.
 2. Confirm final regression acceptance in TESTING-TODO.md. Package only plugin.dll/plugin.pdb/plugin.xml; exclude game DLLs, caches, skill files and backups.

@@ -303,7 +303,8 @@ namespace Marigold
                 "Customize / Custom bars / Layout",
                 "Customize / Health bars / Power sections",
                 "Customize / System filters / Background",
-                "Customize / Health bars / Colors"
+                "Customize / Health bars / Colors",
+                "Customize / Color picker"
             };
 
             private void MenuRow(float y, string title, string description, int next)
@@ -328,6 +329,8 @@ namespace Marigold
                 blueprintPageLabel = null;
                 captureShortcut = -1;
                 shortcutBox = null;
+                pickerHex = null;
+                saturationPicker = huePicker = null;
                 Label(
                     -.4f,
                     -.40f,
@@ -355,7 +358,7 @@ namespace Marigold
                 Button(.28f, -.33f, Section == 2 ? "[ Customize ]" : "Customize", () => Switch(9));
                 if (history.Count > 0)
                     Button(-.31f, .40f, "Back", Back);
-                if (tab != 13 && tab != 21 && tab != 22)
+                if (tab != 13 && tab != 21 && tab != 22 && tab != 26)
                     Button(0, .40f, "Save display...", () => Switch(13));
                 Button(.32f, .40f, "Close", () => CloseScreen());
                 output = new MyGuiControlMultilineText(
@@ -445,6 +448,9 @@ namespace Marigold
                         break;
                     case 25:
                         BarColors();
+                        break;
+                    case 26:
+                        ColorPicker();
                         break;
                 }
             }
@@ -761,27 +767,18 @@ namespace Marigold
 
             private void Colors()
             {
-                Label(-.39f, -.25f, "Edit one state at a time. Enter a six-digit RGB color, e.g. FF8214.");
+                Label(-.39f, -.25f, "Choose a state, then pick visually or enter an exact RGB color.");
                 FieldLabel(-.38f, -.19f, "Block state", .32f);
                 FieldLabel(.015f, -.19f, "RGB color", .19f);
                 var choice = Combo(
                     -.21f,
                     -.15f,
-                    new[]
-                    {
-                        "Healthy outline",
-                        "Missing",
-                        "Damaged",
-                        "Replaced",
-                        "Added",
-                        "Unknown",
-                        "Non-functional"
-                    },
-                    0
+                    ColorStateNames,
+                    colorStateIndex
                 );
                 var value = new MyGuiControlTextbox(
                     new Vector2(.11f, -.15f),
-                    owner.controls.Appearance.Colors.Split(',')[0],
+                    owner.controls.Appearance.Colors.Split(',')[colorStateIndex],
                     maxLength: 6,
                     textScale: .65f
                 )
@@ -789,7 +786,11 @@ namespace Marigold
                     Size = new Vector2(.19f, .04f)
                 };
                 Controls.Add(value);
-                choice.ItemSelected += () => value.Text = owner.controls.Appearance.Colors.Split(',')[(int)choice.GetSelectedKey()];
+                choice.ItemSelected += () =>
+                {
+                    colorStateIndex = (int)choice.GetSelectedKey();
+                    value.Text = owner.controls.Appearance.Colors.Split(',')[colorStateIndex];
+                };
                 Button(
                     .32f,
                     -.15f,
@@ -802,9 +803,10 @@ namespace Marigold
                         Status("Color updated. Save display to keep it.");
                     }
                 );
+                Button(0, -.055f, "Choose color visually...", () => OpenColorPicker((int)choice.GetSelectedKey()), .4f);
                 Button(
                     0,
-                    -.02f,
+                    .015f,
                     "Restore colors",
                     () =>
                     {
@@ -812,8 +814,8 @@ namespace Marigold
                         RecreateControls(false);
                     }
                 );
-                Button(0, .07f, "Pulse settings in Preferences", () => Switch(19));
-                Label(-.39f, .13f, "Orange/red alerts pulse for four seconds. Yellow stays steady.");
+                Button(0, .085f, "Pulse settings in Preferences", () => Switch(19));
+                Label(-.39f, .135f, "Orange/red alerts pulse for four seconds. Yellow stays steady.");
                 Button(0, .19f, "Health bar colors...", () => Switch(25), .4f);
             }
 
@@ -1261,15 +1263,15 @@ namespace Marigold
                 };
                 Controls.Add(match);
                 FieldLabel(-.32f, -.05f, "Match healthy schematic outline", .69f);
-                Button(0, .05f, "Restore healthy blue", () =>
+                Button(0, .025f, "Choose color visually...", () => OpenColorPicker(0, true), .4f);
+                Button(0, .105f, "Restore healthy blue", () =>
                 {
                     appearance.HealthyBarColor = "3296FF";
                     appearance.MatchHealthyBarColor = false;
                     RecreateControls(false);
                     Status("Color updated. Save display to keep it.");
                 }, .34f);
-                Label(-.39f, .13f, "Damage colors still follow Customize > Colors.");
-                Label(-.39f, .19f, "Save display keeps color choices.");
+                Label(-.39f, .18f, "Damage colors follow Customize > Colors. Save display keeps changes.");
             }
 
             private void Library()
@@ -1684,6 +1686,11 @@ namespace Marigold
 
             public override bool Update(bool hasFocus)
             {
+                if (!hasFocus)
+                {
+                    saturationPicker?.CancelDrag();
+                    huePicker?.CancelDrag();
+                }
                 var mouseInput = VRage.Input.MyInput.Static;
                 if (!hasFocus || !RecoveryFocus || mouseInput == null)
                     draggingRecovery = false;
