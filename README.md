@@ -4,13 +4,13 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. Compare your ship with a saved layout, spot damaged or missing blocks, and keep an eye on the systems that matter to you.
 
-Current version: **0.15.1**. See the [changelog](CHANGELOG.md) for what's new.
+Development preview: **0.16.0**, with a redesigned control panel ready for in-game testing. See the [changelog](CHANGELOG.md) for what's new.
 
 ## Get started
 
 1. Sit in the cockpit you want to use as the ship's orientation reference.
 2. Type **`/mg ui`**.
-3. Open **Baseline**, choose **Capture this ship**, then click again to confirm.
+3. Open **Baselines**, choose **Capture this ship**, then click again to confirm.
 4. Close the panel to see your ship schematic.
 
 A **baseline** is the layout your ship should have. Capturing records the blocks currently present; damage to those blocks still shows. For sections already missing, use a saved baseline or import a blueprint instead.
@@ -37,20 +37,25 @@ Fresh orange/red faults can pulse together briefly to draw your attention. Yello
 Everything starts in **`/mg ui`**:
 
 - **Ship:** show or hide the HUD, choose views, pause rotation, focus on systems or damage states, and read a damage report.
-- **Baseline:** capture a layout, import a blueprint, manage saved ships and versions, or recover alignment after cockpit loss.
-- **Customize:** adjust position, size, colors and opacity; configure health bars, shortcuts and preferences.
+- **Baselines:** capture a layout, import a blueprint, manage saved ships and versions, or recover alignment after cockpit loss.
+- **Ship display:** arrange the schematic and choose its colors.
+- **Health bars:** enable system bars or create bars for particular blocks and groups.
+- **Preferences:** choose performance options, pulses, automatic matching, language and shortcuts.
+- **Save & share:** keep a default, ship setup or preset, or share your display settings through the clipboard.
 
-Views follow your saved cockpit orientation. Focus on one or several systems, such as Power, Thrusters, Tools or **Offensive**, while keeping the rest of the ship faintly visible. Adjust **System filters > Other systems opacity** to choose how much context remains.
+Views follow your saved cockpit orientation. Under **Ship > Systems and filters**, focus on one or several systems, such as Power, Thrusters, Tools or **Offensive**, while keeping the rest of the ship faintly visible. Adjust **Other systems opacity** to choose how much context remains.
 
-Under **Customize > Colors**, choose a state and open **Choose color visually...**. The color square and hue strip let you pick by eye, with original and selected swatches to compare. Exact RGB entry is available too. **Use color** applies your choice; Cancel or Back discards the selection.
+Under **Ship display > State colors**, choose a state and open **Choose color visually...**. The color square and hue strip let you pick by eye, with original and selected swatches to compare. Exact RGB entry is available too. **Use color** applies your choice; Cancel or Back discards the selection.
 
-Use **Save display** to keep display changes as your default, for this ship, or as a named preset. Closing the panel alone does not save them. **Share config** copies display settings through the clipboard, including standard health-bar layouts, colors and filters. Custom bars stay with their ship; baselines and shortcuts are not included.
+Forms label each value and scroll when needed. Apply a layout change, then use **Preview HUD** to inspect it at its actual position and size. **Return to editor** keeps your place and any custom-bar draft.
+
+Use **Save display** to keep display changes as your default, for this ship, or as a named preset. Closing the panel alone does not save them. **Save & share > Share through clipboard** copies display settings, including standard health-bar layouts, colors and filters. Custom bars stay with their ship; baselines and shortcuts are not included.
 
 Shortcuts are optional and start unbound. English and Spanish are available, with English fallback for some messages.
 
 ## Watch your systems
 
-Enable health bars under **Customize > Health bars** for **Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools**. They start hidden, and each can be moved, resized or faded independently. You can hide the ship schematic and keep only the bars.
+Enable health bars under **Health bars** for **Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools**. They start hidden, and each can be moved, resized or faded independently. You can hide the ship schematic and keep only the bars.
 
 Bars show the share of baseline blocks that are healthy, damaged, non-functional, missing or unreadable. They count blocks rather than hit points. Choose a healthy bar color under **Bar colors**, or match it to the schematic outline. Power can also be split into **Reactors**, **Batteries** and **Solar** sections.
 
@@ -64,21 +69,21 @@ Custom-bar edits have their own **Save bar** button. Leaving the editor discards
 
 ## Save layouts and return to your ship
 
-Saved ships survive restarts and reconnects. Automatic matching tries to recognize your saved layout, including after server transfers. Identical ships or heavily changed layouts may need manual selection under **Baseline > Saved ships**.
+Saved ships survive restarts and reconnects. Automatic matching tries to recognize your saved layout, including after server transfers. Identical ships or heavily changed layouts may need manual selection under **Baselines > Saved ships**.
 
-**Baseline > Saved versions** keeps layouts such as Original or Before refit. You can save, rename, restore or replace versions. Capture and blueprint import preserve the previous baseline automatically.
+**Baselines > Saved versions** keeps layouts such as Original or Before refit. You can save, rename, restore or replace versions. Capture and blueprint import preserve the previous baseline automatically.
 
 If the original cockpit is gone, open **Recovery tools**. Drag the preview to look around and scroll to zoom; these affect only your inspection view. The X/Y/Z controls adjust the baseline alignment. Inspect it before accepting. Back, Close or Escape ends an unaccepted preview.
 
 ## Import a blueprint
 
-Open **Baseline > Import blueprint > Find blueprint**. Search any combination of **Local, Workshop and Cloud**, load a result, choose its grid and cockpit, then preview the alignment before accepting it.
+Open **Baselines > Import blueprint > Find blueprint**. Search any combination of **Local, Workshop and Cloud**, load a result, choose its grid and cockpit, then preview the alignment before accepting it.
 
 Workshop search uses blueprints already cached on your computer. Plain or gzip-compressed XML `bp.sbc` files are supported; protobuf-only and archived formats are not. You can also provide an XML file path. See [blueprint formats](docs/BLUEPRINT-FORMATS.md) for details.
 
 ## Performance and connected ships
 
-Filled displays can cost more FPS on large, heavily damaged ships. **Customize > Preferences > Performance options** offers outline and fault-only modes for lighter rendering. Health-bar counts stay the same.
+Filled displays can cost more FPS on large, heavily damaged ships. **Preferences > Performance options** offers outline and fault-only modes for lighter rendering. Health-bar counts stay the same.
 
 Optional **Show connector-docked ships** adds context for ships attached through connectors. It starts off. Connected ships with saved profiles can show their own damage, but do not become part of your main ship's baseline or bars. Rotor, hinge and piston subgrids are excluded.
 

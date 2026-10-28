@@ -1,3 +1,4 @@
+using System;
 using Sandbox.Graphics;
 using Sandbox.Graphics.GUI;
 using VRageMath;
@@ -33,68 +34,74 @@ namespace Marigold
             private void ColorPicker()
             {
                 string target = pickingBarColor ? "Healthy health bars" : ColorStateNames[colorStateIndex];
-                Label(-.39f, -.26f, T(target) + " — " + T("Drag the color square and hue strip."));
+                Intro(T(target) + ". " + T("Choose a color family with the hue strip, then adjust brightness and intensity in the square."));
+                var host = new MyGuiControlParent(size: new Vector2(.60f, .34f));
                 var screen = MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One);
-                float height = .30f;
-                float width = height * screen.Y / screen.X;
-                float left = -.18f - width / 2;
-                FieldLabel(left, -.215f, "Saturation →", width);
-                FieldLabel(.005f, -.215f, "Hue", .07f);
-                FieldLabel(-.40f, -.175f, "Bright", .08f);
-                FieldLabel(-.40f, .105f, "Dark", .08f);
+                float height = .28f;
+                float width = Math.Min(.28f, height * screen.Y / Math.Max(1, screen.X));
+                float squareLeft = -.285f;
+                float hueX = squareLeft + width + .04f;
+                PickerLabel(host, squareLeft, -.155f, "Color intensity", width);
+                PickerLabel(host, hueX - .018f, -.155f, "Hue", .06f);
                 saturationPicker = new ColorPickerControl(
-                    new Vector2(-.18f, -.03f), new Vector2(width, height), colorSelection, false, UpdatePickerHex
+                    new Vector2(squareLeft + width / 2, .015f), new Vector2(width, height),
+                    colorSelection, false, UpdatePickerHex
                 );
                 saturationPicker.SetToolTip(T("Left is gray; right is vivid. Top is bright; bottom is dark."));
                 huePicker = new ColorPickerControl(
-                    new Vector2(.035f, -.03f), new Vector2(.025f, height), colorSelection, true, UpdatePickerHex
+                    new Vector2(hueX, .015f), new Vector2(.025f, height),
+                    colorSelection, true, UpdatePickerHex
                 );
                 huePicker.SetToolTip(T("Drag to choose a color family."));
-                Controls.Add(saturationPicker);
-                Controls.Add(huePicker);
-                FieldLabel(.13f, -.205f, "Selected color", .25f);
-                Controls.Add(new ColorSwatchControl(
-                    new Vector2(.25f, -.15f), new Vector2(.24f, .05f), () => colorSelection.Rgb
+                host.Controls.Add(saturationPicker);
+                host.Controls.Add(huePicker);
+                PickerLabel(host, .065f, -.13f, "Selected color", .22f);
+                host.Controls.Add(new ColorSwatchControl(
+                    new Vector2(.175f, -.075f), new Vector2(.22f, .06f), () => colorSelection.Rgb
                 ));
-                FieldLabel(.13f, -.10f, "RGB (hex)", .25f);
-                pickerHex = new MyGuiControlTextbox(
-                    new Vector2(.25f, -.06f), colorSelection.Hex, maxLength: 6, textScale: .65f
-                )
-                {
-                    Size = new Vector2(.24f, .04f)
-                };
+                PickerLabel(host, .065f, .015f, "Original color", .22f);
+                host.Controls.Add(new ColorSwatchControl(
+                    new Vector2(.175f, .075f), new Vector2(.22f, .06f), () => originalPickerColor
+                ));
+                AddContent(host, .34f);
+                ActionRow("Use color", ApplyPickerColor, "Cancel", Back);
+                Heading("Exact RGB");
+                pickerHex = TextField("RGB color (six hexadecimal digits)", colorSelection.Hex, 6);
                 pickerHex.EnterPressed += box => ReadPickerHex();
-                Controls.Add(pickerHex);
-                Button(.25f, .015f, "Set RGB", ReadPickerHex, .24f);
-                FieldLabel(.13f, .065f, "Original color", .25f);
-                Controls.Add(new ColorSwatchControl(
-                    new Vector2(.25f, .10f), new Vector2(.24f, .03f), () => originalPickerColor
-                ));
-                Label(-.39f, .145f, pickingBarColor && owner.controls.Appearance.MatchHealthyBarColor
+                ActionControl("Set RGB", ReadPickerHex);
+                Note(pickingBarColor && owner.controls.Appearance.MatchHealthyBarColor
                     ? "Choosing a bar color turns off outline matching."
                     : "Use color applies now. Save display keeps your choice.");
-                Button(-.21f, .19f, "Use color", () =>
+            }
+
+            private void PickerLabel(MyGuiControlParent host, float x, float y, string text, float width)
+            {
+                host.Controls.Add(new MyGuiControlLabel(
+                    new Vector2(x, y), text: T(text), textScale: .62f, font: "White",
+                    maxWidth: width, isAutoEllipsisEnabled: true
+                ));
+            }
+
+            private void ApplyPickerColor()
+            {
+                if (!colorSelection.TrySetHex(pickerHex.Text))
                 {
-                    if (!colorSelection.TrySetHex(pickerHex.Text))
-                    {
-                        Status("Use six hexadecimal RGB digits, for example 3296FF.");
-                        return;
-                    }
-                    if (pickingBarColor)
-                    {
-                        owner.controls.Appearance.Set("healthy", colorSelection.Hex);
-                        owner.controls.Appearance.MatchHealthyBarColor = false;
-                    }
-                    else
-                    {
-                        var colors = owner.controls.Appearance.Colors.Split(',');
-                        colors[colorStateIndex] = colorSelection.Hex;
-                        owner.controls.Appearance.Set("colors", string.Join(",", colors));
-                    }
-                    Back();
-                    Status("Color updated. Save display to keep it.");
-                }, .25f);
-                Button(.21f, .19f, "Cancel", Back, .25f);
+                    Status("Use six hexadecimal RGB digits, for example 3296FF.");
+                    return;
+                }
+                if (pickingBarColor)
+                {
+                    owner.controls.Appearance.Set("healthy", colorSelection.Hex);
+                    owner.controls.Appearance.MatchHealthyBarColor = false;
+                }
+                else
+                {
+                    var colors = owner.controls.Appearance.Colors.Split(',');
+                    colors[colorStateIndex] = colorSelection.Hex;
+                    owner.controls.Appearance.Set("colors", string.Join(",", colors));
+                }
+                Back();
+                Status("Color updated. Save display to keep it.");
             }
 
             private void ReadPickerHex()

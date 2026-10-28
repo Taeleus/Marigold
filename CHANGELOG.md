@@ -2,7 +2,15 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-Latest version: **0.15.1 for Pulsar Legacy**. Interim remains experimental and untested in-game.
+Development preview: **0.16.0 for Pulsar Legacy**, pending in-game UI testing. The previous tested version is 0.15.1. Interim remains experimental and untested in-game.
+
+## 0.16.0
+
+- Rebuilt the control panel around six persistent sections: Ship, Baselines, Ship display, Health bars, Preferences and Save & share.
+- Replaced dense setting/value menus with labeled forms, grouped actions and scrolling pages. Longer help text wraps, and empty lists explain the next step.
+- Added a full HUD preview with **Return to editor**, preserving the editor's fields and custom-bar draft. Ordinary editing pages keep the ship preview away from form controls.
+- Made save behavior clearer for display settings, custom bars, baselines and shortcuts. System selection now uses checkboxes, and baseline/version actions have clearer instructions.
+- Expanded Spanish labels and help text. Existing profiles, commands, damage tracking and saved data formats are retained.
 
 ## 0.15.1
 

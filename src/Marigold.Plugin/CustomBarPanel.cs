@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Sandbox.Graphics.GUI;
-using VRageMath;
 
 namespace Marigold
 {
@@ -45,6 +43,7 @@ namespace Marigold
 
             private void CustomBars()
             {
+                Intro("Watch one named block or a terminal group. Each custom bar belongs to this ship and its saved baseline versions.");
                 ShipProfile profile;
                 try
                 {
@@ -54,23 +53,11 @@ namespace Marigold
                 }
                 catch (InvalidOperationException e)
                 {
-                    Label(-.39f, -.23f, e.Message);
+                    Note(e.Message);
+                    PrimaryAction("Set up a baseline", () => Switch(1));
                     return;
                 }
-                Label(-.39f, -.26f, "Track one block or an existing terminal group on this ship.");
-                FieldLabel(-.17f, -.21f, "Custom health bar");
-                var names = new List<string>();
-                foreach (var bar in profile.CustomBars)
-                    names.Add(bar.Name + " (" + bar.Members.Length + " " + T("saved blocks") + ")");
-                int selected = profile.CustomBars.FindIndex(item => item.Id == customBarId);
-                if (selected < 0 && profile.CustomBars.Count > 0)
-                    customBarId = profile.CustomBars[selected = 0].Id;
-                Combo(0, -.17f, names.ToArray(), Math.Max(0, selected), i =>
-                {
-                    customBarId = profile.CustomBars[i].Id;
-                    confirm = null;
-                });
-                Button(-.21f, -.07f, "Add custom bar...", () =>
+                PrimaryAction("Add custom bar...", () =>
                 {
                     if (profile.CustomBars.Count >= CustomHealthBars.MaximumBars)
                         throw new InvalidOperationException("Limit: 16 custom bars per ship.");
@@ -79,12 +66,32 @@ namespace Marigold
                     customName = T("My custom bar");
                     Switch(21);
                 });
-                Button(.21f, -.07f, "Edit custom bar...", () =>
+                if (profile.CustomBars.Count == 0)
+                {
+                    Note("No custom bars yet. Add one for a block or terminal group you want to watch.");
+                    return;
+                }
+                Heading("Your custom bars");
+                var names = new List<string>();
+                foreach (var bar in profile.CustomBars)
+                    names.Add(bar.Name + " (" + bar.Members.Length + " " + T("saved blocks") + ")");
+                int selected = profile.CustomBars.FindIndex(item => item.Id == customBarId);
+                if (selected < 0)
+                    customBarId = profile.CustomBars[selected = 0].Id;
+                ChoiceField("Custom health bar", names.ToArray(), selected, i =>
+                {
+                    customBarId = profile.CustomBars[i].Id;
+                    confirm = null;
+                });
+                ActionControl("Edit name and layout", () =>
                 {
                     customBarDraft = SelectedCustomBar().Copy();
                     Switch(22);
                 });
-                Button(-.21f, .03f, "Update tracked blocks", () =>
+                Note("Damage and repairs update automatically. Destroyed blocks remain tracked as missing.");
+                Heading("After changing a terminal group");
+                Note("Use Update tracked blocks only when you want to add or remove tracked group members. It is not needed for repairs.");
+                ActionControl("Update tracked blocks", () =>
                 {
                     var bar = SelectedCustomBar();
                     if (string.IsNullOrEmpty(bar.GroupName))
@@ -99,7 +106,8 @@ namespace Marigold
                         Status(message);
                     }, "Update the tracked list to the group's current blocks? Members absent from that list stop counting. Click again to confirm.");
                 });
-                Button(.21f, .03f, "Delete custom bar", () =>
+                Heading("Remove a bar");
+                ActionControl("Delete custom bar", () =>
                 {
                     var bar = SelectedCustomBar();
                     ConfirmCustomAction("delete-custom-" + bar.Id, () =>
@@ -110,53 +118,45 @@ namespace Marigold
                         Status(message);
                     });
                 });
-                Label(-.39f, .11f, "Damage and repairs update automatically.");
-                Label(-.39f, .17f, "After editing a terminal group, use Update tracked blocks.");
+                Note("Deleting a custom bar leaves the ship baseline unchanged.");
             }
 
             private void CreateCustomBar()
             {
-                FieldLabel(-.36f, -.26f, "Bar name", .72f);
-                var name = new MyGuiControlTextbox(new Vector2(0, -.21f), customName, maxLength: 128, textScale: .65f)
-                {
-                    Size = new Vector2(.72f, .04f)
-                };
-                Controls.Add(name);
-                FieldLabel(-.38f, -.155f, "Selection type");
-                FieldLabel(.04f, -.155f, "Find by name");
-                var search = new MyGuiControlTextbox(new Vector2(.21f, -.115f), customSearch, maxLength: 128, textScale: .65f)
-                {
-                    Size = new Vector2(.34f, .04f)
-                };
-                Controls.Add(search);
-                Combo(-.21f, -.115f, new[] { "Single block", "Terminal group" }, customGroupSource ? 1 : 0, i =>
+                Intro("Choose what to watch, then give the bar a name. Only blocks present in your saved baseline can be tracked.");
+                var name = TextField("Bar name", customName, 128);
+                MyGuiControlTextbox search = null;
+                ChoiceField("Track", new[] { "Single block", "Terminal group" }, customGroupSource ? 1 : 0, i =>
                 {
                     customName = name.Text;
-                    customSearch = search.Text;
+                    customSearch = search == null ? customSearch : search.Text;
                     customGroupSource = i == 1;
                     customSources = null;
                     customSourceIndex = 0;
                     RecreateControls(false);
                 });
-                Button(-.28f, -.015f, "Find", () =>
+                search = TextField("Find by name", customSearch, 128);
+                Action find = () =>
                 {
                     customName = name.Text;
                     customSearch = search.Text;
                     customSources = null;
                     customSourceIndex = 0;
                     RecreateControls(false);
-                });
+                };
+                search.EnterPressed += box => find();
+                ActionControl("Find", find);
                 if (customSources == null)
                     customSources = owner.CustomBarSources(customGroupSource, customSearch);
                 var names = new string[customSources.Count];
                 for (int i = 0; i < names.Length; i++)
                     names[i] = customSources[i].Name;
-                FieldLabel(-.145f, -.055f, customGroupSource ? "Terminal group" : "Block", .53f);
-                var choice = Combo(.12f, -.015f, names, customSourceIndex, i => customSourceIndex = i);
-                choice.Size = new Vector2(.53f, .04f);
-                Label(-.39f, .06f, "Only blocks in your saved baseline are tracked.");
-                Label(-.39f, .105f, "Damage and repairs update automatically.");
-                Button(-.21f, .18f, "Create bar", () =>
+                var choice = ChoiceField(customGroupSource ? "Terminal group" : "Block", names,
+                    customSourceIndex, i => customSourceIndex = i);
+                if (names.Length == 0)
+                    Note("No matching blocks or groups. Try another name or check your baseline.");
+                Note("Damage and repairs update automatically. The tracked block list stays fixed until you choose to update it.");
+                PrimaryAction("Create bar", () =>
                 {
                     int index = (int)choice.GetSelectedKey();
                     if (index < 0 || index >= customSources.Count)
@@ -173,7 +173,7 @@ namespace Marigold
                     Switch(22);
                     Status(message);
                 });
-                Button(.21f, .18f, "Cancel", () => Switch(20));
+                ActionControl("Cancel", () => Switch(20));
             }
 
             private void CustomBarLayout()
@@ -181,75 +181,53 @@ namespace Marigold
                 if (customBarDraft == null)
                     customBarDraft = SelectedCustomBar().Copy();
                 var layout = customBarDraft.Layout;
-                FieldLabel(-.36f, -.26f, "Bar name", .72f);
-                var name = new MyGuiControlTextbox(new Vector2(0, -.215f), customBarDraft.Name, maxLength: 128, textScale: .65f)
-                {
-                    Size = new Vector2(.72f, .04f)
-                };
-                Controls.Add(name);
+                Intro("Changes preview on the HUD. Save bar keeps this ship's edits; leaving this page discards unsaved edits.");
+                var name = TextField("Bar name", customBarDraft.Name, 128);
                 Action rememberName = () => customBarDraft.Name = name.Text;
-                Button(-.21f, -.135f, layout.Enabled ? "Hide bar" : "Show bar", () =>
+                CheckField("Show this bar", layout.Enabled, value =>
                 {
                     rememberName();
-                    layout.Enabled = !layout.Enabled;
-                    RecreateControls(false);
+                    layout.Enabled = value;
                 });
-                Button(.21f, -.135f, layout.Label ? "Hide label" : "Show label", () =>
+                CheckField("Show its label", layout.Label, value =>
                 {
                     rememberName();
-                    layout.Label = !layout.Label;
-                    RecreateControls(false);
+                    layout.Label = value;
                 });
-                FieldLabel(-.38f, -.085f, "Setting");
-                FieldLabel(.015f, -.085f, "Value", .19f);
-                var fields = new[] { "x", "y", "width", "height", "opacity" };
-                var field = Combo(-.21f, -.045f, new[]
-                {
-                    "Horizontal position", "Vertical position", "Width", "Height", "Opacity"
-                }, 0);
-                var value = new MyGuiControlTextbox(new Vector2(.11f, -.045f), layout.X.ToString(CultureInfo.InvariantCulture), maxLength: 24, textScale: .65f)
-                {
-                    Size = new Vector2(.19f, .04f)
-                };
-                Controls.Add(value);
-                field.ItemSelected += () => value.Text = layout.Encode().Split(',')[(int)field.GetSelectedKey() + 2];
-                Button(.32f, -.045f, "Apply", () =>
+                var applyLayout = BarLayoutFields(layout);
+                ActionRow("Preview layout", () =>
                 {
                     rememberName();
-                    layout.Set(fields[(int)field.GetSelectedKey()], value.Text);
+                    applyLayout();
                     Status("Preview updated. Save bar keeps these changes for this ship.");
-                });
-                Button(-.31f, .04f, "Left", () =>
+                    InspectHud();
+                }, "Save bar", () =>
                 {
                     rememberName();
-                    layout.X = Math.Max(0, layout.X - .02);
-                    RecreateControls(false);
-                });
-                Button(-.10f, .04f, "Right", () =>
-                {
-                    rememberName();
-                    layout.X = Math.Min(1, layout.X + .02);
-                    RecreateControls(false);
-                });
-                Button(.11f, .04f, "Up", () =>
-                {
-                    rememberName();
-                    layout.Y = Math.Max(0, layout.Y - .02);
-                    RecreateControls(false);
-                });
-                Button(.32f, .04f, "Down", () =>
-                {
-                    rememberName();
-                    layout.Y = Math.Min(1, layout.Y + .02);
-                    RecreateControls(false);
-                });
-                Button(-.21f, .13f, "Save bar", () =>
-                {
-                    rememberName();
+                    applyLayout();
                     customBarDraft.Name = customBarDraft.Name.Trim();
                     Status(owner.SaveCustomBar(customBarDraft));
                 });
-                Button(.21f, .13f, "Reset layout", () =>
+                Heading("Move in small steps");
+                ActionRow("Left", () =>
+                {
+                    rememberName();
+                    MoveBar(layout, -.02, 0);
+                }, "Right", () =>
+                {
+                    rememberName();
+                    MoveBar(layout, .02, 0);
+                });
+                ActionRow("Up", () =>
+                {
+                    rememberName();
+                    MoveBar(layout, 0, -.02);
+                }, "Down", () =>
+                {
+                    rememberName();
+                    MoveBar(layout, 0, .02);
+                });
+                ActionControl("Reset layout", () =>
                 {
                     rememberName();
                     int index = owner.SelectedProfile().CustomBars.FindIndex(bar => bar.Id == customBarDraft.Id);
@@ -261,31 +239,23 @@ namespace Marigold
                     };
                     RecreateControls(false);
                 });
-                Label(-.39f, .195f, "Preview applies immediately. Save bar keeps this ship's edits.");
+                Note("Custom bars use Save bar, separately from Save display.");
             }
 
             private void PowerSections()
             {
-                Label(-.39f, -.25f, "Choose which power sources get their own section.");
+                Intro("Give selected power sources their own labeled section within the Power bar.");
                 var layout = owner.controls.HealthBars.Bars[2];
                 for (int i = 0; i < 3; i++)
                 {
                     int bit = 1 << i;
-                    float y = -.14f + i * .10f;
-                    var check = new MyGuiControlCheckbox
+                    CheckField(ShipHealth.PowerNames[i], (layout.PowerMask & bit) != 0, value =>
                     {
-                        Position = new Vector2(-.30f, y),
-                        IsChecked = (layout.PowerMask & bit) != 0
-                    };
-                    check.IsCheckedChanged += control =>
-                    {
-                        layout.PowerMask = control.IsChecked ? layout.PowerMask | bit : layout.PowerMask & ~bit;
-                    };
-                    Controls.Add(check);
-                    FieldLabel(-.25f, y, ShipHealth.PowerNames[i], .5f);
+                        layout.PowerMask = value ? layout.PowerMask | bit : layout.PowerMask & ~bit;
+                    });
                 }
-                Label(-.39f, .14f, "Unchecked sources stay in Other; every baseline power block is counted.");
-                Label(-.39f, .19f, "Use Save display to keep these choices.");
+                Note("Unchecked sources stay in Other. Every baseline power block is still counted.");
+                Note("Use Save display to keep these choices.");
             }
         }
     }

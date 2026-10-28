@@ -1138,29 +1138,28 @@ namespace Marigold
             {
                 long drawStart = Stopwatch.GetTimestamp();
                 Vector2 screen = MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One, true);
-                bool recoveryFocus = panel?.RecoveryFocus ?? false;
+                bool editingPanel = panel != null && !panel.PreviewingHud;
+                bool recoveryFocus = editingPanel && panel.RecoveryFocus;
                 var view = recoveryFocus ? panel.RecoveryView : controls;
                 if (controls.SchematicVisible || recoveryFocus)
                 {
-                    float side = panel != null
+                    float side = editingPanel
                         ? Math.Min(screen.X * .14f, screen.Y * .18f)
                         : controls.Expanded
                         ? Math.Min(screen.X * .6f, screen.Y * .7f * (float)(controls.Appearance.Size / .32))
                         : Math.Min(screen.X * .6f, screen.Y * (float)controls.Appearance.Size);
-                    float left = panel != null
+                    float left = editingPanel
                         ? 8
                         : controls.Expanded
                         ? (screen.X - side) / 2
                         : 8 + (screen.X - side - 24) * (float)controls.Appearance.X,
-                        top = panel != null ? (screen.Y - side) / 2 : 8 + (screen.Y - side - 65) * (float)controls.Appearance.Y;
-                    if (recoveryFocus)
+                        top = editingPanel ? (screen.Y - side) / 2 : 8 + (screen.Y - side - 65) * (float)controls.Appearance.Y;
+                    if (editingPanel)
                     {
-                        // Use the GUI safe area so preview and controls align on wide screens.
-                        var previewSize = MyGuiManager.GetScreenSizeFromNormalizedSize(new Vector2(.78f, .37f));
-                        side = Math.Min(previewSize.X, previewSize.Y);
-                        var previewCenter = MyGuiManager.GetScreenCoordinateFromNormalizedCoordinate(new Vector2(.5f, .365f));
-                        left = previewCenter.X - side / 2;
-                        top = previewCenter.Y - side / 2;
+                        var preview = panel.PreviewBounds;
+                        side = preview.Width;
+                        left = preview.X;
+                        top = preview.Y;
                     }
 
                     var panelRect = new RectangleF(left - 8, top - 8, side + 16, side + 16);
@@ -1259,7 +1258,7 @@ namespace Marigold
                         MyRenderProxy.DrawSprite(Texture, ref line, null, lineColor, (float)Math.Atan2(delta.Y, delta.X), false, false);
                     }
 
-                    if (!recoveryFocus)
+                    if (!editingPanel)
                         MyGuiManager.DrawString(
                             "White",
                             caption + " | " + (controls.Category == "all"
@@ -1274,7 +1273,7 @@ namespace Marigold
                             useFullClientArea: true,
                             maxTextWidth: controls.Expanded ? .65f : .28f
                         );
-                    if (controls.Expanded && panel == null)
+                    if (controls.Expanded && !editingPanel)
                         MyGuiManager.DrawString(
                             "White",
                             controls.Mode + " | " + controls.Category.Replace("weapons", "Offensive") + " | "
@@ -1286,7 +1285,7 @@ namespace Marigold
                         );
                 }
 
-                if (!recoveryFocus)
+                if (!editingPanel)
                     DrawHealthBars(screen);
                 double drawMs = (Stopwatch.GetTimestamp() - drawStart) * 1000.0 / Stopwatch.Frequency;
                 if (drawSamples >= 600)
