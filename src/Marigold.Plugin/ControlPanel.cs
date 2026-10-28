@@ -83,7 +83,7 @@ namespace Marigold
             }
         }
 
-        private sealed class Panel : MyGuiScreenBase
+        private sealed partial class Panel : MyGuiScreenBase
         {
             private readonly SchematicOverlay owner;
             private int blueprintUiRevision = -1;
@@ -149,6 +149,17 @@ namespace Marigold
             private void Label(float x, float y, string text)
             {
                 Controls.Add(new MyGuiControlLabel(new Vector2(x, y), text: T(text), textScale: .65f, maxWidth: .78f, isAutoEllipsisEnabled: true));
+            }
+
+            private void FieldLabel(float x, float y, string text, float width = .34f)
+            {
+                Controls.Add(new MyGuiControlLabel(
+                    new Vector2(x, y),
+                    text: T(text),
+                    textScale: .58f,
+                    maxWidth: width,
+                    isAutoEllipsisEnabled: true
+                ));
             }
 
             private void Button(float x, float y, string text, Action action, float width = .19f)
@@ -226,6 +237,8 @@ namespace Marigold
             {
                 if (next == tab)
                     return;
+                if (tab == 22)
+                    customBarDraft = null;
                 if (RecoveryFocus)
                     owner.EndPanelRecovery();
                 if (pathBox != null)
@@ -241,6 +254,8 @@ namespace Marigold
             {
                 if (history.Count == 0)
                     return;
+                if (tab == 22)
+                    customBarDraft = null;
                 if (RecoveryFocus)
                     owner.EndPanelRecovery();
                 if (pathBox != null)
@@ -282,7 +297,13 @@ namespace Marigold
                 "Customize / Colors",
                 "Customize / Share config",
                 "Baseline / Find blueprint",
-                "Customize / Preferences / Performance"
+                "Customize / Preferences / Performance",
+                "Customize / Custom bars",
+                "Customize / Custom bars / Choose members",
+                "Customize / Custom bars / Layout",
+                "Customize / Health bars / Power sections",
+                "Customize / System filters / Background",
+                "Customize / Health bars / Colors"
             };
 
             private void MenuRow(float y, string title, string description, int next)
@@ -334,7 +355,7 @@ namespace Marigold
                 Button(.28f, -.33f, Section == 2 ? "[ Customize ]" : "Customize", () => Switch(9));
                 if (history.Count > 0)
                     Button(-.31f, .40f, "Back", Back);
-                if (tab != 13)
+                if (tab != 13 && tab != 21 && tab != 22)
                     Button(0, .40f, "Save display...", () => Switch(13));
                 Button(.32f, .40f, "Close", () => CloseScreen());
                 output = new MyGuiControlMultilineText(
@@ -407,12 +428,30 @@ namespace Marigold
                     case 19:
                         Performance();
                         break;
+                    case 20:
+                        CustomBars();
+                        break;
+                    case 21:
+                        CreateCustomBar();
+                        break;
+                    case 22:
+                        CustomBarLayout();
+                        break;
+                    case 23:
+                        PowerSections();
+                        break;
+                    case 24:
+                        ContextSettings();
+                        break;
+                    case 25:
+                        BarColors();
+                        break;
                 }
             }
 
             private void Choice(float x, float y, string label, string values, string selected, string command)
             {
-                Label(x - .17f, y - .032f, label);
+                FieldLabel(x - .17f, y - .04f, label);
                 var items = values.Split(' ');
                 if (Array.IndexOf(items, selected) < 0)
                 {
@@ -557,6 +596,7 @@ namespace Marigold
             {
                 Label(-.39f, -.25f, "Choose an action, then press the shortcut you want to use.");
                 owner.LoadHotkeys();
+                FieldLabel(-.17f, -.20f, "Action");
                 var action = Combo(
                     0,
                     -.16f,
@@ -570,6 +610,7 @@ namespace Marigold
                     },
                     0
                 );
+                FieldLabel(-.17f, -.09f, "Shortcut");
                 var binding = new MyGuiControlTextbox(new Vector2(0, -.05f), owner.hotkeys[0] ?? "", maxLength: 80, textScale: .65f)
                 {
                     Size = new Vector2(.34f, .04f)
@@ -610,7 +651,7 @@ namespace Marigold
                 Choice(
                     -.21f,
                     -.19f,
-                    "Show connector-docked ships",
+                    "Connector-docked ships",
                     "off on",
                     owner.controls.Station ? "on" : "off",
                     "station"
@@ -618,7 +659,7 @@ namespace Marigold
                 Choice(
                     .21f,
                     -.19f,
-                    "Automatically match saved ships",
+                    "Automatic matching",
                     "off on",
                     owner.controls.AutoAssociate ? "on" : "off",
                     "auto"
@@ -658,6 +699,7 @@ namespace Marigold
                 Button(-.21f, -.06f, "Save for this ship", () => Status(owner.DisplayProfileAction("ship-save", null)));
                 Button(.21f, -.06f, "Restore ship setup", () => Status(owner.DisplayProfileAction("ship-load", null)));
                 Label(-.39f, .015f, "Or save a named display preset:");
+                FieldLabel(-.38f, .04f, "Preset name (save or load)");
                 var name = new MyGuiControlTextbox(new Vector2(-.21f, .08f), "My preset", maxLength: 40, textScale: .65f)
                 {
                     Size = new Vector2(.34f, .04f)
@@ -685,6 +727,7 @@ namespace Marigold
                 var names = new List<string>();
                 foreach (var p in profiles)
                     names.Add(p.Name + " [" + p.Number + "]");
+                FieldLabel(-.17f, -.21f, "Saved ship");
                 var choice = Combo(0, -.17f, names.ToArray(), 0);
                 Button(
                     -.21f,
@@ -719,6 +762,8 @@ namespace Marigold
             private void Colors()
             {
                 Label(-.39f, -.25f, "Edit one state at a time. Enter a six-digit RGB color, e.g. FF8214.");
+                FieldLabel(-.38f, -.19f, "Block state", .32f);
+                FieldLabel(.015f, -.19f, "RGB color", .19f);
                 var choice = Combo(
                     -.21f,
                     -.15f,
@@ -768,13 +813,13 @@ namespace Marigold
                     }
                 );
                 Button(0, .07f, "Pulse settings in Preferences", () => Switch(19));
-                Label(-.39f, .15f, "Orange/red alerts pulse for four seconds. Yellow stays steady.");
-                Label(-.39f, .20f, "Health bars keep healthy blocks blue and use these damage colors.");
+                Label(-.39f, .13f, "Orange/red alerts pulse for four seconds. Yellow stays steady.");
+                Button(0, .19f, "Health bar colors...", () => Switch(25), .4f);
             }
 
             private void HealthBars()
             {
-                Label(-.39f, -.26f, "Baseline block states: blue / yellow / orange / red / gray");
+                FieldLabel(-.38f, -.245f, "Health bar", .32f);
                 Combo(
                     -.21f,
                     -.20f,
@@ -815,6 +860,8 @@ namespace Marigold
                     "height",
                     "opacity"
                 };
+                FieldLabel(-.38f, -.14f, "Setting", .32f);
+                FieldLabel(.015f, -.14f, "Value", .19f);
                 var field = Combo(-.21f, -.10f, new[]
                 {
                     "Horizontal position",
@@ -886,8 +933,8 @@ namespace Marigold
                 );
                 Button(
                     -.21f,
-                    .08f,
-                    "Hide all",
+                    .065f,
+                    "Hide system bars",
                     () =>
                     {
                         foreach (var b in owner.controls.HealthBars.Bars)
@@ -897,7 +944,7 @@ namespace Marigold
                 );
                 Button(
                     .21f,
-                    .08f,
+                    .065f,
                     "Reset this bar",
                     () =>
                     {
@@ -905,32 +952,11 @@ namespace Marigold
                         RecreateControls(false);
                     }
                 );
-                Label(-.39f, .15f, "X/Y/opacity: 0-1; width: .05-.8; height: .005-.08");
-                Label(
-                    -.39f,
-                    .19f,
-                    "Utility includes systems without a dedicated bar. Added blocks excluded; replacements count red."
-                );
+                Label(-.39f, .115f, "Healthy / damaged / non-functional / missing / unknown");
+                Button(-.27f, .18f, "Custom bars", () => Switch(20), .24f);
+                Button(0, .18f, "Bar colors", () => Switch(25), .24f);
                 if (healthBarSelected == 2)
-                {
-                    Label(-.39f, .25f, "Separate power sections (unchecked types stay in Other):");
-                    for (int i = 0; i < 3; i++)
-                    {
-                        int bit = 1 << i;
-                        float x = -.36f + i * .27f;
-                        var check = new MyGuiControlCheckbox
-                        {
-                            Position = new Vector2(x, .30f),
-                            IsChecked = (layout.PowerMask & bit) != 0
-                        };
-                        check.IsCheckedChanged += c =>
-                        {
-                            layout.PowerMask = c.IsChecked ? layout.PowerMask | bit : layout.PowerMask & ~bit;
-                        };
-                        Controls.Add(check);
-                        Label(x + .035f, .30f, ShipHealth.PowerNames[i]);
-                    }
-                }
+                    Button(.27f, .18f, "Power sections", () => Switch(23), .24f);
             }
 
             private void Appearance()
@@ -963,6 +989,8 @@ namespace Marigold
                     "Outline opacity",
                     "Damage fill opacity"
                 };
+                FieldLabel(-.38f, -.19f, "Setting", .32f);
+                FieldLabel(.015f, -.19f, "Value", .19f);
                 var choice = Combo(-.21f, -.15f, names, 0);
                 var value = new MyGuiControlTextbox(
                     new Vector2(.11f, -.15f),
@@ -1004,11 +1032,19 @@ namespace Marigold
                         var colors = owner.controls.Appearance.Colors;
                         bool fresh = owner.controls.Appearance.NewDamagePulse;
                         double pulse = owner.controls.Appearance.Pulse;
+                        string healthyBarColor = owner.controls.Appearance.HealthyBarColor;
+                        bool matchHealthyBar = owner.controls.Appearance.MatchHealthyBarColor;
+                        double contextOpacity = owner.controls.Appearance.ContextOpacity;
+                        int rendering = owner.controls.Appearance.Rendering;
                         owner.controls.Appearance = new HudAppearance
                         {
                             Colors = colors,
                             Pulse = pulse,
-                            NewDamagePulse = fresh
+                            NewDamagePulse = fresh,
+                            HealthyBarColor = healthyBarColor,
+                            MatchHealthyBarColor = matchHealthyBar,
+                            ContextOpacity = contextOpacity,
+                            Rendering = rendering
                         };
                         RecreateControls(false);
                         Status("Position, size and opacity reset. Colors unchanged.");
@@ -1019,6 +1055,7 @@ namespace Marigold
             private void Performance()
             {
                 Label(-.39f, -.25f, "Reduce drawing cost on heavily damaged ships.");
+                FieldLabel(-.17f, -.19f, "Rendering mode");
                 Combo(
                     0,
                     -.15f,
@@ -1066,6 +1103,7 @@ namespace Marigold
             {
                 Label(-.39f, -.25f, "Choose several systems to display together");
                 var items = DisplayFilter.Categories.Split(' ');
+                FieldLabel(-.17f, -.21f, "System");
                 var choice = Combo(0, -.17f, Array.ConvertAll(items, SystemName), 1);
                 Action<bool> toggle = add =>
                 {
@@ -1102,6 +1140,7 @@ namespace Marigold
                 Button(-.10f, .02f, "Propulsion", () => Run("isolate thrusters,power,gas,control"));
                 Button(.11f, .02f, "Conveyors", () => Run("isolate conveyors,cargo"));
                 Button(.32f, .02f, "Show all states", () => Run("filter all"));
+                FieldLabel(-.33f, .075f, "Presentation style");
                 var style = Combo(-.16f, .12f, new[]
                 {
                     "hidden",
@@ -1129,13 +1168,108 @@ namespace Marigold
                         Status(owner.comparisonReport);
                     }
                 );
-                Label(-.39f, .19f, "Styles affect ship and docked hulls. Save display keeps changes.");
+                Button(0, .19f, "Other systems opacity...", () => Switch(24), .4f);
             }
 
             private string SystemName(string category)
             {
                 string name = T(category == "weapons" ? "Offensive" : category == "other" ? "Utility" : category);
                 return name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name.Substring(1);
+            }
+
+            private void ContextSettings()
+            {
+                Label(-.39f, -.25f, "Keep the rest of your ship visible when focusing on a system.");
+                FieldLabel(-.17f, -.20f, "Other systems opacity");
+                var value = new MyGuiControlTextbox(
+                    new Vector2(0, -.16f),
+                    owner.controls.Appearance.ContextOpacity.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    maxLength: 24,
+                    textScale: .65f
+                )
+                {
+                    Size = new Vector2(.34f, .04f)
+                };
+                Controls.Add(value);
+                Button(0, -.07f, "Apply", () =>
+                {
+                    double opacity;
+                    if (!double.TryParse(value.Text, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out opacity)
+                        || double.IsNaN(opacity) || double.IsInfinity(opacity) || opacity < 0 || opacity > 1)
+                        throw new InvalidOperationException("Other systems opacity must be between 0 and 1.");
+                    SetContextOpacity(opacity);
+                });
+                Button(-.21f, .02f, "Hide other systems", () =>
+                {
+                    SetContextOpacity(0);
+                    value.Text = "0";
+                });
+                Button(.21f, .02f, "Use faint outlines", () =>
+                {
+                    SetContextOpacity(.15);
+                    value.Text = "0.15";
+                });
+                Label(-.39f, .10f, "0 hides other systems; 1 uses full outline opacity.");
+                Label(-.39f, .15f, "Background systems use outlines only. Fault-only modes hide them.");
+                Label(-.39f, .20f, "Selected systems keep their damage colors. Save display keeps changes.");
+            }
+
+            private void SetContextOpacity(double opacity)
+            {
+                owner.controls.Appearance.ContextOpacity = opacity;
+                owner.RefreshReference("Other systems presentation updated.");
+                Status("Updated. Save display to keep this setting.");
+            }
+
+            private void BarColors()
+            {
+                var appearance = owner.controls.Appearance;
+                Label(-.39f, -.25f, "Choose the healthy color for all health bars.");
+                FieldLabel(-.27f, -.20f, "Healthy color (RGB)");
+                var value = new MyGuiControlTextbox(
+                    new Vector2(-.10f, -.16f),
+                    appearance.HealthyBarColor,
+                    maxLength: 6,
+                    textScale: .65f
+                )
+                {
+                    Size = new Vector2(.34f, .04f),
+                    Enabled = !appearance.MatchHealthyBarColor
+                };
+                Controls.Add(value);
+                Button(.24f, -.16f, "Apply color", () =>
+                {
+                    uint color;
+                    if (value.Text.Length != 6 || !uint.TryParse(value.Text,
+                        System.Globalization.NumberStyles.HexNumber,
+                        System.Globalization.CultureInfo.InvariantCulture, out color))
+                        throw new InvalidOperationException("Use six hexadecimal RGB digits, for example 3296FF.");
+                    appearance.HealthyBarColor = value.Text.ToUpperInvariant();
+                    Status("Color updated. Save display to keep it.");
+                }, .26f);
+                var match = new MyGuiControlCheckbox
+                {
+                    Position = new Vector2(-.36f, -.05f),
+                    IsChecked = appearance.MatchHealthyBarColor
+                };
+                match.IsCheckedChanged += control =>
+                {
+                    appearance.MatchHealthyBarColor = control.IsChecked;
+                    value.Enabled = !control.IsChecked;
+                    Status("Updated. Save display to keep this setting.");
+                };
+                Controls.Add(match);
+                FieldLabel(-.32f, -.05f, "Match healthy schematic outline", .69f);
+                Button(0, .05f, "Restore healthy blue", () =>
+                {
+                    appearance.HealthyBarColor = "3296FF";
+                    appearance.MatchHealthyBarColor = false;
+                    RecreateControls(false);
+                    Status("Color updated. Save display to keep it.");
+                }, .34f);
+                Label(-.39f, .13f, "Damage colors still follow Customize > Colors.");
+                Label(-.39f, .19f, "Save display keeps color choices.");
             }
 
             private void Library()
@@ -1317,6 +1451,7 @@ namespace Marigold
                 foreach (var p in profiles)
                     names.Add(p.Name + " [" + p.Number.ToString() + "]");
                 Label(-.39f, -.25f, "Choose a saved ship to use as this grid's baseline.");
+                FieldLabel(-.17f, -.20f, "Saved ship");
                 var choice = Combo(0, -.16f, names.ToArray(), 0);
                 Func<string> id = () =>
                 {
@@ -1376,6 +1511,7 @@ namespace Marigold
                         RecreateControls(false);
                     }
                 );
+                FieldLabel(-.38f, -.20f, "Blueprint name", .56f);
                 blueprintSearchBox = new MyGuiControlTextbox(new Vector2(-.10f, -.16f), searchText, maxLength: 100, textScale: .65f)
                 {
                     Size = new Vector2(.56f, .04f)

@@ -134,6 +134,7 @@ namespace Marigold
         {
             health = new ShipHealth();
             healthPreview = false;
+            ResetCustomBarHealth();
             CancelRecovery();
             stationBaselines.Clear();
             var closed = new List<MyCubeGrid>();
@@ -213,18 +214,9 @@ namespace Marigold
                     if (references.TryGetValue(grid, out binding))
                     {
                         var p = profileStore.Find(binding.ProfileId);
-                        profileStore.Put(
-                            new ShipProfile
-                            {
-                                Id = p.Id,
-                                Name = p.Name,
-                                GridSize = p.GridSize,
-                                Anchor = p.Anchor,
-                                Blocks = p.Blocks,
-                                Station = enabled
-                            },
-                            true
-                        );
+                        var updated = p.Copy();
+                        updated.Station = enabled;
+                        profileStore.Put(updated, true);
                     }
 
                     controls.Station = enabled;
@@ -363,7 +355,17 @@ namespace Marigold
                     Blocks = selected == null ? null : ProfileAlignment.Transform(selected.Blocks, anchor, true)
                 };
                 if (selected != null)
+                {
+                    var previous = profileStore.Find(selected.ProfileId);
+                    foreach (var bar in previous.CustomBars)
+                    {
+                        var aligned = bar.Copy();
+                        var members = ProfileAlignment.Transform(bar.Members, selected.Anchor, false);
+                        aligned.Members = ProfileAlignment.Transform(members, anchor, true);
+                        profile.CustomBars.Add(aligned);
+                    }
                     ArchiveBaseline(profileStore.Find(selected.ProfileId));
+                }
                 profileStore.Put(profile);
                 BindProfile(profile, anchor);
                 return "Saved cockpit anchor for " + profile.Name + " (" + profile.Number.ToString() + "). "
@@ -414,7 +416,7 @@ namespace Marigold
                     ? "Baseline cleared. Profile " + saved.Number + " (" + saved.Name
                     + ") and its cockpit anchor are still saved; /mg profiles lists it."
                     : "Saved " + blocks.Length + " baseline blocks to profile " + saved.Number.ToString()
-                    + ". This reference survives leaving the world.";
+                    + ". This reference survives leaving the world. Custom bars from the old baseline remain in Saved versions.";
             }
 
             return SchematicControls.Help;
@@ -430,7 +432,8 @@ namespace Marigold
                 (byte)(rgb >> 16),
                 (byte)(rgb >> 8),
                 (byte)rgb,
-                (byte)Math.Min(255, alpha * controls.Appearance.Outline * weight / 100)
+                (byte)Math.Min(255, alpha * controls.Appearance.Outline
+                    * (weight == 0 ? controls.Appearance.ContextOpacity : weight / 100.0))
             );
         }
 
@@ -465,12 +468,15 @@ namespace Marigold
             public ChangeKind[] Kinds;
             public int[] ShadedMarkers;
             public ShipHealth Health;
+            public CustomBarView[] CustomBars;
             public bool Preview;
             public byte[] Weights;
             public string Report;
             public StationGrid[] Station;
             public BlockSample[] Snapshot, Reference;
             public readonly List<BlockChange> Regions = new List<BlockChange>();
+            public readonly List<BlockChange> OutlineAlerts = new List<BlockChange>();
+            public readonly List<int> OutlineAlertLines = new List<int>();
         }
 
         private static BuildResult Build(
@@ -485,7 +491,8 @@ namespace Marigold
             bool preview,
             StationGrid[] station,
             string styles,
-            bool outlineOnly
+            bool outlineOnly,
+            CustomBarView[] customBars
         )
         {
             var timer = Stopwatch.StartNew();
@@ -501,6 +508,8 @@ namespace Marigold
             try
             {
                 result.Health = ShipHealth.Build(reference, snapshot);
+                BuildCustomBarHealth(customBars, snapshot);
+                result.CustomBars = customBars;
                 var boxes = new List<Box3>();
                 var faded = new List<Box3>();
                 var highlighted = new List<Box3>();
@@ -572,6 +581,17 @@ namespace Marigold
                     }
                 }
 
+                // Retain a cheap whole-ship outline when focusing on one or more systems.
+                // Weight zero is reserved for context, so opacity changes need no geometry rebuild.
+                var contextBoxes = DisplayFilter.ContextBoxes(snapshot, reference, category, styles);
+                var contextModel = OutlineGeometry.Build(contextBoxes, 0, frame, 768);
+                geometry.AddRange(contextModel.Points);
+                for (int i = 0; i < contextModel.Points.Length / 2; i++)
+                {
+                    kinds.Add(ChangeKind.Hull);
+                    weights.Add(0);
+                }
+
                 if (frame.HasValue)
                     foreach (var connected in station)
                     {
@@ -585,6 +605,15 @@ namespace Marigold
                                 kinds.Add(ChangeKind.Hull);
                                 weights.Add(group == 2 ? (byte)25 : group == 3 ? (byte)230 : (byte)100);
                             }
+                        }
+
+                        var otherSystems = DisplayFilter.ContextBoxes(connected.Blocks, connected.Baseline, category, styles);
+                        var contextLines = StationGeometry.Build(connected, category, frame.Value, otherSystems, 0, 256);
+                        geometry.AddRange(contextLines);
+                        for (int i = 0; i < contextLines.Length / 2; i++)
+                        {
+                            kinds.Add(ChangeKind.Hull);
+                            weights.Add(0);
                         }
 
                         if (connected.Baseline != null)
@@ -648,9 +677,23 @@ namespace Marigold
                             && (kind == ChangeKind.Missing || kind == ChangeKind.Damaged || kind == ChangeKind.NonFunctional))
                             continue; // Filled boxes already include complete outlines.
                         var overview = OutlineGeometry.Faults(visible, kind, frame.Value);
+                        int firstLine = geometry.Count / 2;
                         geometry.AddRange(overview.Points);
                         for (int i = 0; i < overview.Points.Length / 2; i++)
+                        {
                             kinds.Add(kind);
+                            if (outlineOnly && DamagePulse.VisibleFor(kind))
+                            {
+                                result.OutlineAlertLines.Add(firstLine + i);
+                                result.OutlineAlerts.Add(DamagePulse.OutlineRegion(
+                                    kind,
+                                    overview.Points[i * 2],
+                                    overview.Points[i * 2 + 1],
+                                    frame.Value,
+                                    overview.CellSize
+                                ));
+                            }
+                        }
                     }
 
                     if (preview)
@@ -793,6 +836,7 @@ namespace Marigold
             grid = next;
             health = new ShipHealth();
             healthPreview = false;
+            ResetCustomBarHealth();
             bool auto = controls.AutoAssociate;
             string language = controls.Language;
             try
@@ -952,6 +996,7 @@ namespace Marigold
                         controls.Page = result.Page;
                         health = result.Health;
                         healthPreview = result.Preview;
+                        customBarViews = result.CustomBars;
                         pulseStarts = new double[result.Kinds.Length];
                         for (int i = 0; i < pulseStarts.Length; i++)
                             pulseStarts[i] = double.NegativeInfinity;
@@ -967,6 +1012,8 @@ namespace Marigold
                                 for (int j = first; j < first + 12; j++)
                                     pulseStarts[j] = start;
                             }
+                            for (int i = 0; i < result.OutlineAlerts.Count; i++)
+                                pulseStarts[result.OutlineAlertLines[i]] = damagePulse.StartOutline(result.OutlineAlerts[i]);
                         }
 
                         points = result.Points;
@@ -1048,6 +1095,7 @@ namespace Marigold
                     bool preview = recoveryPreview != null || previewBlocks != null;
                     string styles = controls.SystemStyles;
                     bool outlineOnly = !controls.Appearance.DrawFills && !(panel?.RecoveryFocus ?? false);
+                    var customBars = CustomBarsForBuild(reference, preview);
                     pending = Task.Run(() => Build(
                         snapshot,
                         baseline,
@@ -1060,7 +1108,8 @@ namespace Marigold
                         preview,
                         station,
                         styles,
-                        outlineOnly
+                        outlineOnly,
+                        customBars
                     ));
                     snapshotMs = timer.Elapsed.TotalMilliseconds;
                     dirty = false;
@@ -1141,7 +1190,7 @@ namespace Marigold
 
                     double pulseTime = clock.Elapsed.TotalSeconds;
                     double pulseWave = DamagePulse.Wave(pulseTime);
-                    byte missingAlpha = (byte)(205 + 35 * controls.Appearance.Pulse * (2 * pulseWave - 1));
+                    const byte missingAlpha = 205;
                     if (recoveryFocus || controls.Appearance.DrawFills)
                         MarkerFill.Build(rotated, shadedMarkers, view.Zoom, side, fillBands);
                     else
@@ -1158,18 +1207,17 @@ namespace Marigold
                             (float)band.Height * half
                         );
                         var kind = lineKinds[band.MarkerStart / 2];
-                        var shade = LineColor(kind, missingAlpha);
-                        double flash = controls.Appearance.NewDamagePulse
+                        bool fresh = controls.Appearance.NewDamagePulse
                             && DamagePulse.VisibleFor(kind)
                             && band.MarkerStart / 2 < pulseStarts.Length
-                            ? (pulseTime - pulseStarts[band.MarkerStart / 2] >= 0
-                            && pulseTime - pulseStarts[band.MarkerStart / 2] < 4
-                            ? pulseWave
-                            : 0)
-                            : 0;
+                            && pulseTime - pulseStarts[band.MarkerStart / 2] >= 0
+                            && pulseTime - pulseStarts[band.MarkerStart / 2] < 4;
+                        uint rgb = DamagePulse.Tint(controls.Appearance.Color((int)kind), kind, pulseWave, fresh, controls.Appearance.Pulse);
+                        var shade = new Color((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
                         shade.A = (byte)Math.Min(
                             255,
-                            ((kind == ChangeKind.Missing ? missingAlpha / 4 : kind == ChangeKind.Damaged ? 12 : 60) + 150 * flash) * controls.Appearance.Fill
+                            (fresh ? 160 : kind == ChangeKind.Missing ? missingAlpha / 4 : kind == ChangeKind.Damaged ? 12 : 60)
+                                * controls.Appearance.Fill
                         );
                         renderedFills++;
                         MyRenderProxy.DrawSprite(Texture, ref fill, null, shade, 0, false, false);
@@ -1179,6 +1227,8 @@ namespace Marigold
                     for (int b = 0; b < points.Length; b += 2)
                     {
                         if (!recoveryFocus && !controls.Appearance.DrawHull && lineKinds[b / 2] == ChangeKind.Hull)
+                            continue;
+                        if (lineWeights[b / 2] == 0 && controls.Appearance.ContextOpacity <= 0)
                             continue;
                         if (b / 2 < drawLine.Length && !drawLine[b / 2])
                             continue;
@@ -1193,14 +1243,17 @@ namespace Marigold
                         float length = delta.Length();
                         if (length < 0.25f)
                             continue;
-                        var lineColor = LineColor(lineKinds[b / 2], missingAlpha, lineWeights[b / 2]);
-                        double flash = controls.Appearance.NewDamagePulse
+                        var kind = lineKinds[b / 2];
+                        var lineColor = LineColor(kind, missingAlpha, lineWeights[b / 2]);
+                        bool fresh = controls.Appearance.NewDamagePulse
                             && DamagePulse.VisibleFor(lineKinds[b / 2])
                             && b / 2 < pulseStarts.Length
-                            ? (pulseTime - pulseStarts[b / 2] >= 0 && pulseTime - pulseStarts[b / 2] < 4 ? pulseWave : 0)
-                            : 0;
-                        lineColor.A = (byte)Math.Min(255, lineColor.A + 105 * flash * controls.Appearance.Outline);
-                        float thickness = 1 + (float)flash;
+                            && pulseTime - pulseStarts[b / 2] >= 0 && pulseTime - pulseStarts[b / 2] < 4;
+                        uint rgb = DamagePulse.Tint(controls.Appearance.Color((int)kind), kind, pulseWave, fresh, controls.Appearance.Pulse);
+                        lineColor.R = (byte)(rgb >> 16);
+                        lineColor.G = (byte)(rgb >> 8);
+                        lineColor.B = (byte)rgb;
+                        const float thickness = 1;
                         var line = new RectangleF((from.X + to.X - length) / 2, (from.Y + to.Y - thickness) / 2, length, thickness);
                         renderedLines++;
                         MyRenderProxy.DrawSprite(Texture, ref line, null, lineColor, (float)Math.Atan2(delta.Y, delta.X), false, false);

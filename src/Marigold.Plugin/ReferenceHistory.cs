@@ -19,7 +19,8 @@ namespace Marigold
             foreach (var p in library.Profiles)
                 if (p.ReferenceId == profile.ReferenceId
                     && SameAnchor(p.Anchor, profile.Anchor)
-                    && ObservationCache.Same(p.Blocks, profile.Blocks))
+                    && ObservationCache.Same(p.Blocks, profile.Blocks)
+                    && CustomHealthBars.Same(p.CustomBars, profile.CustomBars))
                     return;
             var copy = profile.Copy();
             copy.Id = Guid.NewGuid().ToString("N");

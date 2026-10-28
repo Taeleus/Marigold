@@ -95,6 +95,7 @@ namespace Marigold
                 var remembered = p.Copy();
                 remembered.Anchor = ReferenceHistory.Relative(anchor, seat);
                 remembered.Blocks = ProfileAlignment.Transform(observation.Snapshot(), seat, true);
+                remembered.CustomBars.Clear();
                 // Recovery signatures store geometry only; unknown health must not prevent persistence.
                 for (int i = 0; i < remembered.Blocks.Length; i++)
                 {

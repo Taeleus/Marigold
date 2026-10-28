@@ -2,7 +2,17 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-Current release candidate: **0.14.16 for Pulsar Legacy**. Interim remains experimental and untested in-game.
+Current development build: **0.15.0 for Pulsar Legacy**, awaiting in-game testing. Interim remains experimental and untested in-game.
+
+## 0.15.0
+
+- Keep other systems visible as faint outlines when focusing on a system. Their opacity is adjustable, including fully hidden; fault-only modes remain available.
+- Make fresh orange/red alerts easier to distinguish using synchronized brightness changes within their own colors. Yellow stays steady, and the ongoing missing pulse remains gentler.
+- Choose the healthy health-bar color or match it to the schematic's healthy outline.
+- Add custom health bars for one named block or an existing terminal group. Saved membership keeps destroyed blocks counted until repair or an explicit group refresh.
+- Save custom-bar names, visibility, layout and membership with ship profiles and baseline revisions, preserving alignment through recovery.
+- Label ambiguous controls and give Power sections their own page, removing overlap with the status area.
+- Reformat the source, tests and build files for readability without changing existing behavior.
 
 ## 0.14.16
 

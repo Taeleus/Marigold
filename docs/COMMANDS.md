@@ -96,6 +96,8 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 `/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station hulls use the same category visibility and brightness styles.
 
+Focusing on selected systems now retains the others as faint outlines. **Customize > System filters > Other systems opacity** adjusts this context; zero hides it. Hidden system styles remain hidden, and fault-only rendering modes omit context.
+
 Customize > HUD layout accepts normalized position (0-1), size (0.12-0.7 of screen height) and opacity (0-1). Customize > Colors edits one state at a time. Customize > Preferences > Performance options contains both missing-block and fresh-damage pulse toggles. Save global writes defaults; Save ship writes the bound profile's display. Ship/preset loads preserve auto-match/language and station settings. Unsaved edits may be lost on grid switches. Preset names use up to 40 letters/digits/spaces/hyphens/underscores.
 
 Library saves independent named baselines. Capture/import and loading archive the previous active baseline when needed; deleting a revision leaves the active baseline intact. Versions show source/date and active identity. Cross-anchor restore opens a recovery preview and changes the active baseline only after acceptance. Limits: 16 revisions and 250,000 total blocks per library.
@@ -110,6 +112,12 @@ Workshop cache reads local bp.sbc files in the current Steam library without dow
 Customize > Health bars provides eight independent bars: Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Defaults are disabled. Each has enable/label toggles, normalized X/Y position, width (0.05-0.8 of screen width), height (0.005-0.08 of screen height), opacity (0-1), movement buttons and reset. Save global, Save ship and display presets include all layouts. Older six- and seven-bar settings retain their existing layouts; new bars start disabled.
 
 Bars count baseline block states: healthy blue, damaged yellow, non-functional orange, missing/replaced expected blocks red, and unreadable gray. This is not summed integrity. New blocks are excluded; replacements retain the original system category. Tools includes welders, grinders, drills and ToolCore blocks; Utility covers categories without a dedicated bar. Filters/pagination and docked-grid context do not affect these controlled-grid totals. Preview baselines are labeled. No baseline or an empty system is shown as unavailable, never 100% healthy. Global Show/hide and normal HUD suppression also hide the bars.
+
+**Health bars > Bar colors** changes the healthy segment color or links it to the healthy schematic outline. Other segments use the state colors. Power's reactor/battery/solar choices are under **Power sections**. Save display keeps these settings.
+
+**Health bars > Custom bars** creates up to 16 bars for a named terminal block or an existing main-grid terminal group. Find selections by name; only currently present blocks matching the saved baseline become members. Membership stays fixed when blocks or groups disappear, so destroyed/replaced members stay red and repairs return healthy. **Refresh group members** requires confirmation and replaces membership with the current matching group selection.
+
+Custom-bar edits preview immediately and use **Save bar**, independently from Save display. Leaving the editor discards unsaved edits. Members, names and layouts belong to the ship and its saved baseline versions, not shared display presets/clipboard layouts. Recovery and changing the main cockpit preserve the coordinate alignment. A new capture/import starts new custom-bar selections, while the previous ones remain in the archived baseline.
 
 
 ## Version controls and remembered matching

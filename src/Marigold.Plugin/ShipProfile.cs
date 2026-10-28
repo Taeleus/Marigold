@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Marigold
 {
@@ -36,7 +37,11 @@ namespace Marigold
 
         public ShipProfile Copy()
         {
-            return (ShipProfile)MemberwiseClone();
+            var copy = (ShipProfile)MemberwiseClone();
+            copy.CustomBars = new List<CustomHealthBar>();
+            foreach (var bar in CustomBars)
+                copy.CustomBars.Add(bar.Copy());
+            return copy;
         }
 
         public int Number;
@@ -45,6 +50,7 @@ namespace Marigold
         public AnchorFrame Anchor;
         // Baseline coordinates and orientations are relative to Anchor, not world/grid IDs.
         public BlockSample[] Blocks;
+        public List<CustomHealthBar> CustomBars = new List<CustomHealthBar>();
     }
 
     internal static class ProfileAlignment

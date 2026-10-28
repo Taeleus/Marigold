@@ -1,6 +1,17 @@
 # Marigold roadmap
 
-Updated October 26, 2026. Release candidate: **0.14.16**, targeting **Pulsar Legacy / .NET Framework 4.8**.
+Updated October 28, 2026. Development build: **0.15.0** on `dev`, targeting **Pulsar Legacy / .NET Framework 4.8**. The PluginHub submission stays on the reviewed master version until these additions are tested.
+
+## 0.15.0 usability improvements — ready for in-game testing
+
+- Adjustable faint outlines retain the rest of the ship when focusing on selected systems, respecting hidden styles and fault-only rendering.
+- Shared orange/red brightness pulses make fresh faults more visible; yellow remains steady.
+- Healthy health-bar color can be chosen independently or linked to the schematic outline.
+- Labels clarify dropdowns/textboxes; Power sections have a separate page without status-area overlap.
+- Custom health bars track a selected block or terminal group, with saved membership, explicit refresh and individual layout controls.
+- Profiles and saved baseline versions retain custom bars; recovery and cockpit re-anchoring preserve their coordinates.
+
+Automated checks cover settings compatibility, fault states, membership persistence, revisions and recovery. Visual clarity, panel layout and the full in-game selection workflow still need the short [0.15.0 checklist](TESTING-TODO.md).
 
 ## Completed and user-verified
 
@@ -16,7 +27,7 @@ Heavy-damage performance has been measured. Outline modes provide lower cost; fu
 - Remove the descriptor's redundant Harmony declaration; retain the local build dependency.
 - Verify ordinary launch, persistence, Local blueprint search and quiet logging using the short [review-fix checklist](TESTING-TODO.md).
 
-Core review-fix tests are user-reported passed: startup, save/restart persistence and Local blueprints. Log inspection confirmed only startup and requested statistics messages, with no rebuild spam or Marigold errors. Automated build, regression and Legacy source checks passed. The review fixes are being promoted to master and [PluginHub PR #285](https://github.com/StarCpt/PluginHub/pull/285). Final pinned-source loading through Legacy remains a separate check; no additional in-game custom `-appdata` test is claimed.
+Core review-fix tests are user-reported passed: startup, save/restart persistence and Local blueprints. Log inspection confirmed only startup and requested statistics messages, with no rebuild spam or Marigold errors. Automated build, regression and Legacy source checks passed. These review fixes are on master and [PluginHub PR #285](https://github.com/StarCpt/PluginHub/pull/285). Final pinned-source loading through Legacy remains a separate check; no additional in-game custom `-appdata` test is claimed.
 
 ## Deferred / known limits
 

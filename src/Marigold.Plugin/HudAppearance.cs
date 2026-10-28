@@ -9,6 +9,9 @@ namespace Marigold
         public double X = .98, Y = .12, Size = .32, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
         public bool NewDamagePulse = true;
         public int Rendering; // 0 full, 1 outlines, 2 faults with fills, 3 fault outlines
+        public double ContextOpacity = .15;
+        public string HealthyBarColor = "3296FF";
+        public bool MatchHealthyBarColor;
 
         public bool DrawFills
         {
@@ -48,7 +51,10 @@ namespace Marigold
                     N(Pulse),
                     Colors,
                     NewDamagePulse.ToString(),
-                    Rendering.ToString(CultureInfo.InvariantCulture)
+                    Rendering.ToString(CultureInfo.InvariantCulture),
+                    N(ContextOpacity),
+                    HealthyBarColor,
+                    MatchHealthyBarColor.ToString()
                 }
             );
         }
@@ -56,7 +62,7 @@ namespace Marigold
         public static HudAppearance Parse(string text)
         {
             var a = text.Split(';');
-            if (a.Length != 8 && a.Length != 9 && a.Length != 10)
+            if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13)
                 throw new InvalidDataException("Invalid HUD appearance.");
             var n = new double[7];
             for (int i = 0; i < 7; i++)
@@ -82,10 +88,28 @@ namespace Marigold
             if (a.Length >= 9 && !bool.TryParse(a[8], out fresh))
                 throw new InvalidDataException("Invalid damage pulse toggle.");
             int rendering = 0;
-            if (a.Length == 10 && (!int.TryParse(a[9], out rendering) || rendering < 0 || rendering > 3))
+            if (a.Length >= 10 && (!int.TryParse(a[9], out rendering) || rendering < 0 || rendering > 3))
                 throw new InvalidDataException("Invalid rendering mode.");
+            double context = .15;
+            string healthy = "3296FF";
+            bool matchHealthy = false;
+            if (a.Length == 13)
+            {
+                uint color;
+                if (!double.TryParse(a[10], NumberStyles.Float, CultureInfo.InvariantCulture, out context)
+                    || double.IsNaN(context) || double.IsInfinity(context) || context < 0 || context > 1)
+                    throw new InvalidDataException("Other systems opacity must be between 0 and 1.");
+                healthy = a[11];
+                if (healthy.Length != 6 || !uint.TryParse(healthy, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out color))
+                    throw new InvalidDataException("Use six hex digits for the healthy bar color.");
+                if (!bool.TryParse(a[12], out matchHealthy))
+                    throw new InvalidDataException("Invalid healthy bar color link.");
+            }
             return new HudAppearance
             {
+                ContextOpacity = context,
+                HealthyBarColor = healthy,
+                MatchHealthyBarColor = matchHealthy,
                 Rendering = rendering,
                 NewDamagePulse = fresh,
                 X = n[0],
@@ -116,6 +140,18 @@ namespace Marigold
             return rgb[kind];
         }
 
+        public uint HealthBarColor(int state)
+        {
+            if (state == 0)
+                return MatchHealthyBarColor
+                    ? Color((int)ChangeKind.Hull)
+                    : uint.Parse(HealthyBarColor, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            var kind = state == 1 ? ChangeKind.Damaged
+                : state == 2 ? ChangeKind.NonFunctional
+                : state == 3 ? ChangeKind.Missing : ChangeKind.Unknown;
+            return Color((int)kind);
+        }
+
         public void Set(string field, string value)
         {
             var a = Encode().Split(';');
@@ -128,7 +164,12 @@ namespace Marigold
                 "outline",
                 "fill",
                 "pulse",
-                "colors"
+                "colors",
+                "fresh",
+                "rendering",
+                "context",
+                "healthy",
+                "matchhealthy"
             }, field);
             if (index < 0)
                 throw new InvalidOperationException("Unknown appearance setting.");
@@ -144,6 +185,9 @@ namespace Marigold
             Colors = parsed.Colors;
             NewDamagePulse = parsed.NewDamagePulse;
             Rendering = parsed.Rendering;
+            ContextOpacity = parsed.ContextOpacity;
+            HealthyBarColor = parsed.HealthyBarColor;
+            MatchHealthyBarColor = parsed.MatchHealthyBarColor;
         }
     }
 }

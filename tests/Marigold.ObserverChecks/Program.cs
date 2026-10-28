@@ -111,6 +111,8 @@ internal static class Program
         ControlChecks.Run();
         FeedbackChecks.Run();
         HealthBarChecks.Run();
+        CustomHealthBarChecks.Run();
+        VisualFeedbackChecks.Run();
         OffensiveChecks.Run();
         ReferenceLifecycleChecks.Run();
     }

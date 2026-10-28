@@ -136,7 +136,8 @@ internal static class ProfileChecks
 
                     input.BaseStream.Position += 8;
                     int blockStart = (int)input.BaseStream.Position;
-                    w.Write(bytes, blockStart, bytes.Length - blockStart);
+                    // The v4 record ends in an empty custom-bar count; v1 has no such field.
+                    w.Write(bytes, blockStart, bytes.Length - blockStart - sizeof(int));
                 }
             }
 
@@ -165,7 +166,7 @@ internal static class ProfileChecks
             v2.Put(v2.Find("1"));
             Check(
                 new ProfileStore(v2dir).Find("1").Blocks.Length == 1,
-                "Version 2 saves into version 3 without losing baseline"
+                "Version 2 saves into the current format without losing baseline"
             );
             var legacy = new ProfileStore(legacyDir);
             Check(legacy.Warning == null && legacy.Find("1").Id == first.Id, "Version 1 migrates to numeric identity");

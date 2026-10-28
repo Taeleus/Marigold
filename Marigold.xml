@@ -4,7 +4,7 @@
 
   <Id>7db0d53e-7572-4cbc-911e-25fa26ef182c</Id>
 
-  <FriendlyName>Marigold 0.14.16</FriendlyName>
+  <FriendlyName>Marigold 0.15.0</FriendlyName>
 
   <Author>Taeleus</Author>
 
@@ -12,7 +12,7 @@
 
   <Description>See your ship's layout and find damaged or missing blocks. Sit in a cockpit and type /mg ui. Capture a baseline or import a local, cached Workshop or cloud XML blueprint.
 
-Yellow marks damage, orange non-functional blocks and red missing blocks. Optional health bars show Overall, Armor, Power, Thrusters, Utility, Cargo, Offensive and Tools. Customize colors, pulses, views, filters and layout. Outline modes reduce drawing cost on large damaged ships.
+Yellow marks damage, orange non-functional blocks and red missing blocks. Optional system health bars and custom bars for a block or terminal group track repairs and missing members. Customize colors, pulses, views and layout. Focus on a system while keeping the rest of the ship faintly visible. Outline modes reduce drawing cost.
 
 Save ship profiles, named baseline versions and display presets. Profiles persist across sessions; automatic matching recognizes sufficiently similar layouts. Recovery tools let you inspect, adjust and accept alignment when the original cockpit is gone. Baselines never update automatically.
 

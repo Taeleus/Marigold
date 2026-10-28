@@ -57,11 +57,7 @@ namespace Marigold
                         double portion = (double)(split ? sections[section, state] : health.Counts[group, state]) / total;
                         if (portion == 0)
                             continue;
-                        uint rgb = state == 0
-                            ? 0x3296FF
-                            : controls.Appearance.Color((int)(state == 1
-                            ? ChangeKind.Damaged
-                            : state == 2 ? ChangeKind.NonFunctional : state == 3 ? ChangeKind.Missing : ChangeKind.Unknown));
+                        uint rgb = controls.Appearance.HealthBarColor(state);
                         var segment = new RectangleF(x + (float)(width * offset), y, (float)(width * portion), height);
                         var color = new Color((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, (byte)(255 * layout.Opacity));
                         MyRenderProxy.DrawSprite(Texture, ref segment, null, color, 0, false, false);
@@ -97,6 +93,7 @@ namespace Marigold
                     }
                 }
             }
+            DrawCustomHealthBars(screen);
         }
     }
 }

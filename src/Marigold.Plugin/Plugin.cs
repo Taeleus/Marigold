@@ -7,9 +7,10 @@ using VRage.Plugins;
 using VRage.Utils;
 
 #if !LOCAL_BUILD
-[assembly: AssemblyVersion("0.14.16.0")]
-[assembly: AssemblyFileVersion("0.14.16.0")]
+[assembly: AssemblyVersion("0.15.0.0")]
+[assembly: AssemblyFileVersion("0.15.0.0")]
 #endif
+
 namespace Marigold
 {
     public sealed class Plugin : IPlugin
@@ -40,7 +41,7 @@ namespace Marigold
                 MyLog.Default.WriteLineAndConsole("[Marigold] Schematic initialization failed: " + exception);
             }
 
-            MyLog.Default.WriteLineAndConsole("[Marigold] Ship observer initialized (0.14.16).");
+            MyLog.Default.WriteLineAndConsole("[Marigold] Ship observer initialized (0.15.0).");
         }
 
         public void Update()

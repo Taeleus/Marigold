@@ -128,6 +128,29 @@ namespace Marigold
             return category == "all" || Array.IndexOf(category.Split(','), Category(definition)) >= 0;
         }
 
+        public static bool IsContext(string definition, string category, string styles)
+        {
+            return category != "none"
+                && !CategoryMatches(definition, category)
+                && Style(definition, styles) != '0';
+        }
+
+        public static List<Box3> ContextBoxes(BlockSample[] current, BlockSample[] reference, string category, string styles)
+        {
+            var result = new List<Box3>();
+            if (category == "all" || category == "none" || category == VisibleCategories("all", styles))
+                return result;
+            var positions = new HashSet<Point3>();
+            foreach (var block in current)
+                if (IsContext(block.Definition, category, styles) && positions.Add(block.Position))
+                    result.Add(block.Bounds);
+            if (reference != null)
+                foreach (var block in reference)
+                    if (IsContext(block.Definition, category, styles) && positions.Add(block.Position))
+                        result.Add(block.Bounds);
+            return result;
+        }
+
         public static bool StateMatches(ChangeKind kind, string state)
         {
             switch (state)

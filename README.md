@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar**. It compares the ship you're piloting with a saved layout, so you can spot damage, find missing sections and check individual systems without inspecting every block yourself.
 
-Current release candidate: **0.14.16 for Pulsar Legacy**. Marigold is under review for inclusion in the PluginHub list. Interim support is experimental and untested in-game.
+Current development build: **0.15.0 for Pulsar Legacy**, awaiting in-game testing. The PluginHub submission remains pinned to the reviewed master version. Interim support is experimental and untested in-game.
 
 See the [changelog](CHANGELOG.md) for changes in each version.
 
@@ -34,7 +34,7 @@ The baseline stays fixed as your ship takes damage or gets repaired. Capture aga
 
 A block detached from your ship counts as missing even if it is floating nearby. Switching a block off or losing power does not make it orange.
 
-Yellow stays steady and faint so serious damage is easier to spot. Newly non-functional or missing blocks can pulse more vividly for four seconds, using one shared rhythm across the display. Toggle **Fresh pulse** under **Customize > Preferences > Performance options**; the gentler ongoing missing-block pulse has its own setting. Save display to keep your choices.
+Yellow stays steady and faint so serious damage is easier to spot. Newly non-functional or missing blocks can pulse more vividly for four seconds, using one shared rhythm across the display. The pulse changes brightness within the block's orange or red color, keeping transparency steady. Toggle **Fresh pulse** under **Customize > Preferences > Performance options**; the gentler ongoing missing-block pulse has its own setting. Save display to keep your choices.
 
 Damage fills remain visible across marker pages. On extremely damaged ships, nearby same-color regions may merge and shade gaps between blocks. The display is a schematic built from block bounds, rather than a detailed model.
 
@@ -48,6 +48,8 @@ Open **`/mg ui`** for three main sections:
 
 Views follow your saved cockpit orientation. Combine system filters to focus on propulsion, cargo, tools or **Offensive** blocks. WeaponCore and ToolCore registrations help recognize supported modded weapons and tools.
 
+When you focus on selected systems, the rest of the ship remains visible as faint outlines. Adjust **Customize > System filters > Other systems opacity**; zero hides the other systems completely. Explicitly hidden systems stay hidden, and fault-only rendering modes omit this background context.
+
 Use **Save display** to save your setup as the default, for this ship, or as a named preset. Closing the panel alone does not save display edits. **Customize > Share config** lets you copy and paste layouts, health bars, colors and filters through the clipboard; ship baselines and shortcuts are not included.
 
 Shortcuts are optional and start unbound. The interface offers English and Spanish, with English fallback for some controls and diagnostic messages.
@@ -60,9 +62,21 @@ Under **Customize > Health bars**, enable any of these: **Overall, Armor, Power,
 
 Bars run from **blue → yellow → orange → red → gray**, showing healthy, damaged, non-functional, missing and unreadable blocks. Segments count blocks equally, not hit points. Added blocks do not improve the baseline score, and replacing an expected block counts as missing that original block.
 
-For **Power**, check **Reactors**, **Batteries** or **Solar** to give those types separate labeled sections, in that order. Unselected types and other power sources stay in **Other**. Section widths reflect block counts, and each section uses the same health colors. These options start off and save with your layout.
+Under **Health bars > Bar colors**, choose a healthy color or check **Match healthy schematic outline**. The choice applies to standard and custom bars. Damage colors follow **Customize > Colors**.
+
+For **Power**, open **Power sections** and check **Reactors**, **Batteries** or **Solar** to give those types separate labeled sections, in that order. Unselected types and other power sources stay in **Other**. Section widths reflect block counts, and each section uses the same health colors. These options start off and save with your layout.
 
 Use **Customize > HUD layout > Hide ship display** to keep the bars without the schematic. **Hide HUD** hides everything. Bars describe the controlled ship's baseline regardless of schematic filters or docked ships.
+
+### Watch one block or a terminal group
+
+Open **Customize > Health bars > Custom bars**, then **Add custom bar**. Give it a name, choose **Single block** or **Terminal group**, and find the block or group by name. This works for named modded equipment too: for example, a coilgun, decoys or a group of PDCs. Selections include only matching baseline blocks on the main grid.
+
+Create the bar to start tracking those members. **Edit custom bar** lets you show/hide, rename, move, resize and fade it. Edits preview immediately; **Save bar** keeps them for this ship. Closing or leaving the editor discards unsaved bar edits. Custom bars have their own save action, separate from **Save display**.
+
+Destroyed members stay red even if the terminal group disappears. Repairs restore their healthy state. New group members are included only after you explicitly **Refresh group members** and confirm; that action replaces the membership with the group's current matching baseline blocks. Create bars before combat to include members that might later be destroyed.
+
+Up to 16 custom bars save with each ship and its baseline versions, including recovery alignment. Capturing or importing a new baseline starts a new set of custom bars; the previous set remains with the archived baseline in **Saved versions**. Ship-specific selections are not copied through display presets or clipboard layout sharing.
 
 ## Use a blueprint as your baseline
 

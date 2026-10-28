@@ -7,7 +7,7 @@ namespace Marigold
 {
     internal sealed class ProfileStore
     {
-        private const int Version = 3, MaxProfiles = 16, MaxBlocks = 250000;
+        private const int Version = 4, MaxProfiles = 16, MaxBlocks = 250000;
         private readonly string path;
         private List<ShipProfile> profiles = new List<ShipProfile>();
 
@@ -234,6 +234,7 @@ namespace Marigold
                                     w.Write(b.BuildIntegrity);
                                     w.Write(b.MaxIntegrity);
                                 }
+                            WriteCustomBars(w, p);
                         }
                     }
 
@@ -260,12 +261,15 @@ namespace Marigold
         {
             if (list.Count > MaxProfiles)
                 throw new InvalidOperationException("Limit: 16 profiles.");
-            int total = 0;
+            int total = 0, customMembers = 0;
             var ids = new HashSet<string>();
             var numbers = new HashSet<int>();
             foreach (var p in list)
             {
                 ProfileAlignment.Validate(p);
+                customMembers += CustomHealthBars.Validate(p);
+                if (customMembers > CustomHealthBars.MaximumMembers)
+                    throw new InvalidOperationException("Limit: 250,000 saved custom-bar members.");
                 Guid referenceId;
                 if ((!string.IsNullOrEmpty(p.ReferenceId) && !Guid.TryParseExact(p.ReferenceId, "N", out referenceId))
                     || p.CreatedUtcTicks < 0
@@ -292,9 +296,9 @@ namespace Marigold
                     if (r.ReadInt32() != 0x4D475046)
                         throw new InvalidDataException("Unsupported profile format.");
                     int version = r.ReadInt32();
-                    if (version != 1 && version != 2 && version != Version)
+                    if (version < 1 || version > Version)
                         throw new InvalidDataException("Unsupported profile version.");
-                    int count = r.ReadInt32(), total = 0;
+                    int count = r.ReadInt32(), total = 0, customMembers = 0;
                     if (count < 0 || count > MaxProfiles)
                         throw new InvalidDataException("Invalid profile count.");
                     if (version >= 2)
@@ -365,6 +369,8 @@ namespace Marigold
                                     MaxIntegrity = r.ReadDouble()
                                 };
                         }
+                        if (version >= 4)
+                            ReadCustomBars(r, p, ref customMembers);
 
                         list.Add(p);
                     }
@@ -374,6 +380,58 @@ namespace Marigold
                     Validate(list);
                     return list;
                 }
+        }
+
+        private static void WriteCustomBars(BinaryWriter writer, ShipProfile profile)
+        {
+            writer.Write(profile.CustomBars.Count);
+            if (profile.CustomBars.Count == 0)
+                return;
+            var indices = new Dictionary<Point3, int>();
+            for (int i = 0; i < profile.Blocks.Length; i++)
+                indices.Add(profile.Blocks[i].Position, i);
+            foreach (var bar in profile.CustomBars)
+            {
+                Text(writer, bar.Id, 32);
+                Text(writer, bar.Name, 512);
+                Text(writer, bar.GroupName, 1024);
+                Text(writer, bar.Layout.Encode(), 256);
+                writer.Write(bar.Members.Length);
+                foreach (var member in bar.Members)
+                    writer.Write(indices[member.Position]);
+            }
+        }
+
+        private static void ReadCustomBars(BinaryReader reader, ShipProfile profile, ref int totalMembers)
+        {
+            int count = reader.ReadInt32();
+            if (count < 0 || count > CustomHealthBars.MaximumBars)
+                throw new InvalidDataException("Invalid custom-bar count.");
+            for (int i = 0; i < count; i++)
+            {
+                var bar = new CustomHealthBar
+                {
+                    Id = Text(reader, 32),
+                    Name = Text(reader, 512),
+                    GroupName = Text(reader, 1024),
+                    Layout = HealthBarLayout.Parse(Text(reader, 256))
+                };
+                int members = reader.ReadInt32();
+                if (profile.Blocks == null || members < 1 || members > profile.Blocks.Length
+                    || members > CustomHealthBars.MaximumMembers
+                    || (totalMembers += members) > CustomHealthBars.MaximumMembers)
+                    throw new InvalidDataException("Invalid custom-bar member count.");
+                bar.Members = new BlockSample[members];
+                var seen = new HashSet<int>();
+                for (int member = 0; member < members; member++)
+                {
+                    int index = reader.ReadInt32();
+                    if (index < 0 || index >= profile.Blocks.Length || !seen.Add(index))
+                        throw new InvalidDataException("Invalid custom-bar baseline member.");
+                    bar.Members[member] = profile.Blocks[index];
+                }
+                profile.CustomBars.Add(bar);
+            }
         }
 
         private static void Point(BinaryWriter w, Point3 p)
