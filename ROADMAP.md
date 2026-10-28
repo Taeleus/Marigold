@@ -1,8 +1,8 @@
 # Marigold roadmap
 
-Updated October 28, 2026. Development preview: **0.16.0**, targeting **Pulsar Legacy / .NET Framework 4.8**. The tested 0.15.1 version remains on master; the UI redesign is on dev.
+Updated October 28, 2026. Current version: **0.16.0**, targeting **Pulsar Legacy / .NET Framework 4.8**. The redesigned UI has passed user testing.
 
-## 0.16.0 control panel redesign — in-game testing pending
+## 0.16.0 control panel redesign — complete
 
 - Persistent task navigation, scrolling forms and shared native control spacing replace the placeholder layout.
 - Clear labels, grouped actions, explicit save scope and guided empty states cover all existing workflows.
@@ -10,7 +10,7 @@ Updated October 28, 2026. Development preview: **0.16.0**, targeting **Pulsar Le
 - Recovery drawing and mouse interaction share one preview rectangle; translated help uses the native wrapped-text measurement.
 - Backend behavior, commands and storage formats stay compatible. Existing 0.15.1 acceptance results remain valid for that version.
 
-The new [0.16.0 checklist](TESTING-TODO.md) covers visual layout, navigation and the changed interactions. Passing a build or source review does not claim those in-game checks passed.
+All six [0.16.0 checks](TESTING-TODO.md) passed in user testing: navigation and layout, full HUD preview, filters/colors, bars and drafts, baseline workflows, and saving/preferences. Build, regression and source-compilation checks passed separately. PluginHub pinning and exact-source-loader validation remain distinct publication steps.
 
 ## 0.15.1 usability follow-up — complete
 

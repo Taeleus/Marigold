@@ -1,15 +1,15 @@
-# Try the redesigned control panel — 0.16.0
+# Completed control panel checks — 0.16.0
 
-Development build on `dev` for Pulsar Legacy. The UI has been rebuilt; these checks are still pending in-game. Your completed 0.15.1 results remain below. Back up your active `Storage/Marigold` folder before trying baseline changes on a test ship.
+All six redesigned-UI checks below are user-reported passed as of October 28, 2026, using the deployed Pulsar Legacy build. Automated build, regression and source-compilation checks also passed. Earlier completed results remain below.
 
-1. [ ] **Find your way around.** Open `/mg ui` and visit all six sidebar sections. At your usual resolution/UI scale, labels, fields and footer buttons should stay readable. Scroll a long page, open a dropdown near its bottom and come back: it should stay usable without jumping to the top. Try Tab and Escape too.
-2. [ ] **Arrange the display and inspect it.** In **Ship display**, change position/size or transparency and apply it. Use **Preview HUD**, then **Return to editor** (or Escape). Your edits and place in the form should remain. The editor's small ship preview should stay out of the controls; the full preview should use your actual HUD positions.
-3. [ ] **Check filters and colors.** In **Ship > Systems and filters**, check multiple systems and change a style/background opacity. In **Ship display > State colors**, use the picker and exact RGB entry, then try canceling a selection. Existing damage colors and filters should behave as before.
-4. [ ] **Edit bars without losing a draft.** In **Health bars**, try a system bar and Power sections. Edit a custom bar's name/layout, choose **Preview layout**, return to the editor and **Save bar**. Try leaving a second unsaved edit: it should be discarded. Damage/repair tracking and **Update tracked blocks** still have their separate meanings.
-5. [ ] **Walk through baseline tools on a test ship.** Try capture/select, versions and a blueprint search/import. Check that confirmations name the intended action and that empty lists offer a useful next step. Open recovery, drag/zoom the preview, adjust alignment and cancel or accept; exiting should clear preview geometry as before.
-6. [ ] **Keep and share your setup.** Use **Save & share** for a default/ship setup or preset, and try the clipboard page. Open **Preferences** for performance/pulses, language and shortcuts. Save a setup and restart when convenient: your existing profiles, bars, colors and bindings should remain intact. If you use Spanish, check the new labels and longer help text too.
+1. [x] **Find your way around.** Open `/mg ui` and visit all six sidebar sections. At your usual resolution/UI scale, labels, fields and footer buttons should stay readable. Scroll a long page, open a dropdown near its bottom and come back: it should stay usable without jumping to the top. Try Tab and Escape too.
+2. [x] **Arrange the display and inspect it.** In **Ship display**, change position/size or transparency and apply it. Use **Preview HUD**, then **Return to editor** (or Escape). Your edits and place in the form should remain. The editor's small ship preview should stay out of the controls; the full preview should use your actual HUD positions.
+3. [x] **Check filters and colors.** In **Ship > Systems and filters**, check multiple systems and change a style/background opacity. In **Ship display > State colors**, use the picker and exact RGB entry, then try canceling a selection. Existing damage colors and filters should behave as before.
+4. [x] **Edit bars without losing a draft.** In **Health bars**, try a system bar and Power sections. Edit a custom bar's name/layout, choose **Preview layout**, return to the editor and **Save bar**. Try leaving a second unsaved edit: it should be discarded. Damage/repair tracking and **Update tracked blocks** still have their separate meanings.
+5. [x] **Walk through baseline tools on a test ship.** Try capture/select, versions and a blueprint search/import. Check that confirmations name the intended action and that empty lists offer a useful next step. Open recovery, drag/zoom the preview, adjust alignment and cancel or accept; exiting should clear preview geometry as before.
+6. [x] **Keep and share your setup.** Use **Save & share** for a default/ship setup or preset, and try the clipboard page. Open **Preferences** for performance/pulses, language and shortcuts. Save a setup and restart when convenient: your existing profiles, bars, colors and bindings should remain intact. If you use Spanish, check the new labels and longer help text too.
 
-No new combat or FPS benchmark is required just for this menu redesign. Automated backend checks and source compilation remain separate from visual acceptance.
+The menu redesign is accepted in-game. A final exact-pin source-loader check with the local DLL disabled remains separate from this local-package testing.
 
 ---
 

@@ -2,9 +2,9 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-Development preview: **0.16.0 for Pulsar Legacy**, pending in-game UI testing. The previous tested version is 0.15.1. Interim remains experimental and untested in-game.
+Latest version: **0.16.0 for Pulsar Legacy**. Interim remains experimental and untested in-game.
 
-## 0.16.0
+## 0.16.0 — October 28, 2026
 
 - Rebuilt the control panel around six persistent sections: Ship, Baselines, Ship display, Health bars, Preferences and Save & share.
 - Replaced dense setting/value menus with labeled forms, grouped actions and scrolling pages. Longer help text wraps, and empty lists explain the next step.

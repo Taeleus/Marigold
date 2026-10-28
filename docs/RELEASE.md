@@ -1,6 +1,6 @@
 # Legacy release procedure
 
-Development preview: **0.16.0**, pending the redesigned UI's in-game checklist. PluginHub publication targets **Legacy/CLR only**. Interim and dual-package publication are deferred.
+Current version: **0.16.0**. The redesigned UI passed the local-package in-game checklist. PluginHub publication targets **Legacy/CLR only**. Interim and dual-package publication are deferred.
 
 Building locally requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies and the installed Space Engineers Bin64 folder. The build scripts accept `-Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'` if you need to specify the game location.
 
