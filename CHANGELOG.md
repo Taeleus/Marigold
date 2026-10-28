@@ -2,9 +2,9 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
 
-Development build: **0.16.1 for Pulsar Legacy**, with two review fixes ready to test. Interim remains experimental and untested in-game.
+Latest version: **0.16.1 for Pulsar Legacy**. Interim remains experimental and untested in-game.
 
-## 0.16.1
+## 0.16.1 — October 28, 2026
 
 - Fixed connector undocking briefly marking an unrelated live block as missing. Genuine removals still update immediately, and stale notifications cannot erase a replacement block.
 - Fixed the Spanish control panel failing to open for short bracketed names such as `[ ]`.

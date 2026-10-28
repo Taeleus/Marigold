@@ -1,4 +1,4 @@
-# Marigold commands — 0.16.0
+# Marigold commands — 0.16.1
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 

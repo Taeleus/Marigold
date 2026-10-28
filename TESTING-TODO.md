@@ -1,9 +1,9 @@
-# Check the review fixes — 0.16.1
+# Completed review-fix checks — 0.16.1
 
-Two focused checks for the new dev build. Your completed 0.16.0 results are preserved below; no full UI retest is needed.
+Both focused checks below are user-reported passed on October 28, 2026, using the deployed Legacy package. The build, regression suite (including the new removal/translation checks) and source compilation also passed. Earlier completed results remain below.
 
-1. [ ] **Undock without false damage.** With a saved baseline, dock and undock through a connector a few times. Live blocks should not briefly turn red or drop from the healthy count. On a test ship, remove a real baseline block afterward: it should still show missing, then return healthy when repaired.
-2. [ ] **Open Spanish controls with a bracketed name.** Temporarily name a test ship `[ ]`, choose Spanish under Preferences and reopen `/mg ui`. The panel should open normally. If you use custom bars, try a group named `[ ]` in its selection list too. Restore your preferred name and language afterward.
+1. [x] **Undock without false damage.** With a saved baseline, dock and undock through a connector a few times. Live blocks should not briefly turn red or drop from the healthy count. On a test ship, remove a real baseline block afterward: it should still show missing, then return healthy when repaired.
+2. [x] **Open Spanish controls with a bracketed name.** Temporarily name a test ship `[ ]`, choose Spanish under Preferences and reopen `/mg ui`. The panel should open normally. If you use custom bars, try a group named `[ ]` in its selection list too. Restore your preferred name and language afterward.
 
 ---
 
