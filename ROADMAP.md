@@ -1,6 +1,14 @@
 # Marigold roadmap
 
-Updated October 28, 2026. Current version: **0.16.0**, targeting **Pulsar Legacy / .NET Framework 4.8**. The redesigned UI has passed user testing.
+Updated October 28, 2026. Development build: **0.16.1**, targeting **Pulsar Legacy / .NET Framework 4.8**. The 0.16.0 UI passed user testing; the two new review fixes await their focused checks.
+
+## 0.16.1 review fixes — ready to test
+
+- Ignore foreign-grid and still-resident removal notifications during connector bookkeeping, while preserving immediate genuine removals and replacement blocks.
+- Handle short bracketed names safely in the Spanish translator.
+- Add regression coverage for both reports and a short [in-game checklist](TESTING-TODO.md).
+
+Master and the PluginHub source pin remain on the tested 0.16.0 version until these changes are promoted.
 
 ## 0.16.0 control panel redesign — complete
 

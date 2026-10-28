@@ -39,6 +39,10 @@ namespace Marigold
 
         private void Removed(MySlimBlock block)
         {
+            // Connector detach also reports the other grid's still-existing connector.
+            // Only evict a local sample once its cell is actually empty.
+            if (block == null || block.CubeGrid != grid || grid.GetCubeBlock(block.Position) != null)
+                return;
             if (values.Remove(new Point3(block.Position.X, block.Position.Y, block.Position.Z)))
                 Revision++;
         }

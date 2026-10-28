@@ -663,9 +663,9 @@ namespace Marigold
 
         public static string Get(string language, string text)
         {
-            if (language != "es")
+            if (language != "es" || string.IsNullOrEmpty(text))
                 return text;
-            if (text.StartsWith("[ ") && text.EndsWith(" ]"))
+            if (text.Length >= 4 && text.StartsWith("[ ") && text.EndsWith(" ]"))
                 return "[ " + Get(language, text.Substring(2, text.Length - 4)) + " ]";
             string result;
             if (Spanish.TryGetValue(text, out result) || Spanish.TryGetValue(text.ToLowerInvariant(), out result))
