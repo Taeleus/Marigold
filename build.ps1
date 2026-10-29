@@ -25,7 +25,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Observer checks failed.'
 }
 
-# Keep the version visible in Pulsar and the checked-in source manifest.
+# Keep Pulsar's display name stable across releases.
 [xml]$project = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src\Marigold.Plugin\Marigold.Plugin.csproj') -Raw
 $pluginVersion = [string]$project.Project.PropertyGroup.Version
 if ($pluginVersion -notmatch '^\d+\.\d+\.\d+$') {
@@ -38,7 +38,7 @@ if ([regex]::Matches($manifestText, '<FriendlyName>[^<]*</FriendlyName>').Count 
     throw 'Expected one FriendlyName in Marigold.xml.'
 }
 
-$manifestText = [regex]::Replace($manifestText, '<FriendlyName>[^<]*</FriendlyName>', "<FriendlyName>Marigold $pluginVersion</FriendlyName>")
+$manifestText = [regex]::Replace($manifestText, '<FriendlyName>[^<]*</FriendlyName>', '<FriendlyName>Marigold</FriendlyName>')
 [System.IO.File]::WriteAllText($manifestPath, $manifestText, [System.Text.UTF8Encoding]::new($false))
 
 $packagePath = Join-Path $PSScriptRoot $(if ($Runtime -eq 'Legacy') {

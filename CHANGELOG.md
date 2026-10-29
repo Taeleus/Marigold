@@ -4,6 +4,10 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 Latest version: **0.16.1 for Pulsar Legacy**. Interim remains experimental and untested in-game.
 
+## Unreleased
+
+- Kept the Pulsar plugin list name as **Marigold**, so it cannot show an outdated version number. Version details remain available inside the plugin.
+
 ## 0.16.1 — October 28, 2026
 
 - Fixed connector undocking briefly marking an unrelated live block as missing. Genuine removals still update immediately, and stale notifications cannot erase a replacement block.
