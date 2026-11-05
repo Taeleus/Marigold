@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using Sandbox.Graphics.GUI;
 
 namespace Marigold
@@ -195,60 +196,126 @@ namespace Marigold
                 Heading("Drawing and feedback");
                 ActionRow("Performance options", () => Switch(19), "Keyboard shortcuts", () => Switch(11));
                 Note("Choose lighter rendering and turn missing-block or fresh-damage pulses on or off.");
-                PrimaryAction("Save preferences", () => Run("settings save"));
-                Note("Save preferences also keeps the current display as your default for future launches.");
             }
 
             private void SavedDisplays()
             {
-                Intro("Save how the HUD looks. Ship baselines and custom-bar membership stay separate.");
-                ActionRow("Share through clipboard", () => Switch(17));
-                Heading("Default display");
-                Note("The default is loaded on future game launches.");
-                ActionRow("Save as default", () => Run("settings save"), "Restore default", () =>
+                bool hasDefault = File.Exists(owner.settingsPath);
+                Heading("Save the current layout");
+                if (owner.ActiveShipSettingsPath != null)
                 {
-                    Run("settings load");
+                    ActionRow("Save as my default", () => ChangeDefault("settings save"),
+                        "Save for this ship", () => ChangeShipDisplay("ship-save"));
+                    Note("Ships use your default unless you save a layout for them. Custom bar positions and sizes are saved per ship.");
+                }
+                else
+                {
+                    PrimaryAction("Save as my default", () => ChangeDefault("settings save"));
+                    Note("To save a layout for one ship, capture or load its baseline first.");
+                }
+
+                Heading("When you return");
+                bool useShipLayout = owner.UsesSavedShipLayout;
+                if (owner.HasSavedShipLayout)
+                {
+                    ChoiceField("Use on reconnect", new[] { "My default", "This ship's layout" },
+                        useShipLayout ? 1 : 0, i => ChangeShipDisplay(i == 0 ? "ship-default" : "ship-load"));
+                    Note("Changing this choice loads that layout now and on reconnect.");
+                }
+                else
+                    Note("Your default loads when you return.");
+
+                if (useShipLayout)
+                    ActionRow("Reload saved layout", () => ChangeShipDisplay("ship-load"),
+                        hasDefault ? "Load my default now" : null, () => ChangeDefault("settings load"));
+                else if (hasDefault)
+                    ActionRow("Reload saved layout", () => ChangeDefault("settings load"));
+
+                Heading("Reuse or share");
+                ActionRow("Named layouts", () => Switch(27), "Copy or paste layout", () => Switch(17));
+
+                void ChangeDefault(string command)
+                {
+                    Run(command);
                     RecreateControls(false);
+                }
+
+                void ChangeShipDisplay(string action)
+                {
+                    string message;
+                    try
+                    {
+                        message = owner.DisplayProfileAction(action, null);
+                    }
+                    catch (Exception error)
+                    {
+                        message = error.Message;
+                    }
+                    RecreateControls(false);
+                    Status(message);
+                }
+            }
+
+            private void NamedLayouts()
+            {
+                Intro("Keep layouts you can load on any ship. Custom bar positions stay with their ship.");
+                Heading("Save a named copy");
+                var name = TextField("Layout name", "", 40);
+                ActionRow("Save named layout", () =>
+                {
+                    string message = owner.DisplayProfileAction("preset-save", name.Text);
+                    selectedNamedLayout = name.Text.Trim();
+                    RecreateControls(false);
+                    Status(message);
                 });
+                Note("Saving with an existing name replaces that copy.");
 
-                Heading("This ship");
-                Note("Save the current ship's display, including arranged custom bars.");
-                ActionRow("Save for this ship", () => Status(owner.DisplayProfileAction("ship-save", null)),
-                    "Restore ship setup", () =>
-                    {
-                        string message = owner.DisplayProfileAction("ship-load", null);
-                        RecreateControls(false);
-                        Status(message);
-                    });
+                Heading("Load a named layout");
+                string[] layouts;
+                try
+                {
+                    layouts = owner.SavedLayoutNames();
+                }
+                catch (Exception error) when (error is IOException || error is UnauthorizedAccessException)
+                {
+                    Note("Couldn't read your named layouts.");
+                    return;
+                }
+                if (layouts.Length == 0)
+                {
+                    Note("Your named layouts will appear here after you save one.");
+                    return;
+                }
 
-                Heading("Named presets");
-                Note("Save a reusable display setup under a name, or enter an existing name to load it.");
-                var name = TextField("Preset name", "My preset", 40);
-                ActionRow("Save preset", () => Status(owner.DisplayProfileAction("preset-save", name.Text)),
-                    "Load preset", () =>
-                    {
-                        string message = owner.DisplayProfileAction("preset-load", name.Text);
-                        RecreateControls(false);
-                        Status(message);
-                    });
+                int selected = Array.FindIndex(layouts, layout =>
+                    string.Equals(layout, selectedNamedLayout, StringComparison.OrdinalIgnoreCase));
+                var list = ChoiceField("Saved layout", layouts, selected,
+                    i => selectedNamedLayout = layouts[i], translateItems: false);
+                ActionRow("Load selected layout", () =>
+                {
+                    string message = owner.DisplayProfileAction("preset-load", layouts[(int)list.GetSelectedKey()]);
+                    RecreateControls(false);
+                    Status(message);
+                });
+                Note("Loading applies the layout now. Use Save display to keep it as your default or for this ship.");
             }
 
             private void ClipboardConfig()
             {
-                Intro("Copy your display setup to share it or use it on another computer.");
-                Note("Includes schematic and standard health-bar layouts, colors, filters and display preferences. Custom bars stay with their ship; baselines and shortcuts are not included.");
-                ActionRow("Copy config", () =>
+                Intro("Copy your HUD layout to share it or use it on another computer.");
+                Note("Includes the schematic, standard health bars, colors, filters and preferences. Custom bars, baselines and shortcuts stay on this computer.");
+                ActionRow("Copy layout", () =>
                 {
                     new Sandbox.Graphics.MyClipboardService().SetText(DisplaySettings.Export(owner.controls));
-                    Status("Display config copied. Ship baselines and shortcuts are not included.");
-                }, "Paste config", () =>
+                    Status("HUD layout copied to the clipboard.");
+                }, "Paste layout", () =>
                 {
                     DisplaySettings.Import(new Sandbox.Graphics.MyClipboardService().GetText(), owner.controls);
                     owner.RefreshReference("Display config imported.");
                     Status("Imported. Use Save display to keep it after restarting.");
                 });
                 Note("Pasting applies immediately. Invalid configurations leave your settings unchanged.");
-                Note("After pasting, use Save display to keep the result as your default, this ship's setup or a named preset.");
+                Note("Use Save display to keep the imported layout as your default, for this ship, or as a named copy.");
             }
 
             private void Systems()

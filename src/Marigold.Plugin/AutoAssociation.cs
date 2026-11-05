@@ -75,7 +75,7 @@ namespace Marigold
             controls.AutoAssociate = enabled;
             try
             {
-                DisplaySettings.Save(settingsPath, controls);
+                DisplaySettings.SavePreferences(settingsPath, controls);
             }
             catch
             {

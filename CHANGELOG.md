@@ -2,7 +2,17 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-The **0.17.1** development build is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**. In-game Interim testing and stress testing near 50,000 blocks are still open.
+The **0.17.2** beta is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+
+## 0.17.2 — November 5, 2026
+
+- **Save & share** separates **Save as my default** from **Save for this ship**. Ship layouts keep custom bar positions and sizes.
+- **Use on reconnect** lets you choose which layout the ship loads. It applies the choice immediately and remembers it for that ship. **Reload saved layout** restores the selected layout, and **Load my default now** lets you try the default temporarily.
+- **Named layouts** lists your saved presets in a dropdown. **Copy or paste layout** has its own clipboard page.
+- Changing language or automatic matching preserves your saved default layout.
+- **Textured Ship** now follows system and damage-state filters. **Other systems opacity** dims or hides unselected systems. Missing blocks still show red markers.
+
+The main Legacy beta checks passed in game. [Large-grid, sustained-damage and Interim checks](TESTING-TODO.md#pending-beta-checks) are still open.
 
 ## 0.17.1 — November 5, 2026
 

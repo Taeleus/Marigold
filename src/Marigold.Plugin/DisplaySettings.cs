@@ -9,18 +9,7 @@ namespace Marigold
     {
         public static void Reset(SchematicControls c)
         {
-            c.HealthBars = new HealthBarSettings();
-            c.Appearance = new HudAppearance();
-            c.SystemStyles = DisplayFilter.DefaultStyles;
-            c.Detail = 2;
-            c.Mode = "compare";
-            c.Category = "all";
-            c.StateFilter = "all";
-            c.Expanded = false;
-            c.Zoom = .85;
-            c.Visible = true;
-            c.SchematicVisible = true;
-            c.Page = 1;
+            ApplyLayout(new SchematicControls(), c);
             c.Station = false;
             c.AutoAssociate = true;
             c.Language = "en";
@@ -28,11 +17,72 @@ namespace Marigold
 
         public static void Load(string path, SchematicControls c)
         {
-            if (!File.Exists(path))
-                return;
+            if (File.Exists(path))
+                Apply(ReadSettings(path), c);
+        }
+
+        private static string[] ReadSettings(string path)
+        {
             if (new FileInfo(path).Length > 2048)
                 throw new InvalidDataException("Display settings are too large.");
-            Apply(File.ReadAllLines(path), c);
+            return File.ReadAllLines(path);
+        }
+
+        public static bool UsesShipLayout(string shipPath)
+        {
+            return File.Exists(shipPath) && !File.Exists(DefaultMarker(shipPath));
+        }
+
+        public static void LoadShipLayout(string defaultPath, string shipPath, SchematicControls c)
+        {
+            if (File.Exists(shipPath))
+                ApplyLayout(ReadLayout(defaultPath, shipPath, UsesShipLayout(shipPath)), c);
+        }
+
+        public static void SelectShipLayout(string defaultPath, string shipPath, SchematicControls c, bool useSaved)
+        {
+            if (useSaved && !File.Exists(shipPath))
+                throw new InvalidOperationException("This ship has no saved display layout.");
+
+            // Validate the display before changing what this ship loads on reconnect.
+            var selected = ReadLayout(defaultPath, shipPath, useSaved);
+            if (useSaved)
+                EnableShipLayout(shipPath);
+            else
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(shipPath));
+                File.WriteAllText(DefaultMarker(shipPath), string.Empty);
+            }
+            ApplyLayout(selected, c);
+        }
+
+        public static void EnableShipLayout(string shipPath)
+        {
+            File.Delete(DefaultMarker(shipPath));
+        }
+
+        private static string DefaultMarker(string shipPath)
+        {
+            return shipPath + ".default";
+        }
+
+        private static SchematicControls ReadLayout(string defaultPath, string shipPath, bool useSaved)
+        {
+            var selected = new SchematicControls();
+            if (useSaved)
+                Apply(ReadSettings(shipPath), selected);
+            else
+                Load(defaultPath, selected);
+            return selected;
+        }
+
+        public static void SavePreferences(string path, SchematicControls c)
+        {
+            var defaults = new SchematicControls();
+            Load(path, defaults);
+            defaults.AutoAssociate = c.AutoAssociate;
+            defaults.Language = c.Language;
+            Save(path, defaults);
         }
 
         public static string Export(SchematicControls c)
@@ -108,22 +158,38 @@ namespace Marigold
                 throw new InvalidDataException("Invalid display settings; existing settings were kept.");
             if ((version5 || version6) && !DisplayFilter.ValidStyles(a[12]))
                 throw new InvalidDataException("Invalid system styles.");
-            var bars = version6 ? HealthBarSettings.Parse(a[13]) : new HealthBarSettings();
-            c.SchematicVisible = schematicVisible;
-            c.HealthBars = bars;
-            c.SystemStyles = (version5 || version6) ? DisplayFilter.NormalizeStyles(a[12]) : DisplayFilter.DefaultStyles;
-            c.Appearance = appearance;
-            c.Detail = detail;
-            c.Mode = "compare";
-            c.Category = DisplayFilter.NormalizeCategories(a[3]);
-            c.StateFilter = a[4];
-            c.Expanded = expanded;
-            c.Zoom = zoom;
-            c.Visible = visible;
-            c.Page = 1;
+            ApplyLayout(new SchematicControls
+            {
+                SchematicVisible = schematicVisible,
+                HealthBars = version6 ? HealthBarSettings.Parse(a[13]) : new HealthBarSettings(),
+                SystemStyles = (version5 || version6) ? DisplayFilter.NormalizeStyles(a[12]) : DisplayFilter.DefaultStyles,
+                Appearance = appearance,
+                Detail = detail,
+                Category = DisplayFilter.NormalizeCategories(a[3]),
+                StateFilter = a[4],
+                Expanded = expanded,
+                Zoom = zoom,
+                Visible = visible
+            }, c);
             c.Station = false;
             c.AutoAssociate = auto;
             c.Language = (version3 || version4 || version5 || version6) ? a[10] : "en";
+        }
+
+        private static void ApplyLayout(SchematicControls source, SchematicControls target)
+        {
+            target.HealthBars = source.HealthBars;
+            target.Appearance = source.Appearance;
+            target.SystemStyles = source.SystemStyles;
+            target.Detail = source.Detail;
+            target.Mode = source.Mode;
+            target.Category = source.Category;
+            target.StateFilter = source.StateFilter;
+            target.Expanded = source.Expanded;
+            target.Zoom = source.Zoom;
+            target.Visible = source.Visible;
+            target.SchematicVisible = source.SchematicVisible;
+            target.Page = source.Page;
         }
 
         public static void Save(string path, SchematicControls c)

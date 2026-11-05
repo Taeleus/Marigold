@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Marigold
@@ -22,9 +23,14 @@ namespace Marigold
             return profileStore.Find(binding.ProfileId);
         }
 
+        private static bool IsSafeName(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && Regex.IsMatch(value, "^[a-zA-Z0-9 _-]{1,40}$");
+        }
+
         private static string SafeName(string value)
         {
-            if (string.IsNullOrWhiteSpace(value) || !Regex.IsMatch(value ?? "", "^[a-zA-Z0-9 _-]{1,40}$"))
+            if (!IsSafeName(value))
                 throw new InvalidOperationException("Use 1–40 letters, digits, spaces, hyphens or underscores.");
             return value.Trim();
         }
@@ -34,23 +40,41 @@ namespace Marigold
             return Path.Combine(DataRoot, "display-" + id + ".txt");
         }
 
+        private string ActiveShipSettingsPath
+        {
+            get
+            {
+                return grid != null && references.TryGetValue(grid, out var binding)
+                    ? ShipSettingsPath(binding.ProfileId) : null;
+            }
+        }
+
+        private bool HasSavedShipLayout => File.Exists(ActiveShipSettingsPath);
+        private bool UsesSavedShipLayout => DisplaySettings.UsesShipLayout(ActiveShipSettingsPath);
+
+        private string[] SavedLayoutNames()
+        {
+            string directory = Path.Combine(DataRoot, "presets");
+            if (!Directory.Exists(directory))
+                return Array.Empty<string>();
+
+            return Directory.EnumerateFiles(directory, "*.txt")
+                .Where(path => string.Equals(Path.GetExtension(path), ".txt", StringComparison.OrdinalIgnoreCase))
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(name => IsSafeName(name) && name == name.Trim())
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
         private void LoadShipSettings(string id)
         {
-            bool auto = controls.AutoAssociate, station = controls.Station;
-            string language = controls.Language;
             try
             {
-                DisplaySettings.Load(ShipSettingsPath(id), controls);
+                DisplaySettings.LoadShipLayout(settingsPath, ShipSettingsPath(id), controls);
             }
             catch (Exception e)
             {
                 VRage.Utils.MyLog.Default.WriteLine("[Marigold] Ship display: " + e.Message);
-            }
-            finally
-            {
-                controls.AutoAssociate = auto;
-                controls.Station = station;
-                controls.Language = language;
             }
         }
 
@@ -59,36 +83,42 @@ namespace Marigold
             if (verb == "ship-save")
             {
                 var p = SelectedProfile();
-                DisplaySettings.Save(ShipSettingsPath(p.Id), controls);
+                string shipPath = ShipSettingsPath(p.Id);
+                DisplaySettings.Save(shipPath, controls);
                 SaveCustomBarLayouts(p);
-                return "Display saved for profile " + p.Number + ". Global defaults unchanged.";
+                DisplaySettings.EnableShipLayout(shipPath);
+                return "Saved this ship's layout. It will load on reconnect.";
             }
 
-            if (verb == "ship-load")
+            if (verb == "ship-load" || verb == "ship-default")
             {
-                LoadShipSettings(SelectedProfile().Id);
-                ClearCustomBarLayouts();
-                RefreshReference("Ship display loaded.");
-                return comparisonReport;
+                bool useSaved = verb == "ship-load";
+                DisplaySettings.SelectShipLayout(settingsPath, ShipSettingsPath(SelectedProfile().Id), controls, useSaved);
+                if (useSaved)
+                    ClearCustomBarLayouts();
+                string message = useSaved ? "Saved ship layout loaded and selected for reconnect."
+                    : "This ship will load the default display on reconnect.";
+                RefreshReference(message);
+                return message;
             }
 
             string path = Path.Combine(DataRoot, "presets", SafeName(name) + ".txt");
             if (verb == "preset-save")
-                DisplaySettings.Save(path, controls);
-            else
             {
-                if (!File.Exists(path))
-                    return "Preset not found.";
-                bool auto = controls.AutoAssociate, station = controls.Station;
-                string language = controls.Language;
-                DisplaySettings.Load(path, controls);
-                controls.AutoAssociate = auto;
-                controls.Station = station;
-                controls.Language = language;
-                RefreshReference("Preset loaded.");
+                DisplaySettings.Save(path, controls);
+                return "Named layout saved.";
             }
 
-            return "Preset " + name + (verb == "preset-save" ? " saved." : " loaded.");
+            if (!File.Exists(path))
+                return "Saved layout not found.";
+            bool auto = controls.AutoAssociate, station = controls.Station;
+            string language = controls.Language;
+            DisplaySettings.Load(path, controls);
+            controls.AutoAssociate = auto;
+            controls.Station = station;
+            controls.Language = language;
+            RefreshReference("Named layout loaded.");
+            return "Named layout loaded.";
         }
 
         private ProfileStore Revisions(ShipProfile p)

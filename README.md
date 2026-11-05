@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. Compare your ship with a saved layout, spot damaged or missing blocks, and keep an eye on the systems that matter to you.
 
-The PluginHub release is **0.16.1 for Pulsar Legacy**. The development build is **0.17.1**. See the [changelog](CHANGELOG.md) for what's new.
+The PluginHub release is **0.16.1 for Pulsar Legacy**. The development build is **0.17.2**. See the [changelog](CHANGELOG.md) for what's new.
 
 ## Get started
 
@@ -41,7 +41,7 @@ Everything starts in **`/mg ui`**:
 - **Ship display:** arrange the schematic and choose its colors.
 - **Health bars:** enable system bars or create bars for particular blocks and groups.
 - **Preferences:** choose performance options, pulses, automatic matching, language and shortcuts.
-- **Save & share:** keep a default, ship setup or preset, or share your display settings through the clipboard.
+- **Save & share** lets you save a default or a layout for this ship, reuse a named layout, or share a layout through the clipboard.
 
 Views follow your saved cockpit orientation. Under **Ship > Systems and filters**, focus on one or several systems, such as Power, Thrusters, Tools or **Offensive**, while keeping the rest of the ship faintly visible. Adjust **Other systems opacity** to choose how much context remains.
 
@@ -49,7 +49,11 @@ Under **Ship display > State colors**, choose a state and open **Choose color vi
 
 Forms label each value and scroll when needed. Apply a layout change, then use **Preview HUD** to inspect it at its actual position and size. **Return to editor** keeps your place and any custom-bar draft.
 
-Use **Save display** to keep display changes as your default, for this ship, or as a named preset. Closing the panel alone does not save them. **Save & share > Share through clipboard** copies display settings, including standard health-bar layouts, colors and filters. Custom bars stay with their ship; baselines and shortcuts are not included.
+After arranging the HUD, open **Save & share** or choose **Save display**. **Save as my default** keeps your current display as the default. **Save for this ship** keeps a separate layout for the ship you're in, including the positions and sizes of its custom bars.
+
+When a ship has a saved layout, **Use on reconnect** lets you choose **My default** or **This ship's layout**. The choice applies immediately and is remembered for that ship. **Reload saved layout** reapplies the selected layout after unsaved edits. Use **Load my default now** when you want to try the default temporarily.
+
+Under **Named layouts**, enter a **Layout name** to save a reusable copy. Select an existing name from the dropdown to load it. **Copy or paste layout** shares display settings such as schematic and standard health-bar layouts, colors and filters. Custom bars belong to their ship. After pasting, save the result as your default or for this ship if you want it to load automatically.
 
 Shortcuts are optional and start unbound. English and Spanish are available, with English fallback for some messages.
 
@@ -67,9 +71,9 @@ Damage and repairs update automatically. Destroyed members stay counted as missi
 
 Custom-bar edits have their own **Save bar** button. Leaving the editor discards unsaved bar edits. Capturing or importing a new baseline starts a new set of custom bars; the previous set stays with the archived baseline version.
 
-## Save layouts and return to your ship
+## Return to your ship
 
-Saved ships survive restarts and reconnects. Automatic matching tries to recognize your saved layout, including after server transfers. Identical ships or heavily changed layouts may need manual selection under **Baselines > Saved ships**.
+Saved ships survive restarts and reconnects. Automatic matching tries to match your ship to its saved baseline, including after server transfers. Identical ships or major refits may need manual selection under **Baselines > Saved ships**.
 
 **Baselines > Saved versions** keeps layouts such as Original or Before refit. You can save, rename, restore or replace versions. Capture and blueprint import preserve the previous baseline automatically.
 

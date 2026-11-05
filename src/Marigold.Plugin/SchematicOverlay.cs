@@ -194,7 +194,7 @@ namespace Marigold
                 controls.Language = action.Substring(9);
                 try
                 {
-                    DisplaySettings.Save(settingsPath, controls);
+                    DisplaySettings.SavePreferences(settingsPath, controls);
                 }
                 catch
                 {
@@ -241,9 +241,15 @@ namespace Marigold
                 bool station;
                 controls.Station = grid != null && stationByGrid.TryGetValue(grid, out station) && station;
                 ResetAssociation();
-                return "Display settings " + (action == "settings save"
-                    ? "saved. They will load on the next game launch."
-                    : action == "settings load" ? "loaded." : "reset. Use /mg settings save to keep these defaults.");
+                if (action == "settings save")
+                    return UsesSavedShipLayout
+                        ? "Default display saved. This ship is set to load its saved layout on reconnect."
+                        : "Default display saved.";
+                if (action == "settings load")
+                    return UsesSavedShipLayout
+                        ? "Default layout loaded for now. This ship will still use its own layout on reconnect."
+                        : "Default layout loaded.";
+                return "Display settings reset. Use /mg settings save to keep these defaults.";
             }
 
             if (action.StartsWith("blueprint ", StringComparison.Ordinal))

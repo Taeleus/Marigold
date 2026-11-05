@@ -40,6 +40,8 @@ namespace Marigold
             {
                 get
                 {
+                    if (tab == 13 || tab == 17 || tab == 27)
+                        return "";
                     if (tab == 22)
                         return "Custom bar draft. Save bar keeps these edits; leaving this page discards them.";
                     if (tab == 21)
@@ -68,7 +70,7 @@ namespace Marigold
                         return 3;
                     if (tab == 11 || tab == 12 || tab == 19)
                         return 4;
-                    return tab == 13 || tab == 17 ? 5 : 2;
+                    return tab == 13 || tab == 17 || tab == 27 ? 5 : 2;
                 }
             }
 
@@ -265,12 +267,13 @@ namespace Marigold
                 return field;
             }
 
-            private MyGuiControlCombobox ChoiceField(string label, string[] items, int selected, Action<int> change = null)
+            private MyGuiControlCombobox ChoiceField(string label, string[] items, int selected, Action<int> change = null,
+                bool translateItems = true)
             {
                 TextRow(label);
                 var field = new MyGuiControlCombobox(size: new Vector2(ContentWidth, .044f), openAreaItemsCount: 6);
                 for (int i = 0; i < items.Length; i++)
-                    field.AddItem(i, T(items[i]), sort: false);
+                    field.AddItem(i, translateItems ? T(items[i]) : items[i], sort: false);
                 if (items.Length > 0)
                     field.SelectItemByKey(Math.Max(0, Math.Min(selected, items.Length - 1)), false);
                 else

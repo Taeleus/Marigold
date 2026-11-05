@@ -18,6 +18,7 @@ namespace Marigold
         private TexturedShipMesh texturedMesh, displayedTexturedMesh;
         private Task<TexturedFrameJob> pendingTexturedImage;
         private TexturedShipImage texturedImage;
+        private TexturedShipFilter texturedFilter;
         private Box3? schematicBounds;
         private int texturedRevision = -1;
         private int texturedTextureSize, texturedBlockCount;
@@ -91,6 +92,7 @@ namespace Marigold
             var bounds = schematicBounds.Value;
             int size = Math.Min(TexturedPreviewSize, Math.Max(1, (int)Math.Ceiling(side)));
             double now = clock.Elapsed.TotalSeconds;
+            var filter = CurrentTexturedFilter();
 
             if (pendingTexturedImage != null && pendingTexturedImage.IsCompleted)
             {
@@ -108,7 +110,8 @@ namespace Marigold
                         texturedImage = null;
                         ReportTexturedFallback(result.Failure);
                     }
-                    else if (SameBounds(result.Image.Bounds, bounds) && result.Image.RequestedSize == size)
+                    else if (MatchesTexturedOptions(result.Image.Filter) && result.Image.Filter.Baseline == filter.Baseline
+                        && SameBounds(result.Image.Bounds, bounds) && result.Image.RequestedSize == size)
                     {
                         var image = result.Image;
                         texturedStatus = image.Status;
@@ -154,8 +157,10 @@ namespace Marigold
                 texturedSnapshotMs = timer.Elapsed.TotalMilliseconds;
             }
 
-            bool matchingImage = texturedImage != null && SameBounds(texturedImage.Bounds, bounds) && texturedImage.RequestedSize == size;
-            bool needsFrame = !matchingImage || !ReferenceEquals(displayedTexturedMesh, texturedMesh) || !texturedImage.View.SameView(view);
+            bool matchingOptions = texturedImage != null && MatchesTexturedOptions(texturedImage.Filter)
+                && texturedImage.Filter.Baseline == filter.Baseline;
+            bool matchingImage = matchingOptions && SameBounds(texturedImage.Bounds, bounds) && texturedImage.RequestedSize == size;
+            bool needsFrame = !matchingImage || texturedImage.Filter != filter || !ReferenceEquals(displayedTexturedMesh, texturedMesh) || !texturedImage.View.SameView(view);
             if (pendingTexturedImage == null && (snapshot != null || (texturedMesh != null && now >= nextTexturedFrame && needsFrame)))
             {
                 var mesh = texturedMesh;
@@ -179,11 +184,11 @@ namespace Marigold
                 var raster = texturedRaster;
                 var assets = texturedAssets;
                 pendingTexturedCurrent = true;
-                pendingTexturedImage = Task.Run(() => BuildTexturedFrame(assets, snapshot, raster, mesh, bounds, requestedView, size, preferredSize));
+                pendingTexturedImage = Task.Run(() => BuildTexturedFrame(assets, snapshot, raster, mesh, bounds, requestedView, size, preferredSize, filter));
             }
 
             // While dragging the scale slider, keep the last image for this ship until a new size is ready.
-            if (!matchingImage && (hudLayoutPreview == null || texturedImage == null || !SameBounds(texturedImage.Bounds, bounds)))
+            if (!matchingImage && (hudLayoutPreview == null || !matchingOptions || !SameBounds(texturedImage.Bounds, bounds)))
                 return false;
 
             // Use the finished image's camera for the damage overlay, so async rendering cannot shift markers off the hull.
@@ -194,8 +199,29 @@ namespace Marigold
             return true;
         }
 
+        private bool MatchesTexturedOptions(TexturedShipFilter filter)
+        {
+            return filter.Category == controls.Category && filter.State == controls.StateFilter
+                && filter.Styles == controls.SystemStyles
+                && filter.ClassificationRevision == DisplayFilter.ClassificationRevision
+                && filter.ContextAlpha == (byte)(DrawingAppearance.ContextOpacity * 255);
+        }
+
+        private TexturedShipFilter CurrentTexturedFilter()
+        {
+            references.TryGetValue(grid, out var reference);
+            var baseline = controls.StateFilter == "all" ? null : reference?.Blocks;
+            var current = controls.Category == "all" && controls.StateFilter == "all"
+                && controls.SystemStyles == TexturedShipFilter.DefaultStyles ? null : lastObservation;
+            if (texturedFilter == null || !MatchesTexturedOptions(texturedFilter)
+                || texturedFilter.Current != current || texturedFilter.Baseline != baseline)
+                texturedFilter = new TexturedShipFilter(controls.Category, controls.StateFilter, controls.SystemStyles,
+                    (byte)(DrawingAppearance.ContextOpacity * 255), current, baseline);
+            return texturedFilter;
+        }
+
         private static TexturedFrameJob BuildTexturedFrame(TexturedShipMesh.AssetCache assets, TexturedShipMesh.Snapshot snapshot,
-            TexturedShipRaster raster, TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize)
+            TexturedShipRaster raster, TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize, TexturedShipFilter filter)
         {
             var timer = Stopwatch.StartNew();
             var job = new TexturedFrameJob();
@@ -211,7 +237,7 @@ namespace Marigold
                 timer.Restart();
             }
             job.Mesh = mesh;
-            job.Image = raster.Render(mesh, bounds, view, size, preferredSize);
+            job.Image = raster.Render(mesh, bounds, view, size, preferredSize, filter);
             job.RasterMilliseconds = timer.Elapsed.TotalMilliseconds;
             return job;
         }
@@ -277,6 +303,7 @@ namespace Marigold
                 pendingTexturedImage = null;
             texturedAssets = null;
             texturedRaster = null;
+            texturedFilter = null;
             texturedMesh = null;
             pendingTexturedCurrent = false;
             texturedRevision = -1;

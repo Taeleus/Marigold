@@ -141,6 +141,7 @@ internal static class DisplayChecks
                 restored.Mode == "compare" && restored.Category == "all" && restored.Zoom == .85 && !restored.Expanded,
                 "Defaults restored"
             );
+            CheckDisplaySources(folder);
         }
         finally
         {
@@ -188,5 +189,100 @@ internal static class DisplayChecks
             "Saved separate textured toggle maps to the unified rendering mode");
 
         Console.WriteLine("PASS: " + count + " display/settings/profile-suggestion checks.");
+    }
+
+    private static void CheckDisplaySources(string folder)
+    {
+        string defaultsPath = Path.Combine(folder, "defaults.txt");
+        string shipPath = Path.Combine(folder, "display-ship.txt");
+        var defaults = new SchematicControls();
+        var defaultPower = defaults.HealthBars.Bars[2];
+        defaultPower.Enabled = true;
+        defaultPower.X = .999;
+        defaultPower.Y = .57;
+        defaultPower.Width = .28;
+        defaultPower.Height = .02;
+        defaultPower.PowerMask = 3;
+        DisplaySettings.Save(defaultsPath, defaults);
+
+        var savedShip = new SchematicControls();
+        savedShip.HealthBars.Bars[2].Enabled = true;
+        savedShip.HealthBars.Bars[2].X = .75;
+        DisplaySettings.Save(shipPath, savedShip);
+        string savedShipFile = File.ReadAllText(shipPath);
+
+        var current = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, current);
+        current.Station = true;
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, current);
+        Check(DisplaySettings.UsesShipLayout(shipPath) && current.HealthBars.Bars[2].X == .75,
+            "An existing ship setup still loads over the default by default");
+
+        DisplaySettings.SelectShipLayout(defaultsPath, shipPath, current, false);
+        Check(!DisplaySettings.UsesShipLayout(shipPath) && current.HealthBars.Bars[2].X == .999,
+            "Using the default for this ship restores the intended Power bar position");
+        Check(File.ReadAllText(shipPath) == savedShipFile,
+            "Using the default leaves the saved ship setup available");
+
+        var reconnected = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, reconnected);
+        reconnected.Station = true;
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, reconnected);
+        Check(reconnected.HealthBars.Bars[2].X == .999 && reconnected.Station,
+            "Reconnecting honors the default selection and retains station mode");
+
+        File.WriteAllText(shipPath, "invalid display");
+        string before = DisplaySettings.Export(reconnected);
+        bool rejected = false;
+        try
+        {
+            DisplaySettings.SelectShipLayout(defaultsPath, shipPath, reconnected, true);
+        }
+        catch (InvalidDataException)
+        {
+            rejected = true;
+        }
+        Check(rejected && !DisplaySettings.UsesShipLayout(shipPath) && DisplaySettings.Export(reconnected) == before,
+            "An invalid saved ship setup cannot switch the active layout or reconnect source");
+
+        File.WriteAllText(shipPath, savedShipFile);
+        DisplaySettings.SelectShipLayout(defaultsPath, shipPath, reconnected, true);
+        Check(DisplaySettings.UsesShipLayout(shipPath) && reconnected.HealthBars.Bars[2].X == .75,
+            "Selecting the saved ship setup restores its bar and reconnect preference");
+
+        reconnected.Language = "es";
+        reconnected.AutoAssociate = false;
+        DisplaySettings.SavePreferences(defaultsPath, reconnected);
+        var preferences = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, preferences);
+        Check(preferences.Language == "es" && !preferences.AutoAssociate
+            && preferences.HealthBars.Encode() == defaults.HealthBars.Encode(),
+            "Saving preferences while a ship setup is active keeps the default bar positions, sizes, and sections");
+        preferences.Station = true;
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, preferences);
+        Check(preferences.HealthBars.Bars[2].X == .75 && preferences.Language == "es"
+            && !preferences.AutoAssociate && preferences.Station,
+            "Loading the saved ship layout preserves global preferences and station mode");
+
+        DisplaySettings.SelectShipLayout(defaultsPath, shipPath, preferences, false);
+        preferences.HealthBars.Bars[2].X = .9;
+        DisplaySettings.Save(shipPath, preferences);
+        DisplaySettings.EnableShipLayout(shipPath);
+        var nextGrid = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, nextGrid);
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, nextGrid);
+        Check(DisplaySettings.UsesShipLayout(shipPath) && nextGrid.HealthBars.Bars[2].X == .9,
+            "Saving and enabling a ship layout replaces its earlier default selection");
+
+        string missingShipPath = Path.Combine(folder, "display-absent.txt");
+        nextGrid.HealthBars.Bars[2].X = .8;
+        DisplaySettings.LoadShipLayout(defaultsPath, missingShipPath, nextGrid);
+        Check(nextGrid.HealthBars.Bars[2].X == .8 && !DisplaySettings.UsesShipLayout(missingShipPath),
+            "Attaching a ship without a saved layout preserves unsaved adjustments");
+        nextGrid.Station = true;
+        DisplaySettings.SelectShipLayout(Path.Combine(folder, "absent-default.txt"), missingShipPath, nextGrid, false);
+        Check(nextGrid.HealthBars.Bars[2].X == .75 && nextGrid.Language == "es"
+            && !nextGrid.AutoAssociate && nextGrid.Station,
+            "Selecting defaults with no file restores built-in placement and preserves preferences");
     }
 }

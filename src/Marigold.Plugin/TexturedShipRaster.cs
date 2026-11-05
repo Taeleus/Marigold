@@ -32,6 +32,71 @@ namespace Marigold
         public float[] Depth;
         public string Status;
         public string Caption;
+        public TexturedShipFilter Filter;
+    }
+
+    internal sealed class TexturedShipFilter
+    {
+        public static readonly string DefaultStyles = DisplayFilter.DefaultStyles;
+        public readonly string Category, State, Styles;
+        public readonly byte ContextAlpha;
+        public readonly int ClassificationRevision;
+        public readonly BlockSample[] Current, Baseline;
+
+        public TexturedShipFilter(string category, string state, string styles, byte contextAlpha,
+            BlockSample[] current, BlockSample[] baseline)
+        {
+            Category = category;
+            State = state;
+            Styles = styles;
+            ContextAlpha = contextAlpha;
+            ClassificationRevision = DisplayFilter.ClassificationRevision;
+            Current = current;
+            Baseline = baseline;
+        }
+
+        public byte[] PartAlphas(TexturedShipMesh.ModelPart[] parts)
+        {
+            if (Category == "all" && State == "all" && Styles == DefaultStyles)
+                return null;
+
+            var expected = new Dictionary<Point3, BlockSample>();
+            if (State != "all" && Baseline != null)
+                foreach (var block in Baseline)
+                    expected[block.Position] = block;
+
+            var alphas = new Dictionary<Point3, byte>();
+            var categoryAlphas = new Dictionary<string, byte>();
+            string visible = DisplayFilter.VisibleCategories(Category, Styles);
+            foreach (var block in Current ?? Array.Empty<BlockSample>())
+            {
+                if (State != "all")
+                {
+                    var kind = Baseline == null ? ChangeKind.Hull
+                        : expected.TryGetValue(block.Position, out var old)
+                            ? SnapshotComparison.Classify(old, block) : ChangeKind.Added;
+                    if (!DisplayFilter.StateMatches(kind, State))
+                        continue;
+                }
+
+                if (!categoryAlphas.TryGetValue(block.Definition, out byte alpha))
+                {
+                    char style = DisplayFilter.Style(block.Definition, Styles);
+                    alpha = style == '0' || visible == "none" ? (byte)0
+                        : DisplayFilter.CategoryMatches(block.Definition, visible)
+                            ? (style == '2' ? (byte)64 : (byte)255)
+                            : ContextAlpha;
+                    categoryAlphas.Add(block.Definition, alpha);
+                }
+                alphas[block.Position] = alpha;
+            }
+
+            var result = new byte[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
+                if (parts[i].BlockPosition is Point3 position && alphas.TryGetValue(position, out byte alpha))
+                    result[i] = alpha;
+            return result;
+        }
     }
 
     // A small orthographic preview. All inputs are copied mesh data, so it can run off the game thread.
@@ -40,7 +105,12 @@ namespace Marigold
         private const int TextureCacheLimit = 256;
         private const int DetailedTextureLimit = 96;
         private const int SampleBudget = 2500000;
+        private static readonly byte[][] PremultipliedRgb = BuildPremultipliedRgb();
         private readonly Dictionary<string, TexturedShipTexture> textures = new Dictionary<string, TexturedShipTexture>(StringComparer.OrdinalIgnoreCase);
+        private TexturedShipMesh filteredMesh;
+        private TexturedShipFilter filter;
+        private byte[] partAlphas;
+        private bool hasVisibleParts;
         private float[] depth = new float[0];
         private Vertex[] projectedVertices = Array.Empty<Vertex>();
 
@@ -49,14 +119,28 @@ namespace Marigold
             public float X, Y, Z, U, V;
         }
 
-        public TexturedShipImage Render(TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize = 0)
+        public TexturedShipImage Render(TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize, TexturedShipFilter requestedFilter)
         {
             var image = new TexturedShipImage
             {
-                Bounds = bounds, View = view, Size = preferredSize > 0 ? preferredSize : size, RequestedSize = size
+                Bounds = bounds, View = view, Filter = requestedFilter, Size = preferredSize > 0 ? preferredSize : size, RequestedSize = size
             };
             try
             {
+                if (filteredMesh != mesh || filter != requestedFilter)
+                {
+                    partAlphas = requestedFilter.PartAlphas(mesh.Parts);
+                    hasVisibleParts = partAlphas == null || Array.Exists(partAlphas, alpha => alpha > 0);
+                    filteredMesh = mesh;
+                    filter = requestedFilter;
+                }
+                if (!hasVisibleParts)
+                {
+                    image.Pixels = new byte[image.Size * image.Size * 4];
+                    image.Status = "No textured surfaces visible with the current filters.";
+                    return image;
+                }
+
                 int initialSize = image.Size;
                 for (int attempt = 0; ; attempt++)
                 {
@@ -129,6 +213,10 @@ namespace Marigold
             TexturedShipTexture texture = null;
             foreach (var triangle in mesh.Triangles)
             {
+                byte alpha = partAlphas == null ? (byte)255 : partAlphas[triangle.Part];
+                if (alpha == 0)
+                    continue;
+
                 var a = projected[triangle.A];
                 var b = projected[triangle.B];
                 var c = projected[triangle.C];
@@ -171,7 +259,7 @@ namespace Marigold
                 float nx = abY * acZ - abZ * acY;
                 float ny = abZ * acX - abX * acZ;
                 float light = .60f + .40f * Math.Abs(area) / (float)Math.Sqrt(nx * nx + ny * ny + area * area);
-                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, texture, triangle.PaintRgb, light, size, pixels))
+                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, texture, triangle.PaintRgb, light, alpha, size, pixels))
                 {
                     drewSurface = true;
                     foundTexture |= texture != null;
@@ -179,13 +267,15 @@ namespace Marigold
                 }
             }
 
-            if (!drewSurface)
+            if (!drewSurface && partAlphas == null)
             {
                 image.Status = "No textured ship surfaces are visible at this angle and zoom.";
                 return false;
             }
 
-            if (!foundTexture)
+            if (!drewSurface)
+                image.Status = "No textured surfaces visible with the current filters.";
+            else if (!foundTexture)
             {
                 image.Caption = "Painted model";
                 image.Status = foundColorPath
@@ -231,7 +321,7 @@ namespace Marigold
         }
 
         private bool DrawTriangle(Vertex a, Vertex b, Vertex c, int x0, int x1, int y0, int y1, float area,
-            TexturedShipTexture texture, uint paint, float light, int size, byte[] pixels)
+            TexturedShipTexture texture, uint paint, float light, byte alpha, int size, byte[] pixels)
         {
             float invArea = 1 / area;
             float dBx = (c.Y - a.Y) * invArea, dBy = (a.X - c.X) * invArea;
@@ -243,6 +333,8 @@ namespace Marigold
             float texGreen = (.25f + .75f * green) * light;
             float texBlue = (.25f + .75f * blue) * light;
             bool drewPixel = false;
+            bool focused = alpha == 255;
+            var premultiplied = focused ? null : PremultipliedRgb[alpha];
             for (int y = y0; y <= y1; y++)
             {
                 float localX = x0 + .5f - a.X, localY = y + .5f - a.Y;
@@ -255,11 +347,13 @@ namespace Marigold
                         continue;
                     float z = wa * a.Z + wb * b.Z + wc * c.Z;
                     int pixel = y * size + x;
-                    if (z <= depth[pixel])
+                    int offset = pixel * 4;
+                    // Keep full-strength surfaces visible through faint context.
+                    bool previousFocused = partAlphas == null || pixels[offset + 3] == 255;
+                    if (focused == previousFocused ? z <= depth[pixel] : previousFocused)
                         continue;
                     depth[pixel] = z;
                     drewPixel = true;
-                    int offset = pixel * 4;
                     if (texture == null)
                     {
                         pixels[offset] = (byte)(255 * red * light);
@@ -273,10 +367,39 @@ namespace Marigold
                         pixels[offset + 1] = (byte)(((rgb >> 8) & 255) * texGreen);
                         pixels[offset + 2] = (byte)((rgb & 255) * texBlue);
                     }
-                    pixels[offset + 3] = 255;
+                    if (premultiplied != null)
+                    {
+                        pixels[offset] = premultiplied[pixels[offset]];
+                        pixels[offset + 1] = premultiplied[pixels[offset + 1]];
+                        pixels[offset + 2] = premultiplied[pixels[offset + 2]];
+                    }
+                    pixels[offset + 3] = alpha;
                 }
             }
             return drewPixel;
+        }
+
+        private static byte[][] BuildPremultipliedRgb()
+        {
+            // Generated RGBA textures are sampled as sRGB, then blended as premultiplied color.
+            var table = new byte[255][];
+            var linear = new double[256];
+            for (int i = 0; i < linear.Length; i++)
+            {
+                double rgb = i / 255.0;
+                linear[i] = rgb <= .04045 ? rgb / 12.92 : Math.Pow((rgb + .055) / 1.055, 2.4);
+            }
+            for (int alpha = 0; alpha < table.Length; alpha++)
+            {
+                var row = table[alpha] = new byte[256];
+                for (int rgb = 0; rgb < row.Length; rgb++)
+                {
+                    double value = linear[rgb] * (alpha / 255.0);
+                    double encoded = value <= .0031308 ? 12.92 * value : 1.055 * Math.Pow(value, 1.0 / 2.4) - .055;
+                    row[rgb] = (byte)Math.Round(encoded * 255);
+                }
+            }
+            return table;
         }
     }
 }

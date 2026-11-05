@@ -109,6 +109,7 @@ namespace Marigold
             private int healthBarSelected;
             private bool browseLocal = true, browseWorkshop, browseCloud;
             private string searchText = "";
+            private string selectedNamedLayout;
             private int browsePage;
             private int captureShortcut = -1;
             private MyGuiControlTextbox shortcutBox;
@@ -255,7 +256,7 @@ namespace Marigold
                 "Damage report",
                 "Recovery tools",
                 "State colors",
-                "Share a display setup",
+                "Copy or paste layout",
                 "Find a blueprint",
                 "Performance options",
                 "Custom health bars",
@@ -264,7 +265,8 @@ namespace Marigold
                 "Power bar sections",
                 "Background systems",
                 "Health bar colors",
-                "Choose a color"
+                "Choose a color",
+                "Named layouts"
             };
 
             public override void RecreateControls(bool constructor)
@@ -325,6 +327,7 @@ namespace Marigold
                     case 24: ContextSettings(); break;
                     case 25: BarColors(); break;
                     case 26: ColorPicker(); break;
+                    case 27: NamedLayouts(); break;
                 }
                 FinishWorkspace();
             }

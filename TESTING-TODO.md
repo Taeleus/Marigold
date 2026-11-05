@@ -1,22 +1,22 @@
 # Testing checklist
 
-## Ship label — pending
-
-- [ ] Turn off **Ship display > Show ship label** and check that the text disappears below the schematic in compact and expanded views. In **Arrange HUD**, move the ship to the bottom or set **Vertical position** to 100%. It should reach the bottom edge. Apply the layout, use **Save display**, and reconnect to check that both settings were kept.
-
----
-
 ## Display follow-up
 
-- [x] **Arrange HUD** works in game.
-- [x] **Textured Ship** works in game, including the Expanse drive.
-- [x] **HD Wireframe** works in game.
+Main 0.17.2 Legacy beta checks passed in game on November 5, 2026.
+
+- [x] **Upgrade from 0.16.1.** Saved baseline, custom bars, colors and shortcuts carry over. The schematic and bars update after damage and repair.
+- [x] **Arrange HUD.** Drag the display and both types of bars, resize the bars with the corner handle and sliders, and check Cancel and Apply layout. Hide the ship label and move the schematic to the bottom edge.
+- [x] **Save and reconnect.** Save different Power bar positions as the default and the ship layout. Both choices apply immediately and are remembered on reconnect. **Load my default now** temporarily previews the default with the ship layout selected.
+- [x] **Reuse and share layouts.** Restore a standard bar from a named layout and through the clipboard.
+- [x] **Rendering modes.** Compare HD, SD and Textured Ship while rotating. Lower textured opacity and check that damage behind the hull stays visible. The textured Expanse drive also passed an earlier in-game check.
+- [x] **Textured filters.** Cycle Armor, Thrusters and All systems with Other systems opacity at zero and above zero. Try Damaged and Missing with a baseline.
 - [x] **Retest textured station rotation and shapes.** The 2,257-block station looked much better in Legacy. At 768 px, `/mg stats` reported 16.5 preview FPS, 48.47 ms for the last raster and 181.77 ms for the last mesh job. It used 18 reduced meshes and reported zero painted box replacements. The earlier 441 px preview reported a 73.81 ms worker job and 126 simplified parts.
 
-- [ ] **Resize a bar in Arrange HUD.** Select a system bar and a custom bar. Drag the square at the corner of each selection to change width and height, then try the **Width** and **Height** sliders. Check the preview and use **Apply layout**.
-- [ ] **Check layout persistence.** Move a bar and cancel once to check that the draft is discarded. Apply and save a layout, then reconnect to check it was kept. If you moved a custom bar, use **Save for this ship** and confirm it still tracks the same blocks after reconnecting.
+## Pending beta checks
+
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
-- [ ] **Compare wireframe performance during damage.** On the saved damaged station, compare HD and SD at the same view and detail. Check FPS, `/mg stats`, and damage highlights while rotating and taking fire. [Performance test procedure](docs/PERFORMANCE-TEST.md)
+- [ ] **Compare performance during sustained damage.** Compare HD, SD and Textured Ship at the same view and detail. Check that markers agree with the health bars, and record FPS with the display shown and hidden plus `/mg stats`. [Performance test procedure](docs/PERFORMANCE-TEST.md)
+- [ ] **Smoke-test Pulsar Interim.** Launch with the separate Interim package, open `/mg ui`, switch render modes, cycle filters and save a layout.
 
 ---
 
