@@ -61,6 +61,7 @@ internal static class VisualFeedbackChecks
         foreach (int length in new[] { 8, 9, 10 })
         {
             var old = appearance.Encode().Split(';');
+            old[9] = "0"; // Full display was the only filled whole-ship mode in this format.
             Array.Resize(ref old, length);
             var compatible = HudAppearance.Parse(string.Join(";", old));
             Check(

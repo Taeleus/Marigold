@@ -1,3 +1,4 @@
+using System;
 using Sandbox.Graphics.GUI;
 using VRageMath;
 
@@ -16,17 +17,26 @@ namespace Marigold
 
             private void InspectHud()
             {
+                if (hudPreview == null)
+                    OpenHudChild(new HudPreviewScreen(this));
+            }
+
+            private void OpenHudChild(MyGuiScreenBase preview, Action afterClose = null)
+            {
                 if (hudPreview != null)
                     return;
                 captureShortcut = -1;
                 saturationPicker?.CancelDrag();
                 huePicker?.CancelDrag();
-                var preview = new HudPreviewScreen(this);
                 hudPreview = preview;
                 preview.Closed += (screen, unloading) =>
                 {
                     if (ReferenceEquals(hudPreview, preview))
+                    {
                         hudPreview = null;
+                        if (!unloading)
+                            afterClose?.Invoke();
+                    }
                 };
                 MyGuiSandbox.AddScreen(preview);
             }

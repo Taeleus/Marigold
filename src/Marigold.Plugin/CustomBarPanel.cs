@@ -23,10 +23,12 @@ namespace Marigold
 
             private CustomHealthBar SelectedCustomBar()
             {
-                var bar = owner.SelectedProfile().CustomBars.Find(item => item.Id == customBarId);
+                var profile = owner.SelectedProfile();
+                var bar = FindCustomBar(profile.CustomBars, customBarId);
                 if (bar == null)
                     throw new InvalidOperationException("Select a custom bar first.");
-                return bar;
+                var layout = owner.EffectiveCustomBarLayout(profile, bar);
+                return ReferenceEquals(bar.Layout, layout) ? bar : CustomBarWithLayout(bar, layout);
             }
 
             private void ConfirmCustomAction(string key, Action action, string prompt = null)

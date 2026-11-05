@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="../../src/Marigold.Plugin/DataPaths.cs" Link="DataPaths.cs" />
     <Compile Include="../../src/Marigold.Plugin/FillRaster.cs" Link="FillRaster.cs" />
+    <Compile Include="../../src/Marigold.Plugin/SchematicRaster.cs" Link="SchematicRaster.cs" />
     <Compile Include="../../src/Marigold.Plugin/DamagePulse.cs" Link="DamagePulse.cs" />
     <Compile Include="../../src/Marigold.Plugin/ReferenceHistory.cs" Link="ReferenceHistory.cs" />
     <Compile Include="../../src/Marigold.Plugin/OffensiveDefinitions.cs" Link="OffensiveDefinitions.cs" />
@@ -36,6 +37,7 @@
     <Compile Include="../../src/Marigold.Plugin/ObservationSchedule.cs" Link="ObservationSchedule.cs" />
     <Compile Include="../../src/Marigold.Plugin/GridObservation.cs" Link="GridObservation.cs" />
     <Compile Include="../../src/Marigold.Plugin/BlueprintCatalog.cs" Link="BlueprintCatalog.cs" />
+    <Compile Include="../../src/Marigold.Plugin/WorkshopAssetPath.cs" Link="WorkshopAssetPath.cs" />
     <Compile Include="../../src/Marigold.Plugin/UiText.cs" Link="UiText.cs" />
   </ItemGroup>
 </Project>

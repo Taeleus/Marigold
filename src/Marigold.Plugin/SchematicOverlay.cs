@@ -32,6 +32,7 @@ namespace Marigold
         private ChangeKind[] lineKinds = new ChangeKind[0];
         private bool[] drawLine = new bool[0];
         private int renderedLines, renderedFills, unmergedFills;
+        private int mainHullLines;
         private readonly FillRaster fillRaster = new FillRaster();
         private Point3[] rotated = new Point3[0];
         private bool dirty, faulted;
@@ -74,6 +75,7 @@ namespace Marigold
             foreach (var pair in references)
                 pair.Key.OnGridSplit -= OnSplit;
             references.Clear();
+            ClearCustomBarLayouts();
             stationByGrid.Clear();
             stationBaselines.Clear();
             generation++;
@@ -122,6 +124,7 @@ namespace Marigold
         {
             if (target == grid)
             {
+                ClearCustomBarLayouts();
                 CancelRecovery();
                 CancelBlueprintPreview();
             }
@@ -134,6 +137,7 @@ namespace Marigold
         {
             health = new ShipHealth();
             healthPreview = false;
+            ClearCustomBarLayouts();
             ResetCustomBarHealth();
             CancelRecovery();
             stationBaselines.Clear();
@@ -424,7 +428,8 @@ namespace Marigold
 
         private Color LineColor(ChangeKind kind, byte missingAlpha, byte weight = 100)
         {
-            uint rgb = controls.Appearance.Color((int)kind);
+            var appearance = DrawingAppearance;
+            uint rgb = appearance.Color((int)kind);
             int alpha = kind == ChangeKind.Missing
                 ? missingAlpha
                 : kind == ChangeKind.Damaged ? 90 : kind == ChangeKind.Hull ? 110 : kind == ChangeKind.Unknown ? 220 : 240;
@@ -432,8 +437,8 @@ namespace Marigold
                 (byte)(rgb >> 16),
                 (byte)(rgb >> 8),
                 (byte)rgb,
-                (byte)Math.Min(255, alpha * controls.Appearance.Outline
-                    * (weight == 0 ? controls.Appearance.ContextOpacity : weight / 100.0))
+                (byte)Math.Min(255, alpha * appearance.Outline
+                    * (weight == 0 ? appearance.ContextOpacity : weight / 100.0))
             );
         }
 
@@ -447,12 +452,14 @@ namespace Marigold
         {
             return (dirty || pending != null ? "Rebuild pending; displayed model: " : "") + "Requested detail " + controls.DetailName + "; " + points.Length / 2
                 + " geometry lines / " + renderedLines + " rendered / " + renderedFills
-                + " fills (from " + unmergedFills + "); cell " + cellSize + "; snapshot "
+                + (renderedPreciseSchematic ? " fill regions (HD Wireframe)" : " fills (from " + unmergedFills + ")")
+                + "; cell " + cellSize + "; snapshot "
                 + snapshotMs.ToString("F2") + " ms; worker " + buildMs.ToString("F2")
                 + " ms; HUD CPU mean/max " + (drawSamples == 0
                 ? "no samples"
                 : (drawTotalMs / drawSamples).ToString("F2") + "/" + drawMaxMs.ToString("F2") + " ms (" + drawSamples + " draws)")
-                + ". CPU submission only; excludes GPU and other game work.";
+                + ". HUD CPU only; excludes GPU and other game work."
+                + (controls.Appearance.Rendering == HudAppearance.Textured ? TexturedStatistics() : "");
         }
 
         private Point3 cockpitRight = new Point3(1, 0, 0),
@@ -461,12 +468,13 @@ namespace Marigold
 
         private sealed class BuildResult
         {
-            public int Generation, Count, Cells, Page = 1;
+            public int Generation, Count, Cells, MainHullLines, Page = 1;
             public Point3[] Points;
             public double Milliseconds, CellSize;
             public Exception Error;
             public ChangeKind[] Kinds;
             public int[] ShadedMarkers;
+            public Box3? Bounds;
             public ShipHealth Health;
             public CustomBarView[] CustomBars;
             public bool Preview;
@@ -591,6 +599,7 @@ namespace Marigold
                     kinds.Add(ChangeKind.Hull);
                     weights.Add(0);
                 }
+                result.MainHullLines = kinds.Count;
 
                 if (frame.HasValue)
                     foreach (var connected in station)
@@ -750,6 +759,7 @@ namespace Marigold
                 result.Points = geometry.ToArray();
                 result.Kinds = kinds.ToArray();
                 result.ShadedMarkers = shaded.ToArray();
+                result.Bounds = frame;
                 result.Cells = model.Cells;
                 result.CellSize = model.CellSize;
             }
@@ -821,6 +831,10 @@ namespace Marigold
             if (ReferenceEquals(grid, next))
                 return;
             ClosePanel();
+            ReleaseSchematicTexture();
+            ReleaseTexturedShip();
+            schematicBounds = null;
+            mainHullLines = 0;
             observation?.Dispose();
             observation = null;
             observationRevision = -1;
@@ -836,6 +850,7 @@ namespace Marigold
             grid = next;
             health = new ShipHealth();
             healthPreview = false;
+            ClearCustomBarLayouts();
             ResetCustomBarHealth();
             bool auto = controls.AutoAssociate;
             string language = controls.Language;
@@ -1020,6 +1035,8 @@ namespace Marigold
                         lineWeights = result.Weights;
                         lineKinds = result.Kinds;
                         shadedMarkers = result.ShadedMarkers;
+                        schematicBounds = result.Bounds;
+                        mainHullLines = result.MainHullLines;
                         comparisonReport = result.Report;
                         rotated = new Point3[points.Length];
                         // Remove identical same-state edges, retaining the latest alert on shared boundaries.
@@ -1124,144 +1141,61 @@ namespace Marigold
 
         private void DrawSafely()
         {
-            if (!controls.Visible
+            var layout = hudLayoutPreview;
+            if ((layout == null && !controls.Visible)
                 || faulted
                 || grid == null
                 || grid.Closed
                 || grid.MarkedForClose
                 || MyAPIGateway.Gui == null
                 || (MyAPIGateway.Gui.IsCursorVisible && panel == null)
-                || MyHud.MinimalHud
+                || (layout == null && MyHud.MinimalHud)
                 || MyHud.CutsceneHud)
                 return;
             try
             {
                 long drawStart = Stopwatch.GetTimestamp();
+                renderedPreciseSchematic = false;
                 Vector2 screen = MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One, true);
-                bool editingPanel = panel != null && !panel.PreviewingHud;
+                bool editingPanel = layout == null && panel != null && !panel.PreviewingHud;
                 bool recoveryFocus = editingPanel && panel.RecoveryFocus;
                 var view = recoveryFocus ? panel.RecoveryView : controls;
-                if (controls.SchematicVisible || recoveryFocus)
+                bool expanded = layout?.Expanded ?? controls.Expanded;
+                if ((layout?.ShipVisible ?? controls.SchematicVisible) || recoveryFocus)
                 {
-                    float side = editingPanel
-                        ? Math.Min(screen.X * .14f, screen.Y * .18f)
-                        : controls.Expanded
-                        ? Math.Min(screen.X * .6f, screen.Y * .7f * (float)(controls.Appearance.Size / .32))
-                        : Math.Min(screen.X * .6f, screen.Y * (float)controls.Appearance.Size);
-                    float left = editingPanel
-                        ? 8
-                        : controls.Expanded
-                        ? (screen.X - side) / 2
-                        : 8 + (screen.X - side - 24) * (float)controls.Appearance.X,
-                        top = editingPanel ? (screen.Y - side) / 2 : 8 + (screen.Y - side - 65) * (float)controls.Appearance.Y;
-                    if (editingPanel)
-                    {
-                        var preview = panel.PreviewBounds;
-                        side = preview.Width;
-                        left = preview.X;
-                        top = preview.Y;
-                    }
+                    var bounds = editingPanel ? panel.PreviewBounds : HudLayoutGeometry.Ship(screen, DrawingAppearance, expanded);
+                    float side = bounds.Width, left = bounds.X, top = bounds.Y;
 
-                    var panelRect = new RectangleF(left - 8, top - 8, side + 16, side + 16);
+                    float panelTop = top - 8;
+                    var panelRect = new RectangleF(left - 8, panelTop, side + 16, Math.Min(side + 16, screen.Y - panelTop));
                     MyRenderProxy.DrawSprite(
                         Texture,
                         ref panelRect,
                         null,
-                        new Color(5, 18, 25, (byte)(255 * controls.Appearance.Background)),
+                        new Color(5, 18, 25, (byte)(255 * DrawingAppearance.Background)),
                         0,
                         false,
                         false
                     );
-                    float half = side / 2;
                     // Projection is linear. Evaluate trigonometry three times per frame, not per endpoint.
-                    var axisX = view.Project(SchematicGeometry.ToBasis(new Point3(1, 0, 0), cockpitRight, cockpitUp, cockpitBackward));
-                    var axisY = view.Project(SchematicGeometry.ToBasis(new Point3(0, 1, 0), cockpitRight, cockpitUp, cockpitBackward));
-                    var axisZ = view.Project(SchematicGeometry.ToBasis(new Point3(0, 0, 1), cockpitRight, cockpitUp, cockpitBackward));
+                    var projection = new ShipProjection
+                    {
+                        X = view.Project(SchematicGeometry.ToBasis(new Point3(1, 0, 0), cockpitRight, cockpitUp, cockpitBackward)),
+                        Y = view.Project(SchematicGeometry.ToBasis(new Point3(0, 1, 0), cockpitRight, cockpitUp, cockpitBackward)),
+                        Z = view.Project(SchematicGeometry.ToBasis(new Point3(0, 0, 1), cockpitRight, cockpitUp, cockpitBackward)),
+                        Zoom = view.Zoom
+                    };
+                    bool textured = TryDrawTexturedShip(ref projection, left, top, side, recoveryFocus);
                     for (int i = 0; i < points.Length; i++)
-                    {
-                        var p = points[i];
-                        rotated[i] = new Point3(
-                            p.X * axisX.X + p.Y * axisY.X + p.Z * axisZ.X,
-                            p.X * axisX.Y + p.Y * axisY.Y + p.Z * axisZ.Y,
-                            p.X * axisX.Z + p.Y * axisY.Z + p.Z * axisZ.Z
-                        );
-                    }
+                        rotated[i] = projection.Project(points[i]);
 
-                    double pulseTime = clock.Elapsed.TotalSeconds;
-                    double pulseWave = DamagePulse.Wave(pulseTime);
-                    const byte missingAlpha = 205;
-                    if (recoveryFocus || controls.Appearance.DrawFills)
-                        MarkerFill.Build(rotated, shadedMarkers, view.Zoom, side, fillBands);
-                    else
-                        fillBands.Clear();
-                    unmergedFills = fillBands.Count;
-                    fillRaster.Merge(fillBands, lineKinds, pulseStarts, pulseTime, controls.Appearance.NewDamagePulse);
-                    renderedFills = 0;
-                    foreach (var band in fillBands)
-                    {
-                        var fill = new RectangleF(
-                            left + half + (float)band.X * half,
-                            top + half + (float)band.Y * half,
-                            (float)band.Width * half,
-                            (float)band.Height * half
-                        );
-                        var kind = lineKinds[band.MarkerStart / 2];
-                        bool fresh = controls.Appearance.NewDamagePulse
-                            && DamagePulse.VisibleFor(kind)
-                            && band.MarkerStart / 2 < pulseStarts.Length
-                            && pulseTime - pulseStarts[band.MarkerStart / 2] >= 0
-                            && pulseTime - pulseStarts[band.MarkerStart / 2] < 4;
-                        uint rgb = DamagePulse.Tint(controls.Appearance.Color((int)kind), kind, pulseWave, fresh, controls.Appearance.Pulse);
-                        var shade = new Color((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
-                        shade.A = (byte)Math.Min(
-                            255,
-                            (fresh ? 160 : kind == ChangeKind.Missing ? missingAlpha / 4 : kind == ChangeKind.Damaged ? 12 : 60)
-                                * controls.Appearance.Fill
-                        );
-                        renderedFills++;
-                        MyRenderProxy.DrawSprite(Texture, ref fill, null, shade, 0, false, false);
-                    }
+                    DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
 
-                    renderedLines = 0;
-                    for (int b = 0; b < points.Length; b += 2)
-                    {
-                        if (!recoveryFocus && !controls.Appearance.DrawHull && lineKinds[b / 2] == ChangeKind.Hull)
-                            continue;
-                        if (lineWeights[b / 2] == 0 && controls.Appearance.ContextOpacity <= 0)
-                            continue;
-                        if (b / 2 < drawLine.Length && !drawLine[b / 2])
-                            continue;
-                        var a = rotated[b];
-                        var c = rotated[b + 1];
-                        double x0 = a.X * view.Zoom, y0 = -a.Y * view.Zoom, x1 = c.X * view.Zoom, y1 = -c.Y * view.Zoom;
-                        if (!SchematicGeometry.Clip(ref x0, ref y0, ref x1, ref y1))
-                            continue;
-                        var from = new Vector2(left + half + (float)x0 * half, top + half + (float)y0 * half);
-                        var to = new Vector2(left + half + (float)x1 * half, top + half + (float)y1 * half);
-                        var delta = to - from;
-                        float length = delta.Length();
-                        if (length < 0.25f)
-                            continue;
-                        var kind = lineKinds[b / 2];
-                        var lineColor = LineColor(kind, missingAlpha, lineWeights[b / 2]);
-                        bool fresh = controls.Appearance.NewDamagePulse
-                            && DamagePulse.VisibleFor(lineKinds[b / 2])
-                            && b / 2 < pulseStarts.Length
-                            && pulseTime - pulseStarts[b / 2] >= 0 && pulseTime - pulseStarts[b / 2] < 4;
-                        uint rgb = DamagePulse.Tint(controls.Appearance.Color((int)kind), kind, pulseWave, fresh, controls.Appearance.Pulse);
-                        lineColor.R = (byte)(rgb >> 16);
-                        lineColor.G = (byte)(rgb >> 8);
-                        lineColor.B = (byte)rgb;
-                        const float thickness = 1;
-                        var line = new RectangleF((from.X + to.X - length) / 2, (from.Y + to.Y - thickness) / 2, length, thickness);
-                        renderedLines++;
-                        MyRenderProxy.DrawSprite(Texture, ref line, null, lineColor, (float)Math.Atan2(delta.Y, delta.X), false, false);
-                    }
-
-                    if (!editingPanel)
+                    bool showShipLabel = !editingPanel && DrawingAppearance.ShowShipLabel;
+                    if (showShipLabel)
                         MyGuiManager.DrawString(
                             "White",
-                            caption + " | " + (controls.Category == "all"
+                            caption + TexturedCaption(textured) + " | " + (controls.Category == "all"
                                 ? "All systems"
                                 : controls.Category == "none"
                                 ? "No systems"
@@ -1271,9 +1205,9 @@ namespace Marigold
                             new Vector2((left - 8) / screen.X, (top + side + 12) / screen.Y),
                             0.55f,
                             useFullClientArea: true,
-                            maxTextWidth: controls.Expanded ? .65f : .28f
+                            maxTextWidth: expanded ? .65f : .28f
                         );
-                    if (controls.Expanded && !editingPanel)
+                    if (expanded && showShipLabel)
                         MyGuiManager.DrawString(
                             "White",
                             controls.Mode + " | " + controls.Category.Replace("weapons", "Offensive") + " | "

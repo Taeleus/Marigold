@@ -17,9 +17,14 @@ namespace Marigold
             {
                 result.X = cockpitPoint.X;
                 result.Y = -cockpitPoint.Z;
+                result.Z = Pitch < 0 ? cockpitPoint.Y : -cockpitPoint.Y;
             }
             else if (rotatingView)
+            {
+                // Keep the wireframe's screen axes and use the corresponding near side for solid models.
                 result.X = -result.X;
+                result.Z = -result.Z;
+            }
             return result;
         }
 

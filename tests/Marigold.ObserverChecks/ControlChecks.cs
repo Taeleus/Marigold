@@ -184,7 +184,7 @@ internal static class ControlChecks
             var point = new Point3(-2, -1, 3);
             var raw = SchematicGeometry.Rotate(point, c.Yaw, c.Pitch);
             var shown = c.Project(point);
-            check(Math.Abs(shown.X + raw.X) < 1e-9 && shown.Y == raw.Y && shown.Z == raw.Z);
+            check(Math.Abs(shown.X + raw.X) < 1e-9 && shown.Y == raw.Y && shown.Z == -raw.Z);
         }
 
         var beforePause = c.Project(new Point3(-2, -1, 3));

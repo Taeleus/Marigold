@@ -72,7 +72,14 @@ namespace Marigold
         // Liang-Barsky clipping to the schematic's normalized square viewport.
         public static bool Clip(ref double x0, ref double y0, ref double x1, ref double y1)
         {
-            double dx = x1 - x0, dy = y1 - y0, lo = 0, hi = 1;
+            return Clip(ref x0, ref y0, ref x1, ref y1, out _, out _);
+        }
+
+        public static bool Clip(ref double x0, ref double y0, ref double x1, ref double y1, out double lo, out double hi)
+        {
+            double dx = x1 - x0, dy = y1 - y0;
+            lo = 0;
+            hi = 1;
             if (!Bound(-dx, x0 + 1, ref lo, ref hi)
                 || !Bound(dx, 1 - x0, ref lo, ref hi)
                 || !Bound(-dy, y0 + 1, ref lo, ref hi)

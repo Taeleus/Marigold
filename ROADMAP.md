@@ -1,62 +1,35 @@
 # Marigold roadmap
 
-Updated October 28, 2026. Current version: **0.16.1**, targeting **Pulsar Legacy / .NET Framework 4.8**. The redesigned UI and both follow-up review fixes have passed user testing.
+Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-## 0.16.1 review fixes — complete
+Development build **0.17.0** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0170--november-5-2026)
 
-- Ignore foreign-grid and still-resident removal notifications during connector bookkeeping, while preserving immediate genuine removals and replacement blocks.
-- Handle short bracketed names safely in the Spanish translator.
-- Add regression coverage for both reports and a short [in-game checklist](TESTING-TODO.md).
+## Suggestions
 
-Both focused [in-game checks](TESTING-TODO.md) passed. Regression coverage verifies undocking, genuine removals, stale replacement notifications and short bracketed labels. The tested changes are ready for the Legacy source pin; live exact-pin loading remains a separate publication check.
+| Idea | Status | What it would do |
+| --- | --- | --- |
+| Show ship label | Ready to test | Turn off **Show ship label** under **Ship display** to hide the text below the schematic, including the second line in expanded view. The ship's **Show label** checkbox in **Arrange HUD** controls the same setting. The label is visible by default. **Save display** keeps the choice. [Test checklist](TESTING-TODO.md#ship-label--pending) |
+| Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. Use **Apply layout** to use the draft and **Save display** to keep it. Custom-bar changes use **Save for this ship**. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
+| Sharper, steadier ship display | Confirmed in game | **HD Wireframe** is the default. A performance comparison with **SD Wireframe** on the damaged station is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
+| Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 
-## 0.16.0 control panel redesign — complete
+As feedback comes in, add a row with the request, its status and a link to the discussion when available. Use **Suggested**, **Planned**, **In progress**, **Ready to test** or **Confirmed in game**. Once a change ships, record it in the [changelog](CHANGELOG.md). Put in-game checks in the [testing checklist](TESTING-TODO.md).
 
-- Persistent task navigation, scrolling forms and shared native control spacing replace the placeholder layout.
-- Clear labels, grouped actions, explicit save scope and guided empty states cover all existing workflows.
-- A full HUD preview preserves editor fields and custom-bar drafts, with a direct return to editing.
-- Recovery drawing and mouse interaction share one preview rectangle; translated help uses the native wrapped-text measurement.
-- Backend behavior, commands and storage formats stay compatible. Existing 0.15.1 acceptance results remain valid for that version.
+## After release
 
-All six [0.16.0 checks](TESTING-TODO.md) passed in user testing: navigation and layout, full HUD preview, filters/colors, bars and drafts, baseline workflows, and saving/preferences. Build, regression and source-compilation checks passed separately. PluginHub pinning and exact-source-loader validation remain distinct publication steps.
+- [ ] **Try the PluginHub install.** Disable the local copy, enable Marigold from PluginHub in Pulsar Legacy and open `/mg ui` in a cockpit. Check a fresh setup and confirm an existing profile still loads. Source compilation and local package tests have passed. The live PluginHub install check remains unrecorded.
 
-## 0.15.1 usability follow-up — complete
+## Ideas for later
 
-- Visual color selection for schematic states and healthy health bars, with a hue strip, saturation/brightness square, comparison swatches and exact RGB entry.
-- Custom-bar search controls no longer share the same space with the Find button.
-- **Update tracked blocks** explains group membership changes separately from automatic damage/repair updates.
+- **Pulsar Interim support.** The Interim build compiles. Verify it in-game before adding Interim to the PluginHub listing.
+- **Schematic pan.** Consider letting players pan the ship model within its display.
+- **Spanish translation.** Translate the remaining diagnostic messages as gaps are reported.
+- **Performance.** Revisit filled rendering if an improvement can preserve its appearance and damage coverage. Outline modes are available for large grids. [Performance results](docs/PERFORMANCE-RESULTS.md)
 
-User testing passed color selection, cancel/save persistence and the custom-bar page. The earlier menu-label and Power sections check also passed. Results are recorded in the [completed checklist](TESTING-TODO.md).
+Blueprint imports currently require XML, and the schematic uses block bounds. Ambiguous ship matches may need manual recovery. Station mode supports connector-docked ships. Mechanical subgrids on rotors, hinges or pistons are outside scope.
 
-## 0.15.0 usability improvements
+## Share feedback
 
-- Adjustable faint outlines retain the rest of the ship when focusing on selected systems, respecting hidden styles and fault-only rendering.
-- Shared orange/red brightness pulses make fresh faults more visible; yellow remains steady.
-- Healthy health-bar color can be chosen independently or linked to the schematic outline.
-- Labels clarify dropdowns/textboxes; Power sections have a separate page without status-area overlap.
-- Custom health bars track a selected block or terminal group, with saved membership, explicit refresh and individual layout controls.
-- Profiles and saved baseline versions retain custom bars; recovery and cockpit re-anchoring preserve their coordinates.
+[Open an issue](https://github.com/Taeleus/Marigold/issues) with what you were trying to do and what would make it easier. For a bug, include your Marigold version, steps to reproduce and a screenshot if it helps.
 
-Automated checks cover settings compatibility, fault states, membership persistence, revisions and recovery. User testing passed system context, pulse feedback, healthy colors, menu layout, custom-bar creation/repair and persistence/recovery.
-
-## Completed and user-verified
-
-Ship schematic and health bars; Power sections; damage fills, outlines and pulse controls; profiles and baseline versions; XML blueprint imports and repairs; recovery controls; automatic matching with the 75% minimum; reusable profile numbers; performance options under Preferences. User reports final regression checks working.
-
-Heavy-damage performance has been measured. Outline modes provide lower cost; further marginal fill optimization is deferred to preserve current appearance and behavior. [Results](docs/PERFORMANCE-RESULTS.md).
-
-## PluginHub review follow-up — 0.14.16
-
-- Use the game's selected user-data folder for every Marigold data file and the game's canonical local blueprint folder for Local search.
-- Use only the selected game-data root. No migration, old-folder detection or fallback remains; other folders are ignored.
-- Remove routine per-rebuild log messages while retaining requested statistics and error logging.
-- Remove the descriptor's redundant Harmony declaration; retain the local build dependency.
-- Verify ordinary launch, persistence, Local blueprint search and quiet logging using the short [review-fix checklist](TESTING-TODO.md).
-
-Core review-fix tests are user-reported passed: startup, save/restart persistence and Local blueprints. Log inspection confirmed only startup and requested statistics messages, with no rebuild spam or Marigold errors. Automated build, regression and Legacy source checks passed. These review fixes are on master and [PluginHub PR #285](https://github.com/StarCpt/PluginHub/pull/285). Final pinned-source loading through Legacy remains a separate check; no additional in-game custom `-appdata` test is claimed.
-
-## Deferred / known limits
-
-Interim builds compile but are untested in-game and excluded from initial publication. Dual-package release work is deferred. XML-only blueprints, block-envelope shapes, conservative matching and manual handling of ambiguous layouts remain documented limitations. Mechanical subgrids are outside scope. Further rendering optimization, drag positioning/freehand pan and complete diagnostic translation are optional future work.
-
-Earlier roadmap and test evidence: [roadmap history](docs/history/ROADMAP-HISTORY-through-0.14.14.md), [test history](docs/history/TESTING-HISTORY-through-0.14.8.md).
+For shipped features and completed checks, see the [changelog](CHANGELOG.md) and [testing checklist](TESTING-TODO.md). Earlier development milestones are in the [roadmap history](docs/history/ROADMAP-HISTORY-through-0.14.14.md).

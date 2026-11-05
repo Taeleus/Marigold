@@ -18,6 +18,7 @@ internal static class FillChecks
                     edges.Add(corners[i | axis]);
                 }
 
+        CheckPreciseRaster(edges.ToArray());
         var bands = new List<FillBand>();
         MarkerFill.Build(edges.ToArray(), new[] { 0 }, 1, 400, bands);
         double area = 0;
@@ -204,5 +205,189 @@ internal static class FillChecks
         if (!active || !steady)
             throw new Exception("Union lost pulse eligibility");
         Console.WriteLine("PASS: marker fill checks including 3072-region fairness and 3000-block aggregation coverage.");
+    }
+
+    private static void CheckPreciseRaster(Point3[] edges)
+    {
+        const int size = 32;
+        var raster = new SchematicRaster(size);
+        var palette = new uint[] { 0xFFFF0040, 0xFFFF0080, 0xFF800040, 0xFF800080, 0xFF000040, 0xFF000080 };
+        int center = (size * (size / 2) + size / 2) * 4;
+        CheckTexturedCoverage(raster, size, edges, palette);
+        CheckTexturedDepth(raster, size, edges, palette);
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 0);
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center] != 64 || raster.Pixels[center + 3] != 64)
+            throw new Exception("Overlapping fills of the same state must shade once in premultiplied color");
+        if (raster.Pixels[3] != 0)
+            throw new Exception("Fill must leave the area outside the marker transparent");
+
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 0);
+        raster.Fill(edges, 0, 1, 1);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center + 3] != 128)
+            throw new Exception("Fresh fill must take precedence over its steady state at the same point");
+
+        var rotated = Array.ConvertAll(edges, p => SchematicGeometry.Rotate(p, .52, -.37));
+        raster.Begin();
+        raster.Fill(rotated, 0, 1, 4);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        bool hasPartialFill = false;
+        for (int i = 3; i < raster.Pixels.Length; i += 4)
+            hasPartialFill |= raster.Pixels[i] > 0 && raster.Pixels[i] < 64;
+        if (!hasPartialFill || raster.Pixels[center + 3] != 64)
+            throw new Exception("Rotated fills need fractional edges and solid coverage inside");
+
+        var tiny = Array.ConvertAll(edges, p => new Point3(p.X * .001, p.Y * .001, p.Z * .001));
+        raster.Begin();
+        raster.Fill(tiny, 0, 1, 4);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        bool hasTinyFill = false;
+        for (int i = 3; i < raster.Pixels.Length; i += 4)
+            hasTinyFill |= raster.Pixels[i] > 0;
+        if (!hasTinyFill)
+            throw new Exception("A visible marker smaller than one raster sample must retain some fill coverage");
+
+        raster.Begin();
+        raster.Stroke(-.8, -.32, .01, .02, 1, 0x00FFFFFF);
+        raster.Stroke(.01, .02, .65, -.41, 1, 0x00FFFFFF);
+        raster.Finish();
+        bool hasPartialLine = false;
+        for (int i = 3; i < raster.Pixels.Length; i += 4)
+            hasPartialLine |= raster.Pixels[i] > 0 && raster.Pixels[i] < 255;
+        if (!hasPartialLine || raster.Pixels[center + 3] == 0)
+            throw new Exception("Sloped strokes need fractional coverage and a connected shared corner");
+    }
+
+    private static void CheckTexturedDepth(SchematicRaster raster, int size, Point3[] edges, uint[] palette)
+    {
+        const float gap = float.NegativeInfinity;
+        var mixedDepth = new[] { 1f, 0f, gap, 1f, 0f, gap, 1f, 0f, gap };
+        int row = size * (size / 2);
+        int left = (row + 9) * 4 + 3;
+        int center = (row + size / 2) * 4 + 3;
+        int right = (row + 22) * 4 + 3;
+        for (int layer = 0; layer < palette.Length; layer++)
+        {
+            raster.Begin(mixedDepth, 3);
+            raster.Fill(edges, 0, 1, layer);
+            raster.ResolveFills(palette);
+            raster.Finish();
+            int fullAlpha = (byte)palette[layer];
+            int coveredAlpha = raster.Pixels[left];
+            if (coveredAlpha < fullAlpha / 4 || coveredAlpha >= fullAlpha
+                || raster.Pixels[left - 3] != coveredAlpha
+                || raster.Pixels[center] != fullAlpha || raster.Pixels[right] != fullAlpha)
+                throw new Exception("A covered fill must stay visible and dimmer than exposed portions or gaps");
+        }
+
+        // The projected front of a rotated box is nearer in the middle than on either side.
+        var rotated = Array.ConvertAll(edges, p => SchematicGeometry.Rotate(p, Math.PI / 4, 0));
+        raster.Begin(new[] { .55f }, 1);
+        raster.Fill(rotated, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center] != 64 || raster.Pixels[left] == 0 || raster.Pixels[left] >= 64
+            || raster.Pixels[right] == 0 || raster.Pixels[right] >= 64)
+            throw new Exception("A rotated fill must compare the front face depth at each sample");
+
+        var coveringDepth = new[] { 1f };
+        raster.Begin(coveringDepth, 1);
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        int hiddenAlpha = raster.Pixels[center];
+        if (hiddenAlpha < 16 || hiddenAlpha >= 64)
+            throw new Exception("A fully covered marker must keep its colored fill");
+
+        var closer = Array.ConvertAll(edges, p => new Point3(p.X, p.Y, p.Z + 1));
+        raster.Begin(coveringDepth, 1);
+        raster.Fill(closer, 0, 1, 0);
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center] != 64)
+            throw new Exception("An overlapping covered fill must not darken or stack with the exposed fill of the same state");
+
+        raster.Begin(new[] { .55f }, 1, .1);
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center] != 64)
+            throw new Exception("A fill within the surface depth tolerance must keep its normal intensity");
+
+        double lineY = 1.0 / size;
+        raster.Begin(new[] { .5f }, 1);
+        raster.Stroke(-.45, lineY, .45, lineY, 1, 0xFF0000FF, -.5, 1.5);
+        raster.Finish();
+        if (raster.Pixels[left] == 0 || raster.Pixels[left] >= 255 || raster.Pixels[right] != 255)
+            throw new Exception("A stroke must keep covered samples visible and interpolate depth along its length");
+
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Stroke(-.45, lineY, .45, lineY, 1, 0xFF0000FF, -.5, -.5);
+        raster.Finish();
+        int offLine = center + 3 * size * 4;
+        if (raster.Pixels[left] != 255 || raster.Pixels[right] != 255 || raster.Pixels[offLine] != 64)
+            throw new Exception("Beginning a wireframe must clear the previous textured depth");
+    }
+
+    private static void CheckTexturedCoverage(SchematicRaster raster, int size, Point3[] edges, uint[] palette)
+    {
+        // A 3x3 model with only its center pixel covered exercises unequal resolutions and partial edges.
+        var surface = new byte[3 * 3 * 4];
+        surface[4 * 4 + 3] = 255;
+        int row = size * (size / 2);
+        int center = (row + size / 2) * 4 + 3;
+        int outside = (row + 9) * 4 + 3;
+        int edge = (row + 10) * 4 + 3;
+        for (int layer = 0; layer < 4; layer++)
+        {
+            raster.Begin();
+            raster.Fill(edges, 0, 1, layer);
+            raster.ResolveFills(palette, surface, 3);
+            raster.Finish();
+            int alpha = (byte)palette[layer];
+            if (raster.Pixels[center] != alpha || raster.Pixels[outside] != 0 || raster.Pixels[edge] != alpha / 2)
+                throw new Exception("Live fault fills must stay within the visible model coverage");
+        }
+
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 4);
+        raster.ResolveFills(palette, surface, 3);
+        raster.Finish();
+        if (raster.Pixels[outside] != 64)
+            throw new Exception("Missing fills must remain visible beyond the hull");
+
+        raster.Begin();
+        raster.ResolveFills(palette, surface, 3);
+        raster.Stroke(-.5, 0, -.25, 0, 1, 0x00FFFFFF);
+        raster.Finish();
+        if (raster.Pixels[outside] == 0)
+            throw new Exception("Hull coverage must leave diagnostic outlines visible");
+
+        var replacementSurface = new byte[surface.Length];
+        replacementSurface[3 * 4 + 3] = 255;
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette, replacementSurface, 3);
+        raster.Finish();
+        if (raster.Pixels[center] != 0 || raster.Pixels[outside] != 64)
+            throw new Exception("A new textured image must update the coverage mask");
+
+        raster.Begin();
+        raster.Fill(edges, 0, 1, 0);
+        raster.ResolveFills(palette);
+        raster.Finish();
+        if (raster.Pixels[center] != 64 || raster.Pixels[outside] != 64)
+            throw new Exception("Wireframe fills must ignore previously applied textured coverage");
     }
 }

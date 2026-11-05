@@ -147,6 +147,46 @@ internal static class DisplayChecks
             Directory.Delete(folder, true);
         }
 
+        var defaults = new SchematicControls();
+        Check(defaults.Appearance.Rendering == HudAppearance.HdWireframe && defaults.Appearance.DrawFills
+            && defaults.Appearance.DrawHull, "New layouts default to HD Wireframe with full damage shading");
+        var wireframe = DisplaySettings.Export(defaults);
+        var styled = new SchematicControls();
+        styled.Appearance.Rendering = HudAppearance.Textured;
+        styled.Appearance.ShipOpacity = .48;
+        styled.Appearance.ExpandedX = .23;
+        styled.Appearance.ShowShipLabel = false;
+        DisplaySettings.Import(DisplaySettings.Export(styled), c);
+        Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48
+            && c.Appearance.DrawFills && c.Appearance.DrawHull, "Textured style and opacity round-trip with the layout");
+        Check(c.Appearance.ExpandedX == .23 && c.Appearance.X == .98,
+            "Expanded horizontal placement round-trips independently of compact placement");
+        Check(!c.Appearance.ShowShipLabel && c.SchematicVisible, "A layout can hide the label while keeping the schematic visible");
+        c.Appearance.Set("size", "0.5");
+        Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48,
+            "Resizing retains textured style and opacity");
+        Check(c.Appearance.ExpandedX == .23, "Other appearance edits retain expanded horizontal placement");
+        Check(!c.Appearance.ShowShipLabel, "Other appearance edits retain a hidden ship label");
+        DisplaySettings.Import(wireframe, c);
+        Check(c.Appearance.Rendering == HudAppearance.HdWireframe && c.Appearance.ShipOpacity == .7
+            && c.Appearance.ExpandedX == .5, "HD Wireframe round-trips with default model opacity and centered expanded view");
+        Check(c.Appearance.ShowShipLabel, "New layouts show the ship label by default");
+
+        var explicitSd = new HudAppearance { Rendering = HudAppearance.SdWireframe }.Encode();
+        Check(HudAppearance.Parse(explicitSd).Rendering == HudAppearance.SdWireframe,
+            "Explicit SD Wireframe remains selected after saving");
+        var positionedSd = explicitSd.Substring(0, explicitSd.LastIndexOf(';'));
+        Check(HudAppearance.Parse(positionedSd).ShowShipLabel, "Saved layouts from before the label toggle keep showing the label");
+        var unifiedSd = positionedSd.Substring(0, positionedSd.LastIndexOf(';'));
+        var oldFullDisplay = unifiedSd.Substring(0, unifiedSd.LastIndexOf(';'));
+        Check(HudAppearance.Parse(unifiedSd).Rendering == HudAppearance.SdWireframe
+            && HudAppearance.Parse(unifiedSd).ExpandedX == .5, "Saved unified mode keeps explicit SD and centers expanded view");
+        Check(HudAppearance.Parse(oldFullDisplay).Rendering == HudAppearance.HdWireframe,
+            "Saved Full display migrates to HD Wireframe");
+        var oldTextured = HudAppearance.Parse(oldFullDisplay + ";True;0.48");
+        Check(oldTextured.Rendering == HudAppearance.Textured && oldTextured.ShipOpacity == .48 && oldTextured.ExpandedX == .5,
+            "Saved separate textured toggle maps to the unified rendering mode");
+
         Console.WriteLine("PASS: " + count + " display/settings/profile-suggestion checks.");
     }
 }

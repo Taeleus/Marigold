@@ -116,5 +116,16 @@ internal static class BlueprintChecks
         }
 
         Console.WriteLine("PASS: " + count + " blueprint parser/command checks.");
+
+        Check(WorkshopAssetPath.TrySplit(@"C:\Server\content\244850\2815514917\Models\Drives\Drive.mwm",
+                "Models", out string id, out string relative)
+            && id == "2815514917" && relative == Path.Combine("Models", "Drives", "Drive.mwm"),
+            "Remote Workshop models retain the exact mod ID and local asset suffix");
+        Check(!WorkshopAssetPath.TrySplit(@"C:\Server\content\244850\2815514917\Models\..\..\Drive.mwm",
+                "Models", out _, out _), "Workshop asset suffix cannot traverse parent folders");
+        Check(!WorkshopAssetPath.TrySplit(@"C:\Server\content\244850\invalid\Models\Drive.mwm",
+                "Models", out _, out _), "Workshop asset remap requires a numeric ID");
+        Check(!WorkshopAssetPath.TrySplit(@"C:\Server\content\244850\2815514917\Textures\Drive.dds",
+                "Models", out _, out _), "Workshop asset remap stays in the expected asset folder");
     }
 }

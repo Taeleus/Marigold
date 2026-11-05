@@ -97,7 +97,7 @@ namespace Marigold
             {
                 string[] titles = { "Ship", "Baselines", "Ship display", "Health bars", "Preferences", "Save & share" };
                 int[] routes = { 0, 1, 4, 8, 12, 13 };
-                Label(-.44f, -.425f, "Marigold " + typeof(Plugin).Assembly.GetName().Version.ToString(3));
+                Label(-.44f, -.425f, "Marigold " + Plugin.Version);
                 for (int i = 0; i < routes.Length; i++)
                 {
                     int route = routes[i];
@@ -119,12 +119,11 @@ namespace Marigold
                 inspect.Position = new Vector2(-.35f, .115f);
                 inspect.Size = new Vector2(.19f, .044f);
                 Controls.Add(inspect);
-                var hint = new MyGuiControlMultilineText(
-                    new Vector2(-.35f, .335f), new Vector2(.19f, .075f), font: "White", textScale: .56f,
-                    contents: new StringBuilder(T("Preview HUD shows the actual layout without leaving your edits.")),
-                    drawScrollbarV: false, drawScrollbarH: false
-                );
-                Controls.Add(hint);
+                var arrange = MakeAction("Arrange HUD", ArrangeHud, .19f);
+                arrange.Position = new Vector2(-.35f, .335f);
+                arrange.Enabled = tab != 22 && tab != 26;
+                arrange.SetToolTip(T("Move and resize HUD elements on the live preview."));
+                Controls.Add(arrange);
                 var back = MakeAction("Back", Back, .18f);
                 back.Position = new Vector2(-.35f, .425f);
                 back.Enabled = history.Count > 0;

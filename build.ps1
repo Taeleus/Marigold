@@ -31,6 +31,11 @@ $pluginVersion = [string]$project.Project.PropertyGroup.Version
 if ($pluginVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw 'Expected a major.minor.patch plugin version.'
 }
+$pluginSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src\Marigold.Plugin\Plugin.cs') -Raw
+$sourceVersion = [regex]::Match($pluginSource, 'const\s+string\s+Version\s*=\s*"([^"]+)";').Groups[1].Value
+if ($sourceVersion -ne $pluginVersion) {
+    throw 'Plugin.cs and Marigold.Plugin.csproj must use the same version.'
+}
 
 $manifestPath = Join-Path $PSScriptRoot 'Marigold.xml'
 $manifestText = [System.IO.File]::ReadAllText($manifestPath)

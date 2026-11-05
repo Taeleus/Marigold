@@ -18,16 +18,22 @@ namespace Marigold
                     owner.controls.SchematicVisible = visible;
                     Status("Updated. Save display to keep this setting.");
                 });
+                CheckField("Show ship label", owner.controls.Appearance.ShowShipLabel, visible =>
+                {
+                    owner.controls.Appearance.ShowShipLabel = visible;
+                    Status("Updated. Save display to keep this setting.");
+                });
 
                 Heading("Position and size");
                 var appearance = owner.controls.Appearance;
-                var x = TextField("Horizontal position (0 = left, 1 = right)", Number(appearance.X), 24);
+                bool expanded = owner.controls.Expanded;
+                var x = TextField("Horizontal position (0 = left, 1 = right)", Number(expanded ? appearance.ExpandedX : appearance.X), 24);
                 var y = TextField("Vertical position (0 = top, 1 = bottom)", Number(appearance.Y), 24);
                 var size = TextField("Size (0.12 to 0.7 of screen height)", Number(appearance.Size), 24);
                 PrimaryAction("Apply position and size", () =>
                 {
                     var updated = HudAppearance.Parse(owner.controls.Appearance.Encode());
-                    updated.Set("x", x.Text);
+                    updated.Set(expanded ? "expandedx" : "x", x.Text);
                     updated.Set("y", y.Text);
                     updated.Set("size", size.Text);
                     owner.controls.Appearance = updated;
@@ -39,19 +45,32 @@ namespace Marigold
                 var background = TextField("Background opacity (0 to 1)", Number(appearance.Background), 24);
                 var outline = TextField("Outline opacity (0 to 1)", Number(appearance.Outline), 24);
                 var fill = TextField("Damage fill opacity (0 to 1)", Number(appearance.Fill), 24);
+                TextRow("Textured ship opacity");
+                var shipOpacity = new MyGuiControlSlider(
+                    minValue: 0, maxValue: 100, width: ContentWidth, defaultValue: (float)(appearance.ShipOpacity * 100),
+                    labelText: "{0}%", labelDecimalPlaces: 0, labelScale: .68f, labelSpaceWidth: .075f,
+                    intValue: true, showLabel: true
+                );
+                AddContent(shipOpacity, shipOpacity.Size.Y);
+                Note("The slider fades the textured ship and damage fills together. Damage outlines stay visible.");
                 PrimaryAction("Apply transparency", () =>
                 {
                     var updated = HudAppearance.Parse(owner.controls.Appearance.Encode());
                     updated.Set("background", background.Text);
                     updated.Set("outline", outline.Text);
                     updated.Set("fill", fill.Text);
+                    updated.ShipOpacity = shipOpacity.Value / 100d;
                     owner.controls.Appearance = updated;
                     Status("Updated. Save display to keep this layout.");
                 });
 
                 Heading("View style");
                 ChoiceField("Schematic layout", new[] { "Compact", "Expanded" }, owner.controls.Expanded ? 1 : 0,
-                    i => Run("layout " + (i == 1 ? "expanded" : "compact")));
+                    i =>
+                    {
+                        Run("layout " + (i == 1 ? "expanded" : "compact"));
+                        RecreateControls(false);
+                    });
                 var details = new[] { "low", "medium", "high" };
                 ChoiceField("Outline detail", new[] { "Low", "Medium", "High" },
                     Math.Max(0, Array.IndexOf(details, owner.controls.DetailName)), i => Run("detail " + details[i]));
@@ -67,7 +86,8 @@ namespace Marigold
                         HealthyBarColor = previous.HealthyBarColor,
                         MatchHealthyBarColor = previous.MatchHealthyBarColor,
                         ContextOpacity = previous.ContextOpacity,
-                        Rendering = previous.Rendering
+                        Rendering = previous.Rendering,
+                        ShowShipLabel = previous.ShowShipLabel
                     };
                     RecreateControls(false);
                     Status("Position, size and opacity reset. Colors unchanged.");
@@ -83,16 +103,28 @@ namespace Marigold
             private void Performance()
             {
                 Intro("Choose how much the schematic draws on large or heavily damaged ships.");
+                var modes = new[]
+                {
+                    HudAppearance.HdWireframe, HudAppearance.SdWireframe, HudAppearance.Textured,
+                    HudAppearance.Outlines, HudAppearance.FaultsWithFills, HudAppearance.FaultOutlines
+                };
                 ChoiceField("Rendering mode", new[]
                 {
-                    "Full display", "Outlines only", "Faults with fills", "Fault outlines only"
-                }, owner.controls.Appearance.Rendering, i =>
+                    "HD Wireframe", "SD Wireframe", "Textured Ship",
+                    "Outlines only", "Faults with fills", "Fault outlines only"
+                }, Math.Max(0, Array.IndexOf(modes, owner.controls.Appearance.Rendering)), i =>
                 {
-                    owner.controls.Appearance.Rendering = i;
+                    owner.controls.Appearance.Rendering = modes[i];
+                    owner.ReleaseTexturedShip();
+                    owner.ReleaseSchematicTexture();
+                    owner.drawSamples = 0;
+                    owner.drawTotalMs = owner.drawMaxMs = 0;
                     owner.RefreshReference("Rendering mode changed.");
                     Status("Updated. Save display to keep this setting.");
                 });
-                Note("Full display includes the hull and translucent damage shading. Outlines only removes the shading.");
+                Note("HD Wireframe has sharper lines and fill edges. SD Wireframe uses the original sprite display.");
+                Note("Textured Ship uses the live ship's models, paint, and available textures. Adjust its opacity in Ship display.");
+                Note("Outlines only removes the translucent damage shading.");
                 Note("Fault modes hide healthy hull context. Every filtered fault remains represented, and health-bar counts stay the same.");
 
                 Heading("Damage pulses");
@@ -107,7 +139,7 @@ namespace Marigold
                     Status("Updated. Save display to keep this setting.");
                 });
                 Note("Fresh orange/red faults pulse together for four seconds. Yellow stays steady. Turn both options off for a still display.");
-                Note("Use Save display to keep these choices. Recovery previews always use full rendering.");
+                Note("Use Save display to keep these choices. Recovery previews use wireframe with damage shading.");
             }
 
             private void Shortcuts()
@@ -180,7 +212,7 @@ namespace Marigold
                 });
 
                 Heading("This ship");
-                Note("Keep a separate display setup for the current saved ship.");
+                Note("Save the current ship's display, including arranged custom bars.");
                 ActionRow("Save for this ship", () => Status(owner.DisplayProfileAction("ship-save", null)),
                     "Restore ship setup", () =>
                     {

@@ -1,4 +1,25 @@
-# Completed review-fix checks — 0.16.1
+# Testing checklist
+
+## Ship label — pending
+
+- [ ] Turn off **Ship display > Show ship label** and check that the text disappears below the schematic in compact and expanded views. In **Arrange HUD**, move the ship to the bottom or set **Vertical position** to 100%. It should reach the bottom edge. Apply the layout, use **Save display**, and reconnect to check that both settings were kept.
+
+---
+
+## Display follow-up
+
+- [x] **Arrange HUD** works in game.
+- [x] **Textured Ship** works in game, including the Expanse drive.
+- [x] **HD Wireframe** works in game.
+
+- [ ] **Resize a bar in Arrange HUD.** Select a system bar and a custom bar. Drag the square at the corner of each selection to change width and height, then try the **Width** and **Height** sliders. Check the preview and use **Apply layout**.
+- [ ] **Check layout persistence.** Move a bar and cancel once to check that the draft is discarded. Apply and save a layout, then reconnect to check it was kept. If you moved a custom bar, use **Save for this ship** and confirm it still tracks the same blocks after reconnecting.
+- [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
+- [ ] **Compare wireframe performance during damage.** On the saved damaged station, compare HD and SD at the same view and detail. Check FPS, `/mg stats`, and damage highlights while rotating and taking fire. [Performance test procedure](docs/PERFORMANCE-TEST.md)
+
+---
+
+## Completed review-fix checks — 0.16.1
 
 Both focused checks below are user-reported passed on October 28, 2026, using the deployed Legacy package. The build, regression suite (including the new removal/translation checks) and source compilation also passed. Earlier completed results remain below.
 

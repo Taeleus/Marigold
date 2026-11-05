@@ -6,18 +6,30 @@ namespace Marigold
 {
     internal sealed class HudAppearance
     {
+        public const int SdWireframe = 0;
+        public const int Outlines = 1;
+        public const int FaultsWithFills = 2;
+        public const int FaultOutlines = 3;
+        public const int HdWireframe = 4;
+        public const int Textured = 5;
+
+        private const double DefaultShipOpacity = .7;
+        private const double DefaultExpandedX = .5;
         public double X = .98, Y = .12, Size = .32, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
+        public double ExpandedX = DefaultExpandedX;
         public bool NewDamagePulse = true;
-        public int Rendering; // 0 full, 1 outlines, 2 faults with fills, 3 fault outlines
+        public int Rendering = HdWireframe;
         public double ContextOpacity = .15;
         public string HealthyBarColor = "3296FF";
         public bool MatchHealthyBarColor;
+        public double ShipOpacity = DefaultShipOpacity;
+        public bool ShowShipLabel = true;
 
         public bool DrawFills
         {
             get
             {
-                return (Rendering & 1) == 0;
+                return Rendering != Outlines && Rendering != FaultOutlines;
             }
         }
 
@@ -25,7 +37,7 @@ namespace Marigold
         {
             get
             {
-                return (Rendering & 2) == 0;
+                return Rendering != FaultsWithFills && Rendering != FaultOutlines;
             }
         }
 
@@ -54,7 +66,10 @@ namespace Marigold
                     Rendering.ToString(CultureInfo.InvariantCulture),
                     N(ContextOpacity),
                     HealthyBarColor,
-                    MatchHealthyBarColor.ToString()
+                    MatchHealthyBarColor.ToString(),
+                    N(ShipOpacity),
+                    N(ExpandedX),
+                    ShowShipLabel.ToString()
                 }
             );
         }
@@ -62,7 +77,8 @@ namespace Marigold
         public static HudAppearance Parse(string text)
         {
             var a = text.Split(';');
-            if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13)
+            if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13 && a.Length != 14 && a.Length != 15
+                && a.Length != 16)
                 throw new InvalidDataException("Invalid HUD appearance.");
             var n = new double[7];
             for (int i = 0; i < 7; i++)
@@ -87,13 +103,20 @@ namespace Marigold
             bool fresh = true;
             if (a.Length >= 9 && !bool.TryParse(a[8], out fresh))
                 throw new InvalidDataException("Invalid damage pulse toggle.");
-            int rendering = 0;
-            if (a.Length >= 10 && (!int.TryParse(a[9], out rendering) || rendering < 0 || rendering > 3))
+            int rendering = HdWireframe;
+            // Earlier dev layouts stored a separate textured toggle before model opacity.
+            bool texturedShip = false;
+            bool legacyStyle = a.Length == 15 && bool.TryParse(a[13], out texturedShip);
+            bool unifiedRendering = a.Length >= 14 && !legacyStyle;
+            if (a.Length >= 10 && (!int.TryParse(a[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out rendering)
+                || rendering < SdWireframe || rendering > (unifiedRendering ? Textured : FaultOutlines)))
                 throw new InvalidDataException("Invalid rendering mode.");
+            if (!unifiedRendering && rendering == SdWireframe)
+                rendering = HdWireframe; // The earlier default Full display moves to HD Wireframe.
             double context = .15;
             string healthy = "3296FF";
             bool matchHealthy = false;
-            if (a.Length == 13)
+            if (a.Length >= 13)
             {
                 uint color;
                 if (!double.TryParse(a[10], NumberStyles.Float, CultureInfo.InvariantCulture, out context)
@@ -105,14 +128,31 @@ namespace Marigold
                 if (!bool.TryParse(a[12], out matchHealthy))
                     throw new InvalidDataException("Invalid healthy bar color link.");
             }
+            double shipOpacity = DefaultShipOpacity;
+            if (texturedShip)
+                rendering = Textured;
+            if (a.Length >= 14 && (!double.TryParse(a[legacyStyle ? 14 : 13], NumberStyles.Float, CultureInfo.InvariantCulture, out shipOpacity)
+                || double.IsNaN(shipOpacity) || double.IsInfinity(shipOpacity) || shipOpacity < 0 || shipOpacity > 1))
+                throw new InvalidDataException("Textured ship opacity must be between 0 and 1.");
+            double expandedX = DefaultExpandedX;
+            if (a.Length >= 15 && !legacyStyle
+                && (!double.TryParse(a[14], NumberStyles.Float, CultureInfo.InvariantCulture, out expandedX)
+                    || double.IsNaN(expandedX) || double.IsInfinity(expandedX) || expandedX < 0 || expandedX > 1))
+                throw new InvalidDataException("Expanded horizontal position must be between 0 and 1.");
+            bool showShipLabel = true;
+            if (a.Length == 16 && !bool.TryParse(a[15], out showShipLabel))
+                throw new InvalidDataException("Invalid ship label visibility.");
             return new HudAppearance
             {
                 ContextOpacity = context,
                 HealthyBarColor = healthy,
                 MatchHealthyBarColor = matchHealthy,
+                ShipOpacity = shipOpacity,
                 Rendering = rendering,
                 NewDamagePulse = fresh,
                 X = n[0],
+                ExpandedX = expandedX,
+                ShowShipLabel = showShipLabel,
                 Y = n[1],
                 Size = n[2],
                 Background = n[3],
@@ -169,13 +209,16 @@ namespace Marigold
                 "rendering",
                 "context",
                 "healthy",
-                "matchhealthy"
+                "matchhealthy",
+                "shipopacity",
+                "expandedx"
             }, field);
             if (index < 0)
                 throw new InvalidOperationException("Unknown appearance setting.");
             a[index] = value;
             var parsed = Parse(string.Join(";", a));
             X = parsed.X;
+            ExpandedX = parsed.ExpandedX;
             Y = parsed.Y;
             Size = parsed.Size;
             Background = parsed.Background;
@@ -188,6 +231,8 @@ namespace Marigold
             ContextOpacity = parsed.ContextOpacity;
             HealthyBarColor = parsed.HealthyBarColor;
             MatchHealthyBarColor = parsed.MatchHealthyBarColor;
+            ShipOpacity = parsed.ShipOpacity;
+            ShowShipLabel = parsed.ShowShipLabel;
         }
     }
 }

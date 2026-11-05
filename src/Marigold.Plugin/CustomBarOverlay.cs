@@ -27,6 +27,98 @@ namespace Marigold
         private ShipProfile customAlignedProfile;
         private AnchorFrame customAlignedAnchor;
         private readonly Dictionary<string, CustomHealthBar> customAlignedMembers = new Dictionary<string, CustomHealthBar>();
+        private Dictionary<string, HealthBarLayout> customLayoutOverrides = new Dictionary<string, HealthBarLayout>();
+        private string customLayoutProfileId, customLayoutReferenceId;
+
+        private List<CustomHealthBar> CaptureCustomBarLayouts(out string profileId)
+        {
+            profileId = null;
+            var layouts = new List<CustomHealthBar>();
+            if (grid == null || !references.TryGetValue(grid, out var binding))
+                return layouts;
+
+            var profile = profileStore.Find(binding.ProfileId);
+            profileId = profile.Id;
+            foreach (var bar in profile.CustomBars)
+                layouts.Add(CustomBarWithLayout(bar, EffectiveCustomBarLayout(profile, bar)));
+            return layouts;
+        }
+
+        private void ApplyCustomBarLayouts(string profileId, List<CustomHealthBar> bars)
+        {
+            if (profileId == null)
+                return;
+            var profile = SelectedProfile();
+            if (profile.Id != profileId)
+                throw new InvalidOperationException("The active ship changed. Reopen Arrange HUD to edit its layout.");
+
+            var overrides = new Dictionary<string, HealthBarLayout>();
+            foreach (var saved in profile.CustomBars)
+            {
+                var draft = FindCustomBar(bars, saved.Id);
+                if (draft == null)
+                    continue;
+                string encoded = draft.Layout.Encode();
+                if (encoded != saved.Layout.Encode())
+                    overrides.Add(saved.Id, HealthBarLayout.Parse(encoded));
+            }
+
+            customLayoutOverrides = overrides;
+            customLayoutProfileId = profile.Id;
+            customLayoutReferenceId = profile.ReferenceId;
+        }
+
+        private void ClearCustomBarLayouts()
+        {
+            customLayoutOverrides.Clear();
+            customLayoutProfileId = customLayoutReferenceId = null;
+        }
+
+        private bool HasCustomBarLayouts(ShipProfile profile)
+        {
+            return customLayoutOverrides.Count != 0 && customLayoutProfileId == profile.Id
+                && customLayoutReferenceId == profile.ReferenceId;
+        }
+
+        private HealthBarLayout EffectiveCustomBarLayout(ShipProfile profile, CustomHealthBar bar)
+        {
+            return HasCustomBarLayouts(profile) && customLayoutOverrides.TryGetValue(bar.Id, out var layout)
+                ? layout : bar.Layout;
+        }
+
+        private void SaveCustomBarLayouts(ShipProfile profile)
+        {
+            if (!HasCustomBarLayouts(profile))
+                return;
+
+            var updated = profile.Copy();
+            foreach (var bar in updated.CustomBars)
+                if (customLayoutOverrides.TryGetValue(bar.Id, out var layout))
+                    bar.Layout = layout;
+            profileStore.Put(updated);
+            ClearCustomBarLayouts();
+        }
+
+        private static CustomHealthBar FindCustomBar(List<CustomHealthBar> bars, string id)
+        {
+            if (bars != null)
+                foreach (var bar in bars)
+                    if (bar.Id == id)
+                        return bar;
+            return null;
+        }
+
+        private static CustomHealthBar CustomBarWithLayout(CustomHealthBar bar, HealthBarLayout layout)
+        {
+            return new CustomHealthBar
+            {
+                Id = bar.Id,
+                Name = bar.Name,
+                GroupName = bar.GroupName,
+                Layout = HealthBarLayout.Parse(layout.Encode()),
+                Members = bar.Members
+            };
+        }
 
         private void ResetCustomBarHealth()
         {
@@ -179,6 +271,8 @@ namespace Marigold
             else
                 updated.CustomBars[index] = bar.Copy();
             profileStore.Put(updated);
+            if (HasCustomBarLayouts(updated))
+                customLayoutOverrides.Remove(bar.Id);
             RefreshReference("Custom bar saved; updating its health.");
             return "Custom bar saved for this ship and baseline version.";
         }
@@ -188,6 +282,8 @@ namespace Marigold
             var updated = SelectedProfile().Copy();
             updated.CustomBars.RemoveAll(bar => bar.Id == id);
             profileStore.Put(updated);
+            if (HasCustomBarLayouts(updated))
+                customLayoutOverrides.Remove(id);
             customBarViews = Array.FindAll(customBarViews, view => view.Bar.Id != id);
             RefreshReference("Custom bar deleted.");
             return "Custom bar deleted. The ship baseline is unchanged.";
@@ -207,19 +303,30 @@ namespace Marigold
 
         private void DrawCustomHealthBars(Vector2 screen)
         {
+            if (customBarViews.Length == 0 || !references.TryGetValue(grid, out var binding))
+                return;
+
+            // The current profile supplies layout and name even while counts are rebuilding.
+            var profile = profileStore.Find(binding.ProfileId);
+            var editorDraft = panel?.CustomBarPreview;
             foreach (var view in customBarViews)
             {
-                var preview = panel?.CustomBarPreview;
-                var bar = preview != null && preview.Id == view.Bar.Id ? preview : view.Bar;
-                var layout = bar.Layout;
+                var saved = FindCustomBar(profile.CustomBars, view.Bar.Id);
+                if (saved == null)
+                    continue;
+                var draft = FindCustomBar(hudLayoutPreview?.CustomBars, saved.Id);
+                if (draft == null && editorDraft?.Id == saved.Id)
+                    draft = editorDraft;
+                var bar = draft ?? saved;
+                var layout = draft?.Layout ?? EffectiveCustomBarLayout(profile, saved);
                 if (!layout.Enabled)
                     continue;
-                float width = (float)(layout.Width * screen.X);
-                float height = (float)(layout.Height * screen.Y);
-                float labelHeight = layout.Label ? 24f : 0;
-                float x = 8 + (screen.X - width - 16) * (float)layout.X;
-                float y = 8 + (screen.Y - height - labelHeight - 16) * (float)layout.Y;
-                int total = view.Bar.Members.Length;
+                var bounds = HudLayoutGeometry.Bar(screen, layout);
+                float width = bounds.Width;
+                float labelHeight = layout.Label ? HudLayoutGeometry.BarLabelHeight : 0;
+                float height = bounds.Height - labelHeight;
+                float x = bounds.X, y = bounds.Y;
+                int total = view.Aligned.Members.Length;
                 if (layout.Label)
                     MyGuiManager.DrawString(
                         "White",
@@ -240,7 +347,7 @@ namespace Marigold
                         continue;
                     float portion = (float)view.Counts[state] / total;
                     var segment = new RectangleF(x + width * offset, y, width * portion, height);
-                    uint rgb = controls.Appearance.HealthBarColor(state);
+                    uint rgb = DrawingAppearance.HealthBarColor(state);
                     var color = new Color((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, (byte)(255 * layout.Opacity));
                     MyRenderProxy.DrawSprite(Texture, ref segment, null, color, 0, false, false);
                     offset += portion;

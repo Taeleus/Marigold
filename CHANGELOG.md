@@ -1,12 +1,19 @@
 # Changelog
 
-Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records; some development builds were tested locally without a separate release or Git commit. Version numbers below describe when changes first appeared. Later fixes replace earlier behavior.
+Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-Latest version: **0.16.1 for Pulsar Legacy**. Interim remains experimental and untested in-game.
+The **0.17.0** development build is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
-## Unreleased
+## 0.17.0 — November 5, 2026
 
-- Kept the Pulsar plugin list name as **Marigold**, so it cannot show an outdated version number. Version details remain available inside the plugin.
+- Use **Arrange HUD** to drag the ship display, system bars, and custom bars into place. Select an element to adjust its size, opacity, or visibility in the live preview. Drag a bar's corner to resize it directly.
+- Choose **Apply layout** to use your edits or **Cancel** to discard them. Use **Save display** to keep the layout and **Save for this ship** to keep custom bar edits.
+- **HD Wireframe** is the new default, with sharper outlines and fill edges during rotation. **SD Wireframe** offers the original display.
+- **Textured Ship** uses the ship's models, paint, and available textures, including modded Expanse drives. Damage behind the hull stays visible at lower intensity. The opacity slider fades the ship and damage fills together while keeping the outlines visible.
+- Turn off **Show ship label** to hide the text below the schematic. With the label hidden, the display can sit flush with the bottom edge in both compact and expanded views.
+- The Pulsar plugin list shows **Marigold**. The version appears inside the control panel.
+
+The Interim artifact is experimental. In-game Interim testing and stress testing near 50,000 blocks are still open.
 
 ## 0.16.1 — October 28, 2026
 

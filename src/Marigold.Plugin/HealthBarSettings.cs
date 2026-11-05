@@ -6,6 +6,8 @@ namespace Marigold
 {
     internal sealed class HealthBarLayout
     {
+        public const double MinWidth = .05, MaxWidth = .8, MinHeight = .005, MaxHeight = .08;
+
         public bool Enabled, Label = true;
         public int PowerMask;
         public double X = .75, Y = .48, Width = .22, Height = .014, Opacity = 1;
@@ -47,7 +49,7 @@ namespace Marigold
                     || n[i] < 0
                     || n[i] > 1)
                     throw new InvalidDataException("Health bar values must be between 0 and 1.");
-            if (n[2] < .05 || n[2] > .8 || n[3] < .005 || n[3] > .08)
+            if (n[2] < MinWidth || n[2] > MaxWidth || n[3] < MinHeight || n[3] > MaxHeight)
                 throw new InvalidDataException("Width: 0.05 to 0.8; height: 0.005 to 0.08.");
             int mask = 0;
             if (a.Length == 8 && (!int.TryParse(a[7], out mask) || mask < 0 || mask > 7))

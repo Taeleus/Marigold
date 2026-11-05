@@ -60,12 +60,14 @@ namespace Marigold
             {
                 var p = SelectedProfile();
                 DisplaySettings.Save(ShipSettingsPath(p.Id), controls);
+                SaveCustomBarLayouts(p);
                 return "Display saved for profile " + p.Number + ". Global defaults unchanged.";
             }
 
             if (verb == "ship-load")
             {
                 LoadShipSettings(SelectedProfile().Id);
+                ClearCustomBarLayouts();
                 RefreshReference("Ship display loaded.");
                 return comparisonReport;
             }
