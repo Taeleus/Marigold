@@ -101,6 +101,8 @@ Use **Pulsar Legacy**. Interim builds remain experimental and untested in-game.
 2. Copy `plugin.dll`, `plugin.pdb` and `plugin.xml` from the Legacy package into `%APPDATA%/Pulsar/Legacy/Local/Marigold`. An existing `MarigoldDev` folder also works. Enable only one copy.
 3. Start Pulsar, enable Marigold and restart if prompted. Sit in a cockpit and open **`/mg ui`**.
 
+On Bazzite, a player using Pulsar Legacy from the game's Steam folder confirmed this local plugin path. Put the three files in `~/.local/share/Steam/steamapps/common/SpaceEngineers/Pulsar/Legacy/Local/Marigold/`. On Bazzite, `~` can resolve to `/var/home/<username>`. If Steam or Pulsar is installed elsewhere, use the `Legacy/Local` folder under that Pulsar install.
+
 If Windows blocks a trusted downloaded package with error **0x80131515**, unblock the ZIP in Properties before extracting it, or unblock the installed DLL.
 
 ### Your saved data
