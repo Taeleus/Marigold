@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using VRageMath;
 
 namespace Marigold
 {
@@ -43,6 +42,7 @@ namespace Marigold
         private const int SampleBudget = 2500000;
         private readonly Dictionary<string, TexturedShipTexture> textures = new Dictionary<string, TexturedShipTexture>(StringComparer.OrdinalIgnoreCase);
         private float[] depth = new float[0];
+        private Vertex[] projectedVertices = Array.Empty<Vertex>();
 
         private struct Vertex
         {
@@ -97,6 +97,29 @@ namespace Marigold
             var view = image.View;
             float half = size * .5f;
             float scale = (float)(half * view.Zoom / radius);
+            var vertices = mesh.Vertices;
+            if (projectedVertices.Length < vertices.Length)
+                projectedVertices = new Vertex[vertices.Length];
+            var projected = projectedVertices;
+            var axisX = view.X;
+            var axisY = view.Y;
+            var axisZ = view.Z;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var vertex = vertices[i];
+                double x = vertex.Position.X - center.X;
+                double y = vertex.Position.Y - center.Y;
+                double z = vertex.Position.Z - center.Z;
+                projected[i] = new Vertex
+                {
+                    X = half + (float)(x * axisX.X + y * axisY.X + z * axisZ.X) * scale,
+                    Y = half - (float)(x * axisX.Y + y * axisY.Y + z * axisZ.Y) * scale,
+                    Z = (float)(x * axisX.Z + y * axisY.Z + z * axisZ.Z) * scale,
+                    U = vertex.Uv.X,
+                    V = vertex.Uv.Y
+                };
+            }
+
             int samples = SampleBudget;
             bool foundTexture = false;
             bool foundColorPath = false;
@@ -106,20 +129,29 @@ namespace Marigold
             TexturedShipTexture texture = null;
             foreach (var triangle in mesh.Triangles)
             {
-                var a = Project(triangle.A, triangle.UvA, center, view, half, scale);
-                var b = Project(triangle.B, triangle.UvB, center, view, half, scale);
-                var c = Project(triangle.C, triangle.UvC, center, view, half, scale);
+                var a = projected[triangle.A];
+                var b = projected[triangle.B];
+                var c = projected[triangle.C];
                 float abX = b.X - a.X, abY = b.Y - a.Y, abZ = b.Z - a.Z;
                 float acX = c.X - a.X, acY = c.Y - a.Y, acZ = c.Z - a.Z;
                 float area = abX * acY - abY * acX;
                 if (Math.Abs(area) < .002f)
                     continue;
 
-                int x0 = Math.Max(0, (int)Math.Ceiling(Math.Min(a.X, Math.Min(b.X, c.X)) - .5f));
-                int x1 = Math.Min(size - 1, (int)Math.Floor(Math.Max(a.X, Math.Max(b.X, c.X)) - .5f));
-                int y0 = Math.Max(0, (int)Math.Ceiling(Math.Min(a.Y, Math.Min(b.Y, c.Y)) - .5f));
-                int y1 = Math.Min(size - 1, (int)Math.Floor(Math.Max(a.Y, Math.Max(b.Y, c.Y)) - .5f));
-                if (x1 < x0 || y1 < y0)
+                // Samples are at pixel centers. Clip first so integer truncation floors the upper bounds.
+                float minX = Math.Max(0f, Math.Min(a.X, Math.Min(b.X, c.X)) - .5f);
+                float maxX = Math.Min(size - 1f, Math.Max(a.X, Math.Max(b.X, c.X)) - .5f);
+                float minY = Math.Max(0f, Math.Min(a.Y, Math.Min(b.Y, c.Y)) - .5f);
+                float maxY = Math.Min(size - 1f, Math.Max(a.Y, Math.Max(b.Y, c.Y)) - .5f);
+                if (minX > maxX || minY > maxY)
+                    continue;
+                int x0 = (int)minX, x1 = (int)maxX;
+                int y0 = (int)minY, y1 = (int)maxY;
+                if (x0 < minX)
+                    x0++;
+                if (y0 < minY)
+                    y0++;
+                if (x0 > x1 || y0 > y1)
                     continue;
 
                 samples -= (x1 - x0 + 1) * (y1 - y0 + 1);
@@ -162,11 +194,13 @@ namespace Marigold
             }
             else
             {
-                image.Caption = mesh.SimplifiedModels > 0 ? "Some parts simplified" : null;
+                image.Caption = mesh.SimplifiedModels > 0 ? "Some painted shapes" : null;
                 image.Status = usedPaintFallback ? "Textured ship (paint used on surfaces with unavailable textures)." : "Textured ship.";
             }
+            if (mesh.ReducedModels > 0)
+                image.Status += " " + mesh.ReducedModels + " parts use reduced meshes.";
             if (mesh.SimplifiedModels > 0)
-                image.Status += " " + mesh.SimplifiedModels + " surfaces or blocks use simplified shapes.";
+                image.Status += " " + mesh.SimplifiedModels + " parts use painted shapes.";
             if (!string.IsNullOrEmpty(mesh.SimplificationReason))
                 image.Status += " " + mesh.SimplificationReason;
 
@@ -194,12 +228,6 @@ namespace Marigold
             TexturedShipTexture.TryLoad(path, out texture, textures.Count < DetailedTextureLimit ? 256 : 128);
             textures.Add(path, texture);
             return texture;
-        }
-
-        private static Vertex Project(Vector3 point, Vector2 uv, Point3 center, ShipProjection view, float half, float scale)
-        {
-            var p = view.Project(new Point3(point.X - center.X, point.Y - center.Y, point.Z - center.Z));
-            return new Vertex { X = half + (float)p.X * scale, Y = half - (float)p.Y * scale, Z = (float)p.Z * scale, U = uv.X, V = uv.Y };
         }
 
         private bool DrawTriangle(Vertex a, Vertex b, Vertex c, int x0, int x1, int y0, int y1, float area,

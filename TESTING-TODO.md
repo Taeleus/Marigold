@@ -11,6 +11,7 @@
 - [x] **Arrange HUD** works in game.
 - [x] **Textured Ship** works in game, including the Expanse drive.
 - [x] **HD Wireframe** works in game.
+- [x] **Retest textured station rotation and shapes.** The 2,257-block station looked much better in Legacy. At 768 px, `/mg stats` reported 16.5 preview FPS, 48.47 ms for the last raster and 181.77 ms for the last mesh job. It used 18 reduced meshes and reported zero painted box replacements. The earlier 441 px preview reported a 73.81 ms worker job and 126 simplified parts.
 
 - [ ] **Resize a bar in Arrange HUD.** Select a system bar and a custom bar. Drag the square at the corner of each selection to change width and height, then try the **Width** and **Height** sliders. Check the preview and use **Apply layout**.
 - [ ] **Check layout persistence.** Move a bar and cancel once to check that the draft is discarded. Apply and save a layout, then reconnect to check it was kept. If you moved a custom bar, use **Save for this ship** and confirm it still tracks the same blocks after reconnecting.

@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. Compare your ship with a saved layout, spot damaged or missing blocks, and keep an eye on the systems that matter to you.
 
-The PluginHub release is **0.16.1 for Pulsar Legacy**. The development build is **0.17.0**. See the [changelog](CHANGELOG.md) for what's new.
+The PluginHub release is **0.16.1 for Pulsar Legacy**. The development build is **0.17.1**. See the [changelog](CHANGELOG.md) for what's new.
 
 ## Get started
 

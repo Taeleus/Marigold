@@ -17,22 +17,29 @@ using VRageRender.Messages;
 
 namespace Marigold
 {
+    internal readonly struct TexturedShipVertex
+    {
+        public readonly Vector3 Position;
+        public readonly Vector2 Uv;
+
+        public TexturedShipVertex(Vector3 position, Vector2 uv)
+        {
+            Position = position;
+            Uv = uv;
+        }
+    }
+
     internal readonly struct TexturedShipTriangle
     {
-        public readonly Vector3 A, B, C;
-        public readonly Vector2 UvA, UvB, UvC;
         public readonly string ColorTexture;
         public readonly uint PaintRgb;
+        public readonly int A, B, C;
 
-        public TexturedShipTriangle(Vector3 a, Vector3 b, Vector3 c, Vector2 uvA, Vector2 uvB, Vector2 uvC,
-            string colorTexture, uint paintRgb)
+        public TexturedShipTriangle(int a, int b, int c, string colorTexture, uint paintRgb)
         {
             A = a;
             B = b;
             C = c;
-            UvA = uvA;
-            UvB = uvB;
-            UvC = uvC;
             ColorTexture = colorTexture;
             PaintRgb = paintRgb;
         }
@@ -62,14 +69,18 @@ namespace Marigold
             0, 1, 5, 0, 5, 4, 2, 6, 7, 2, 7, 3
         };
 
+        public readonly TexturedShipVertex[] Vertices;
         public readonly TexturedShipTriangle[] Triangles;
-        public readonly int SimplifiedModels;
+        public readonly int SimplifiedModels, ReducedModels;
         public readonly string SimplificationReason;
 
-        private TexturedShipMesh(TexturedShipTriangle[] triangles, int simplifiedModels, string simplificationReason)
+        private TexturedShipMesh(TexturedShipVertex[] vertices, TexturedShipTriangle[] triangles,
+            int simplifiedModels, int reducedModels, string simplificationReason)
         {
+            Vertices = vertices;
             Triangles = triangles;
             SimplifiedModels = simplifiedModels;
+            ReducedModels = reducedModels;
             SimplificationReason = simplificationReason;
         }
 
@@ -100,6 +111,21 @@ namespace Marigold
                 CellsPerMeter = cellsPerMeter;
                 CaptureNote = captureNote;
             }
+
+            internal bool SameRenderParts(Snapshot other)
+            {
+                if (ReferenceEquals(this, other))
+                    return true;
+                if (other == null || BlockCount != other.BlockCount || CellsPerMeter != other.CellsPerMeter
+                    || ContentRoot != other.ContentRoot || CaptureNote != other.CaptureNote
+                    || !SamePaths(Roots, other.Roots) || Parts.Length != other.Parts.Length)
+                    return false;
+
+                for (int i = 0; i < Parts.Length; i++)
+                    if (!Parts[i].SameRenderPart(other.Parts[i]))
+                        return false;
+                return true;
+            }
         }
 
         internal sealed class ModelAsset
@@ -114,6 +140,12 @@ namespace Marigold
                 Scale = model.ScaleFactor;
                 PatternScale = model.PatternScale;
                 Lods = CopyLods(model.LODs);
+            }
+
+            public bool SameAsset(ModelAsset other)
+            {
+                return other != null && Name == other.Name && Scale == other.Scale
+                    && PatternScale == other.PatternScale && SamePaths(Lods, other.Lods);
             }
         }
 
@@ -135,6 +167,26 @@ namespace Marigold
                 UvOffset = uvOffset;
                 Paint = paint;
                 SkinColors = skinColors;
+            }
+
+            public bool SameRenderPart(ModelPart other)
+            {
+                return Paint == other.Paint && Transform.Equals(other.Transform) && Bounds.Equals(other.Bounds)
+                    && UvOffset.Equals(other.UvOffset)
+                    && (ReferenceEquals(Asset, other.Asset) || (Asset != null && Asset.SameAsset(other.Asset)))
+                    && SameSkin(other.SkinColors);
+            }
+
+            private bool SameSkin(Dictionary<string, string> other)
+            {
+                if (ReferenceEquals(SkinColors, other))
+                    return true;
+                if (SkinColors == null || other == null || SkinColors.Count != other.Count)
+                    return false;
+                foreach (var item in SkinColors)
+                    if (!other.TryGetValue(item.Key, out string path) || path != item.Value)
+                        return false;
+                return true;
             }
         }
 
@@ -176,6 +228,8 @@ namespace Marigold
         internal sealed class AssetCache
         {
             private readonly Dictionary<string, Template> models = new Dictionary<string, Template>(StringComparer.OrdinalIgnoreCase);
+            private Snapshot previousSnapshot;
+            private TexturedShipMesh previousMesh;
 
             public bool TryBuild(Snapshot snapshot, out TexturedShipMesh mesh, out string reason)
             {
@@ -186,9 +240,18 @@ namespace Marigold
                     reason = "No ship render data was available.";
                     return false;
                 }
+                // A paint or damage refresh can capture the same render parts.
+                // Reuse their mesh and let the diagnostic overlay update independently.
+                if (snapshot.SameRenderParts(previousSnapshot))
+                {
+                    mesh = previousMesh;
+                    return true;
+                }
                 try
                 {
                     mesh = new MeshCapture(snapshot, models).Build();
+                    previousSnapshot = snapshot;
+                    previousMesh = mesh;
                     return true;
                 }
                 catch (InvalidDataException error)
@@ -215,6 +278,122 @@ namespace Marigold
             public string Root;
             public int TriangleCount;
             public long SourceBytes;
+
+            public Template Reduce(int maximumTriangles)
+            {
+                if (TriangleCount <= maximumTriangles)
+                    return this;
+                if (maximumTriangles <= 0 || !TryGetBounds(out var min, out var max, out float span))
+                    return null;
+
+                var snapped = new Vector3[Positions.Length];
+                for (int cells = 64; cells >= 1; cells /= 2)
+                {
+                    double cellSize = (double)span / cells;
+                    double stepX = GridStep(min.X, max.X, cellSize);
+                    double stepY = GridStep(min.Y, max.Y, cellSize);
+                    double stepZ = GridStep(min.Z, max.Z, cellSize);
+                    for (int i = 0; i < Positions.Length; i++)
+                    {
+                        var position = Positions[i];
+                        snapped[i] = new Vector3(Snap(position.X, min.X, stepX),
+                            Snap(position.Y, min.Y, stepY), Snap(position.Z, min.Z, stepZ));
+                    }
+
+                    int surviving = CountTriangles(snapped, maximumTriangles);
+                    if (surviving > 0 && surviving <= maximumTriangles)
+                    {
+                        return new Template
+                        {
+                            Positions = snapped, Uvs = Uvs, Parts = ReducedParts(snapped),
+                            Root = Root, TriangleCount = surviving
+                        };
+                    }
+                }
+                return null;
+            }
+
+            private bool TryGetBounds(out Vector3 min, out Vector3 max, out float span)
+            {
+                min = max = Positions[0];
+                span = 0;
+                foreach (var position in Positions)
+                {
+                    if (!Finite(position))
+                        return false;
+                    min = Vector3.Min(min, position);
+                    max = Vector3.Max(max, position);
+                }
+                var size = max - min;
+                span = Math.Max(size.X, Math.Max(size.Y, size.Z));
+                return span > 0 && Finite(span);
+            }
+
+            private static double GridStep(float min, float max, double cellSize)
+            {
+                // Keep a cell across thin faces and preserve the original bounds on each axis.
+                double span = (double)max - min;
+                return span / Math.Max(1, Math.Round(span / cellSize));
+            }
+
+            private static float Snap(float value, float min, double step)
+            {
+                return step == 0 ? min : (float)(min + Math.Round(((double)value - min) / step) * step);
+            }
+
+            private int CountTriangles(Vector3[] snapped, int maximumTriangles)
+            {
+                int count = 0;
+                foreach (var part in Parts)
+                {
+                    var indices = part.m_indices;
+                    for (int i = 0; i < indices.Count; i += 3)
+                    {
+                        if (Survives(snapped, indices[i], indices[i + 1], indices[i + 2])
+                            && ++count > maximumTriangles)
+                            return count;
+                    }
+                }
+                return count;
+            }
+
+            private List<MyMeshPartInfo> ReducedParts(Vector3[] snapped)
+            {
+                var parts = new List<MyMeshPartInfo>(Parts.Count);
+                foreach (var part in Parts)
+                {
+                    MyMeshPartInfo reduced = null;
+                    var indices = part.m_indices;
+                    for (int i = 0; i < indices.Count; i += 3)
+                    {
+                        int a = indices[i], b = indices[i + 1], c = indices[i + 2];
+                        if (!Survives(snapped, a, b, c))
+                            continue;
+
+                        if (reduced == null)
+                        {
+                            reduced = new MyMeshPartInfo
+                            {
+                                m_MaterialHash = part.m_MaterialHash,
+                                m_MaterialDesc = part.m_MaterialDesc,
+                                Technique = part.Technique
+                            };
+                            parts.Add(reduced);
+                        }
+                        // Keep corner indices so texture coordinates and material seams are retained.
+                        reduced.m_indices.Add(a);
+                        reduced.m_indices.Add(b);
+                        reduced.m_indices.Add(c);
+                    }
+                }
+                return parts;
+            }
+
+            private static bool Survives(Vector3[] snapped, int a, int b, int c)
+            {
+                var normal = Vector3.Cross(snapped[b] - snapped[a], snapped[c] - snapped[a]);
+                return normal != Vector3.Zero && Finite(normal);
+            }
         }
 
         private sealed class SnapshotBuilder
@@ -333,12 +512,14 @@ namespace Marigold
             private readonly HashSet<string> roots;
             private readonly string workshopRoot;
             private readonly Dictionary<string, string> textures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            private readonly List<TexturedShipVertex> vertices = new List<TexturedShipVertex>();
             private readonly List<TexturedShipTriangle> triangles = new List<TexturedShipTriangle>();
             private readonly MyModelImporter importer = new MyModelImporter();
             private readonly Vector3[] boxCorners = new Vector3[8];
             private Vector3[] positions = new Vector3[0];
+            private int[] vertexIndices = new int[0];
             private long modelBytes;
-            private int simplifiedModels, realModels;
+            private int simplifiedModels, reducedModels, realModels;
             private string simplificationReason;
 
             public MeshCapture(Snapshot snapshot, Dictionary<string, Template> models)
@@ -358,27 +539,80 @@ namespace Marigold
             public TexturedShipMesh Build()
             {
                 int proxyTriangles = snapshot.Parts.Length <= MaximumTriangles / BoxTriangles ? BoxTriangles : 2;
-                for (int i = 0; i < snapshot.Parts.Length; i++)
+                var templates = new Template[snapshot.Parts.Length];
+                var occurrences = new Dictionary<Template, int>();
+                for (int i = 0; i < templates.Length; i++)
                 {
-                    // Reserve enough space for every later part, even if all of them need a proxy.
-                    int reserve = (snapshot.Parts.Length - i - 1) * proxyTriangles;
-                    AddModel(snapshot.Parts[i], MaximumTriangles - triangles.Count - reserve, proxyTriangles);
+                    var template = FindTemplate(snapshot.Parts[i].Asset);
+                    templates[i] = template;
+                    if (template != null)
+                    {
+                        occurrences.TryGetValue(template, out int count);
+                        occurrences[template] = count + 1;
+                    }
+                }
+
+                int modelBudget = ModelTriangleBudget(occurrences, proxyTriangles);
+                var reduced = new Dictionary<Template, Template>();
+                for (int i = 0; i < templates.Length; i++)
+                {
+                    var source = snapshot.Parts[i];
+                    var template = templates[i];
+                    if (template == null)
+                    {
+                        AddProxy(source, proxyTriangles, source.Asset == null
+                            ? "The ship exceeds the preview model asset limit."
+                            : "Some model assets could not be loaded.");
+                        continue;
+                    }
+
+                    bool needsReduction = template.TriangleCount > modelBudget;
+                    if (needsReduction)
+                    {
+                        if (!reduced.TryGetValue(template, out var preview))
+                        {
+                            preview = template.Reduce(modelBudget);
+                            reduced.Add(template, preview);
+                        }
+                        if (preview == null)
+                        {
+                            AddProxy(source, proxyTriangles, "Some models exceeded the preview triangle budget.");
+                            continue;
+                        }
+                        template = preview;
+                    }
+                    AddModel(source, template, needsReduction, proxyTriangles);
                 }
 
                 if (realModels == 0)
                     throw new CaptureLimitException(simplificationReason ?? "No readable ship meshes were available.");
-                return new TexturedShipMesh(triangles.ToArray(), simplifiedModels, simplificationReason);
+                return new TexturedShipMesh(vertices.ToArray(), triangles.ToArray(), simplifiedModels, reducedModels, simplificationReason);
             }
 
-            private void AddModel(ModelPart source, int availableTriangles, int proxyTriangles)
+            private int ModelTriangleBudget(Dictionary<Template, int> occurrences, int proxyTriangles)
             {
-                var model = source.Asset;
-                if (model == null)
+                // Give each part room for a fallback. Let detailed models share the rest
+                // so the first few large meshes cannot crowd out every later block.
+                long reserved = (long)snapshot.Parts.Length * proxyTriangles;
+                int low = proxyTriangles, high = MaximumTriangles;
+                while (low < high)
                 {
-                    AddProxy(source, proxyTriangles, "The ship exceeds the preview model asset limit.");
-                    return;
+                    int limit = low + (high - low + 1) / 2;
+                    long used = reserved;
+                    foreach (var entry in occurrences)
+                        used += (long)Math.Max(0, Math.Min(limit, entry.Key.TriangleCount) - proxyTriangles) * entry.Value;
+                    if (used <= MaximumTriangles)
+                        low = limit;
+                    else
+                        high = limit - 1;
                 }
+                return low;
+            }
 
+            private Template FindTemplate(ModelAsset model)
+            {
+                if (model == null)
+                    return null;
                 string assetName = model.Name;
                 if (!models.TryGetValue(assetName, out var template) && models.Count < MaximumAssets)
                 {
@@ -394,20 +628,23 @@ namespace Marigold
                     }
                     models.Add(assetName, template);
                 }
-                if (template == null || template.TriangleCount > availableTriangles)
-                {
-                    AddProxy(source, proxyTriangles, template == null
-                        ? "Some model assets could not be loaded."
-                        : "Some parts exceeded the preview triangle budget.");
-                    return;
-                }
+                return template;
+            }
 
-                var vertices = template.Positions;
-                if (positions.Length < vertices.Length)
-                    positions = new Vector3[vertices.Length];
-                for (int i = 0; i < vertices.Length; i++)
+            private void AddModel(ModelPart source, Template template, bool reduced, int proxyTriangles)
+            {
+                var model = source.Asset;
+                var modelPositions = template.Positions;
+                if (positions.Length < modelPositions.Length)
                 {
-                    Vector3 position = Vector3.Transform(vertices[i] * model.Scale, source.Transform) * snapshot.CellsPerMeter;
+                    positions = new Vector3[modelPositions.Length];
+                    vertexIndices = new int[modelPositions.Length];
+                }
+                else
+                    Array.Clear(vertexIndices, 0, modelPositions.Length);
+                for (int i = 0; i < modelPositions.Length; i++)
+                {
+                    Vector3 position = Vector3.Transform(modelPositions[i] * model.Scale, source.Transform) * snapshot.CellsPerMeter;
                     if (!Finite(position))
                     {
                         AddProxy(source, proxyTriangles, "Some parts had invalid model coordinates.");
@@ -429,22 +666,34 @@ namespace Marigold
                     var indices = part.m_indices;
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        int a = indices[i], b = indices[i + 1], c = indices[i + 2];
-                        triangles.Add(new TexturedShipTriangle(positions[a], positions[b], positions[c],
-                            TextureCoordinate(template, a, scale, source.UvOffset),
-                            TextureCoordinate(template, b, scale, source.UvOffset),
-                            TextureCoordinate(template, c, scale, source.UvOffset),
-                            colorTexture, source.Paint));
+                        int a = VertexIndex(template, indices[i], scale, source.UvOffset);
+                        int b = VertexIndex(template, indices[i + 1], scale, source.UvOffset);
+                        int c = VertexIndex(template, indices[i + 2], scale, source.UvOffset);
+                        triangles.Add(new TexturedShipTriangle(a, b, c, colorTexture, source.Paint));
                     }
                 }
                 realModels++;
+                if (reduced)
+                    reducedModels++;
+            }
+
+            private int VertexIndex(Template template, int index, float scale, Vector2 offset)
+            {
+                int stored = vertexIndices[index];
+                if (stored != 0)
+                    return stored - 1;
+
+                int next = vertices.Count;
+                vertices.Add(new TexturedShipVertex(positions[index], TextureCoordinate(template, index, scale, offset)));
+                vertexIndices[index] = next + 1;
+                return next;
             }
 
             private void AddProxy(ModelPart source, int proxyTriangles, string reason)
             {
                 simplificationReason = simplificationReason ?? reason;
                 simplifiedModels++;
-                AddPaintedShape(triangles, boxCorners, source, snapshot.CellsPerMeter, proxyTriangles);
+                AddPaintedShape(vertices, triangles, boxCorners, source, snapshot.CellsPerMeter, proxyTriangles);
             }
 
             private Template LoadTemplate(ModelAsset model)
@@ -652,6 +901,16 @@ namespace Marigold
             return paths;
         }
 
+        private static bool SamePaths(string[] first, string[] second)
+        {
+            if (first.Length != second.Length)
+                return false;
+            for (int i = 0; i < first.Length; i++)
+                if (first[i] != second[i])
+                    return false;
+            return true;
+        }
+
         private static string LocalRoot(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || IsNetworkPath(path))
@@ -678,7 +937,7 @@ namespace Marigold
             return Finite(uv.X) && Finite(uv.Y) ? uv : Vector2.Zero;
         }
 
-        private static void AddPaintedShape(List<TexturedShipTriangle> triangles, Vector3[] corners,
+        private static void AddPaintedShape(List<TexturedShipVertex> vertices, List<TexturedShipTriangle> triangles, Vector3[] corners,
             ModelPart source, float cellsPerMeter, int triangleCount)
         {
             var bounds = source.Bounds;
@@ -706,18 +965,23 @@ namespace Marigold
                     return;
             }
 
+            int first = vertices.Count;
             if (flatAxis != 0)
             {
                 int u = flatAxis == 1 ? 2 : 1, v = flatAxis == 4 ? 2 : 4;
-                triangles.Add(new TexturedShipTriangle(corners[0], corners[u], corners[u | v],
-                    Vector2.Zero, Vector2.Zero, Vector2.Zero, null, source.Paint));
-                triangles.Add(new TexturedShipTriangle(corners[0], corners[u | v], corners[v],
-                    Vector2.Zero, Vector2.Zero, Vector2.Zero, null, source.Paint));
+                vertices.Add(new TexturedShipVertex(corners[0], Vector2.Zero));
+                vertices.Add(new TexturedShipVertex(corners[u], Vector2.Zero));
+                vertices.Add(new TexturedShipVertex(corners[u | v], Vector2.Zero));
+                vertices.Add(new TexturedShipVertex(corners[v], Vector2.Zero));
+                triangles.Add(new TexturedShipTriangle(first, first + 1, first + 2, null, source.Paint));
+                triangles.Add(new TexturedShipTriangle(first, first + 2, first + 3, null, source.Paint));
                 return;
             }
+            foreach (var corner in corners)
+                vertices.Add(new TexturedShipVertex(corner, Vector2.Zero));
             for (int i = 0; i < BoxIndices.Length; i += 3)
-                triangles.Add(new TexturedShipTriangle(corners[BoxIndices[i]], corners[BoxIndices[i + 1]],
-                    corners[BoxIndices[i + 2]], Vector2.Zero, Vector2.Zero, Vector2.Zero, null, source.Paint));
+                triangles.Add(new TexturedShipTriangle(first + BoxIndices[i], first + BoxIndices[i + 1],
+                    first + BoxIndices[i + 2], null, source.Paint));
         }
 
         private static uint PaintRgb(Vector3 paint)

@@ -2,7 +2,7 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-Development build **0.17.0** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0170--november-5-2026)
+Development build **0.17.1** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0171--november-5-2026)
 
 ## Suggestions
 
@@ -11,7 +11,7 @@ Development build **0.17.0** is on `dev` and targets Legacy, with an experimenta
 | Show ship label | Ready to test | Turn off **Show ship label** under **Ship display** to hide the text below the schematic, including the second line in expanded view. The ship's **Show label** checkbox in **Arrange HUD** controls the same setting. The label is visible by default. **Save display** keeps the choice. [Test checklist](TESTING-TODO.md#ship-label--pending) |
 | Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. Use **Apply layout** to use the draft and **Save display** to keep it. Custom-bar changes use **Save for this ship**. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Sharper, steadier ship display | Confirmed in game | **HD Wireframe** is the default. A performance comparison with **SD Wireframe** on the damaged station is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
-| Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
+| Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The Legacy station retest showed smoother rotation and textured shapes. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 
 As feedback comes in, add a row with the request, its status and a link to the discussion when available. Use **Suggested**, **Planned**, **In progress**, **Ready to test** or **Confirmed in game**. Once a change ships, record it in the [changelog](CHANGELOG.md). Put in-game checks in the [testing checklist](TESTING-TODO.md).
 

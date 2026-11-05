@@ -2,7 +2,15 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-The **0.17.0** development build is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+The **0.17.1** development build is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**. In-game Interim testing and stress testing near 50,000 blocks are still open.
+
+## 0.17.1 — November 5, 2026
+
+- **Textured Ship** shares its triangle budget across the grid and uses simpler textured meshes for dense parts.
+- Rotating previews render faster by sharing vertices across faces. The preview reuses its mesh when the ship's render data is unchanged.
+- `/mg stats` reports preview FPS separately from mesh build and raster times.
+
+The Legacy station retest reached **768 px at 16.5 preview FPS** with zero reported painted box replacements. [Testing checklist](TESTING-TODO.md#display-follow-up)
 
 ## 0.17.0 — November 5, 2026
 
@@ -12,8 +20,6 @@ The **0.17.0** development build is on `dev`. The published PluginHub release is
 - **Textured Ship** uses the ship's models, paint, and available textures, including modded Expanse drives. Damage behind the hull stays visible at lower intensity. The opacity slider fades the ship and damage fills together while keeping the outlines visible.
 - Turn off **Show ship label** to hide the text below the schematic. With the label hidden, the display can sit flush with the bottom edge in both compact and expanded views.
 - The Pulsar plugin list shows **Marigold**. The version appears inside the control panel.
-
-The Interim artifact is experimental. In-game Interim testing and stress testing near 50,000 blocks are still open.
 
 ## 0.16.1 — October 28, 2026
 

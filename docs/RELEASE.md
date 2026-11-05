@@ -1,6 +1,6 @@
 # Legacy release procedure
 
-Development version **0.17.0** includes Arrange HUD and the new rendering modes. The published PluginHub version is **0.16.1** for **Legacy/CLR**. Interim packages are available for local testing.
+Development version **0.17.1** improves Textured Ship on dense grids. The published PluginHub version is **0.16.1** for **Legacy/CLR**. Interim packages are available for local testing.
 
 Building locally requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies and the installed Space Engineers Bin64 folder. The build scripts accept `-Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'` if you need to specify the game location.
 

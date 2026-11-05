@@ -22,7 +22,7 @@ namespace Marigold
         private int texturedRevision = -1;
         private int texturedTextureSize, texturedBlockCount;
         private double nextMeshCapture, nextTexturedFrame, nextResolutionProbe, refreshPaintAfter;
-        private double texturedSnapshotMs, texturedWorkerMs;
+        private double texturedSnapshotMs, texturedMeshMs, texturedRasterMs, texturedFrameInterval, lastTexturedFrame;
         private string texturedStatus = "Textured ship preparing.";
         private bool texturedFallback, loggedTexturedFallback, pendingTexturedCurrent;
 
@@ -31,7 +31,8 @@ namespace Marigold
             public TexturedShipMesh Mesh;
             public TexturedShipImage Image;
             public string Failure;
-            public double Milliseconds;
+            public double? MeshMilliseconds;
+            public double RasterMilliseconds;
         }
 
         private string TexturedCaption(bool renderedModel)
@@ -99,7 +100,9 @@ namespace Marigold
                 if (pendingTexturedCurrent)
                 {
                     texturedMesh = result.Mesh;
-                    texturedWorkerMs = result.Milliseconds;
+                    if (result.MeshMilliseconds.HasValue)
+                        texturedMeshMs = result.MeshMilliseconds.Value;
+                    texturedRasterMs = result.RasterMilliseconds;
                     if (result.Failure != null)
                     {
                         texturedImage = null;
@@ -111,6 +114,7 @@ namespace Marigold
                         texturedStatus = image.Status;
                         if (image.Pixels != null)
                         {
+                            RecordTexturedFrame(image, now);
                             UploadTexturedImage(image);
                             displayedTexturedMesh = result.Mesh;
                             texturedFallback = false;
@@ -194,18 +198,42 @@ namespace Marigold
             TexturedShipRaster raster, TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize)
         {
             var timer = Stopwatch.StartNew();
-            string reason;
-            if (snapshot != null && !assets.TryBuild(snapshot, out mesh, out reason))
-                return new TexturedFrameJob { Failure = "Textured ship unavailable: " + reason, Milliseconds = timer.Elapsed.TotalMilliseconds };
-            var image = raster.Render(mesh, bounds, view, size, preferredSize);
-            return new TexturedFrameJob { Mesh = mesh, Image = image, Milliseconds = timer.Elapsed.TotalMilliseconds };
+            var job = new TexturedFrameJob();
+            if (snapshot != null)
+            {
+                bool built = assets.TryBuild(snapshot, out mesh, out string reason);
+                job.MeshMilliseconds = timer.Elapsed.TotalMilliseconds;
+                if (!built)
+                {
+                    job.Failure = "Textured ship unavailable: " + reason;
+                    return job;
+                }
+                timer.Restart();
+            }
+            job.Mesh = mesh;
+            job.Image = raster.Render(mesh, bounds, view, size, preferredSize);
+            job.RasterMilliseconds = timer.Elapsed.TotalMilliseconds;
+            return job;
+        }
+
+        private void RecordTexturedFrame(TexturedShipImage image, double now)
+        {
+            double interval = now - lastTexturedFrame;
+            if (texturedImage == null || texturedImage.View.SameView(image.View) || interval <= 0 || interval > 1)
+                texturedFrameInterval = 0;
+            else
+                texturedFrameInterval = texturedFrameInterval == 0 ? interval : texturedFrameInterval * .8 + interval * .2;
+            lastTexturedFrame = now;
         }
 
         private string TexturedStatistics()
         {
             string resolution = texturedImage == null ? "" : " " + texturedImage.Size + " px preview.";
+            string cadence = texturedImage != null && texturedFrameInterval > 0 && clock.Elapsed.TotalSeconds - lastTexturedFrame < 1
+                ? " " + (1 / texturedFrameInterval).ToString("F1") + " preview fps." : "";
             return " " + texturedStatus + resolution + " Textured grid " + texturedBlockCount + " blocks, snapshot "
-                + texturedSnapshotMs.ToString("F2") + " ms, last worker " + texturedWorkerMs.ToString("F2") + " ms.";
+                + texturedSnapshotMs.ToString("F2") + " ms, last mesh " + texturedMeshMs.ToString("F2")
+                + " ms, last raster " + texturedRasterMs.ToString("F2") + " ms." + cadence;
         }
 
         private void ReportTexturedFallback(string reason)
@@ -253,7 +281,7 @@ namespace Marigold
             pendingTexturedCurrent = false;
             texturedRevision = -1;
             texturedBlockCount = 0;
-            texturedSnapshotMs = texturedWorkerMs = 0;
+            texturedSnapshotMs = texturedMeshMs = texturedRasterMs = texturedFrameInterval = lastTexturedFrame = 0;
             nextMeshCapture = nextTexturedFrame = nextResolutionProbe = refreshPaintAfter = 0;
             texturedStatus = "Textured ship preparing.";
             texturedFallback = loggedTexturedFallback = false;
