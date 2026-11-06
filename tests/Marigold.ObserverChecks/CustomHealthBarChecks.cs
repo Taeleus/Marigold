@@ -184,6 +184,33 @@ internal static class CustomHealthBarChecks
             store.Put(restored);
             Check(new ProfileStore(directory).Find(profile.Id).CustomBars[0].Name == "Port PDCs",
                 "Restoring a revision restores its saved bar definitions");
+
+            var layoutDraft = restored.CustomBars[0].Copy();
+            Check(CustomHealthBars.WithLayouts(restored, new List<CustomHealthBar> { layoutDraft }) == null,
+                "Applying an unchanged custom layout needs no profile write");
+            layoutDraft.Layout.X = .38;
+            layoutDraft.Layout.Y = .64;
+            layoutDraft.Layout.Width = .31;
+            layoutDraft.Layout.Height = .021;
+            layoutDraft.Layout.TitleOnly = true;
+            layoutDraft.Name = "Draft only";
+            layoutDraft.Members = new[] { baseline[5] };
+            var arranged = CustomHealthBars.WithLayouts(restored, new List<CustomHealthBar> { layoutDraft });
+            store.Put(arranged);
+            var reloaded = new ProfileStore(directory).Find(profile.Id);
+            Check(reloaded.CustomBars[0].Layout.Encode() == layoutDraft.Layout.Encode(),
+                "Applied custom bar position, size and label style survive a fresh profile store");
+            Check(reloaded.CustomBars[0].Copy().Layout.TitleOnly,
+                "Copying a custom bar keeps its title-only setting");
+            Check(reloaded.ReferenceId == restored.ReferenceId
+                && reloaded.CustomBars[0].Id == restored.CustomBars[0].Id
+                && reloaded.CustomBars[0].Name == "Port PDCs"
+                && reloaded.CustomBars[0].Members.Length == 6
+                && reloaded.CustomBars[1].Layout.Encode() == restored.CustomBars[1].Layout.Encode(),
+                "Applying a layout preserves the baseline, tracked blocks and other bars");
+            Check(restored.CustomBars[0].Layout.Width == .22 && named.CustomBars[0].Layout.Width == .22,
+                "Applying a layout leaves prior profiles and named revisions intact");
+
             ReferenceHistory.Archive(revisions, saved);
             int archivedCount = revisions.Profiles.Count;
             var editedBar = saved.Copy();

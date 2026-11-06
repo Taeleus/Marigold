@@ -2,19 +2,19 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-Beta **0.17.2** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0172--november-5-2026)
+Beta **0.17.4** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0174--november-6-2026)
 
 ## Suggestions
 
 | Idea | Status | What it would do |
 | --- | --- | --- |
-| Simplify the control panel | Planned | Review the full `/mg ui` flow. Combine related pages, shorten common paths and use plain labels. Explore a **Standard** view for everyday actions and an **Advanced** view for detailed settings. Keep positioning and resizing in **Arrange HUD** wherever it already supports those adjustments. |
-| Resize the ship display background | Planned | Adjust background width and height separately in **Arrange HUD** so the panel can fit long or narrow ships with less empty space. Keep the ship model's scale independent and save the background dimensions with the HUD layout. |
-| Title-only health bar labels | Planned | In **Arrange HUD**, add a **Simple label** checkbox for system and custom health bars. With **Show label** on, checking it shows just the bar title and unchecking it shows the full status text. Turn **Show label** off to hide the text entirely. |
-| Exact values in Arrange HUD | Planned | Let players type a value for every numeric setting, including position, size, scale, opacity and the planned background dimensions. Keep the sliders, drag controls and typed values in sync with the live preview so matching elements is easy. |
-| Simplify rendering mode choices | Planned | Remove **Faults with fills** and **Fault outlines only** from the rendering mode controls. List **Textured Ship** above **HD Wireframe** and keep **HD Wireframe** selected by default. |
+| Simplify the control panel | Confirmed in game | **Standard** shows everyday controls. **Advanced** reveals detailed settings and diagnostics. Related controls share pages, and positioning and resizing are handled in **Arrange HUD**. |
+| Resize the ship display background | Confirmed in game | Set background width and height in **Arrange HUD** independently of ship scale. The display follows the resized background and the caption stays below it. |
+| Title-only health bar labels | Confirmed in game | **Simple label** shows the title for system and custom bars. The Power bar keeps its enabled section captions. Turn **Show label** off to hide the text entirely. |
+| Exact values in Arrange HUD | Confirmed in game | Every numeric slider has a percentage field. Typing values, dragging and moving sliders update the same live preview. |
+| Simplify rendering mode choices | Confirmed in game | **Ship display** lists **Textured Ship** above **HD Wireframe**, followed by **SD Wireframe** and **Outlines only**. HD remains the default. |
 | Show ship label | Confirmed in game | Turn off **Show ship label** under **Ship display** to hide the text below the schematic. The ship's **Show label** checkbox in **Arrange HUD** controls the same setting. The label is visible by default. **Save display** keeps the choice. [Test checklist](TESTING-TODO.md#display-follow-up) |
-| Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. Use **Apply layout** to use the draft and **Save display** to keep it. Custom-bar changes use **Save for this ship**. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
+| Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. **Apply layout** saves custom bar changes with the ship. Use **Save display** to keep the schematic and system bar layout. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Sharper, steadier ship display | Confirmed in game | **HD Wireframe** is the default. A performance comparison with **SD Wireframe** on the damaged station is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The Legacy station retest showed smoother rotation and textured shapes. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 

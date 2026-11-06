@@ -33,18 +33,23 @@ internal static class HealthBarChecks
 
     public static void Run()
     {
-        for (int mode = 0; mode < 4; mode++)
+        var modes = new[]
+        {
+            HudAppearance.SdWireframe, HudAppearance.Outlines, HudAppearance.FaultsWithFills,
+            HudAppearance.FaultOutlines, HudAppearance.HdWireframe, HudAppearance.Textured
+        };
+        foreach (int mode in modes)
         {
             var configured = new SchematicControls();
             configured.Appearance.Rendering = mode;
             var restoredMode = new SchematicControls();
             DisplaySettings.Import(DisplaySettings.Export(configured), restoredMode);
-            Check(
-                restoredMode.Appearance.Rendering == mode
-                    && restoredMode.Appearance.DrawFills == ((mode & 1) == 0)
-                    && restoredMode.Appearance.DrawHull == ((mode & 2) == 0),
-                "Performance modes persist and select intended layers"
-            );
+            int expectedMode = mode == HudAppearance.FaultsWithFills ? HudAppearance.HdWireframe
+                : mode == HudAppearance.FaultOutlines ? HudAppearance.Outlines : mode;
+            Check(restoredMode.Appearance.Rendering == expectedMode
+                    && restoredMode.Appearance.DrawFills == (expectedMode != HudAppearance.Outlines)
+                    && restoredMode.Appearance.DrawHull,
+                "Rendering modes persist and retired fault modes keep the intended fill setting");
         }
 
         var projection = new SchematicControls();
@@ -183,6 +188,21 @@ internal static class HealthBarChecks
             HealthBarLayout.Parse("False,True,0.75,0.48,0.22,0.014,1").PowerMask == 0,
             "Old layouts retain unsplit power bars"
         );
+        var legacyLabel = HealthBarLayout.Parse("True,True,0.75,0.48,0.22,0.014,1,7");
+        Check(legacyLabel.Label && !legacyLabel.TitleOnly && legacyLabel.PowerMask == 7,
+            "Existing layouts keep full labels and power sections");
+        var labelSettings = new SchematicControls();
+        labelSettings.HealthBars.Bars[2].PowerMask = 7;
+        labelSettings.HealthBars.Bars[2].TitleOnly = true;
+        labelSettings.HealthBars.Bars[3].Label = false;
+        labelSettings.HealthBars.Bars[3].TitleOnly = true;
+        var restoredLabels = new SchematicControls();
+        DisplaySettings.Import(DisplaySettings.Export(labelSettings), restoredLabels);
+        Check(restoredLabels.HealthBars.Bars[2].Label && restoredLabels.HealthBars.Bars[2].TitleOnly
+            && restoredLabels.HealthBars.Bars[2].PowerMask == 7,
+            "Title-only labels and power sections round trip together");
+        Check(!restoredLabels.HealthBars.Bars[3].Label && restoredLabels.HealthBars.Bars[3].TitleOnly,
+            "Hiding a label preserves the choice to show only its title");
         Check(
             ShipHealth.PowerType("MyObjectBuilder_Reactor/ModdedFusion") == 0
                 && ShipHealth.PowerType("MyObjectBuilder_CubeBlock/ReactorDecoration") == 3,

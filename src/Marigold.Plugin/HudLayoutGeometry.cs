@@ -6,6 +6,18 @@ namespace Marigold
     // Use the same pixel bounds for drawing, hit testing, and dragging.
     internal static class HudLayoutGeometry
     {
+        internal readonly struct ShipHudLayout
+        {
+            public readonly RectangleF Model, Background, Bounds;
+
+            public ShipHudLayout(RectangleF model, RectangleF background, RectangleF bounds)
+            {
+                Model = model;
+                Background = background;
+                Bounds = bounds;
+            }
+        }
+
         private const float Inset = 8;
         private const float CompactHorizontalInsets = 24;
         private const float ExpandedHorizontalInsets = 16;
@@ -15,18 +27,28 @@ namespace Marigold
 
         public static RectangleF Ship(Vector2 screen, HudAppearance appearance, bool expanded)
         {
-            float side = expanded
-                ? Math.Min(screen.X * .6f, screen.Y * .7f * (float)(appearance.Size / .32))
-                : Math.Min(screen.X * .6f, screen.Y * (float)appearance.Size);
+            return ShipLayout(screen, appearance, expanded).Bounds;
+        }
+
+        public static ShipHudLayout ShipLayout(Vector2 screen, HudAppearance appearance, bool expanded)
+        {
             float verticalInsets = ShipVerticalInsets(appearance);
-            side = Math.Min(side, Math.Max(1, screen.Y - verticalInsets));
             float horizontalInsets = expanded ? ExpandedHorizontalInsets : CompactHorizontalInsets;
+            float limit = Math.Min(screen.X * .6f, Math.Max(1, screen.Y - verticalInsets));
+            float scale = expanded ? screen.Y * .7f / .32f : screen.Y;
+            float side = Math.Min(limit, scale * (float)appearance.Size);
+            float backgroundWidth = Math.Min(limit, scale * (float)appearance.BackgroundWidth);
+            float backgroundHeight = Math.Min(limit, scale * (float)appearance.BackgroundHeight);
             double x = expanded ? appearance.ExpandedX : appearance.X;
-            return new RectangleF(
-                Inset + Travel(screen.X, side, horizontalInsets) * (float)x,
-                Inset + Travel(screen.Y, side, verticalInsets) * (float)appearance.Y,
-                side, side
-            );
+            // Anchor to the visible panel so unused space in the square projection can overhang the screen.
+            float left = Inset + Travel(screen.X, backgroundWidth, horizontalInsets) * (float)x;
+            float top = Inset + Travel(screen.Y, backgroundHeight, verticalInsets) * (float)appearance.Y;
+            float centerX = left + backgroundWidth / 2, centerY = top + backgroundHeight / 2;
+            var model = new RectangleF(centerX - side / 2, centerY - side / 2, side, side);
+            float backgroundTop = top - Inset;
+            var background = new RectangleF(left - Inset, backgroundTop,
+                backgroundWidth + 2 * Inset, Math.Min(backgroundHeight + 2 * Inset, screen.Y - backgroundTop));
+            return new ShipHudLayout(model, background, new RectangleF(left, top, backgroundWidth, backgroundHeight));
         }
 
         public static RectangleF Bar(Vector2 screen, HealthBarLayout layout, bool split = false)

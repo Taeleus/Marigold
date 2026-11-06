@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Sandbox.Graphics;
 using Sandbox.Graphics.GUI;
 using VRage.Input;
@@ -24,30 +25,44 @@ namespace Marigold
                     if (screen.Applied)
                     {
                         RecreateControls(false);
-                        Status("Layout applied. Use Save display to keep it. Custom bars use Save for this ship.");
+                        Status(screen.CustomBarsSaved
+                            ? "Custom bars saved for this ship. Use Save display to keep the schematic and system bars."
+                            : "Layout applied. Use Save display to keep it.");
                     }
                 });
             }
 
             private sealed class HudLayoutScreen : MyGuiScreenBase
             {
-                private static readonly Vector2 ToolbarSize = new Vector2(.94f, .24f);
+                private static readonly Vector2 ToolbarSize = new Vector2(.94f, .34f);
+                private static readonly Vector4 InvalidValueColor = new Vector4(1, .65f, .55f, 1);
+
+                private sealed class NumericField
+                {
+                    public MyGuiControlLabel Label, Unit;
+                    public MyGuiControlSlider Slider;
+                    public MyGuiControlTextbox Input;
+                    public double Minimum, Maximum;
+                    public Func<double> Read;
+                    public Action<double> Write;
+                }
+
                 private readonly Panel editor;
                 private readonly HudLayoutDraft draft;
                 private readonly List<MyGuiControlBase> toolbar = new List<MyGuiControlBase>();
-                private readonly MyGuiControlSlider[] sliders = new MyGuiControlSlider[5];
-                private readonly MyGuiControlLabel[] sliderLabels = new MyGuiControlLabel[5];
+                private readonly NumericField[] fields = new NumericField[8];
                 private MyGuiControlCombobox element;
-                private MyGuiControlCheckbox showElement, showLabel;
-                private MyGuiControlLabel hint;
+                private MyGuiControlCheckbox showElement, showLabel, simpleLabel;
+                private MyGuiControlLabel hint, simpleLabelText;
                 private int selected;
                 private bool controlsAtTop, syncing, dragging, dragMoved, resizing;
                 private Vector2 dragOrigin, dragOffset, dragScreen, dragCursor;
                 private Vector2 resizeAnchor, resizeBodySize;
 
                 public bool Applied { get; private set; }
+                public bool CustomBarsSaved { get; private set; }
 
-                private float ToolbarY => controlsAtTop ? -.355f : .355f;
+                private float ToolbarY => controlsAtTop ? -.325f : .325f;
                 private int SystemCount => draft.Bars.Bars.Length;
                 private int ElementCount => 1 + SystemCount + draft.CustomBars.Count;
                 private bool Textured => draft.Appearance.Rendering == HudAppearance.Textured;
@@ -71,16 +86,16 @@ namespace Marigold
                 {
                     base.RecreateControls(constructor);
                     toolbar.Clear();
-                    AddLabel("Arrange HUD", -.445f, -.087f, .23f, .83f);
-                    AddButton("Move controls", -.024f, -.087f, .195f, MoveToolbar);
-                    AddButton("Cancel", .16f, -.087f, .15f, () => CloseScreen());
-                    var apply = AddButton("Apply layout", .341f, -.087f, .19f, Apply);
+                    AddLabel("Arrange HUD", -.445f, -.132f, .23f, .83f);
+                    AddButton("Move controls", -.024f, -.132f, .195f, MoveToolbar);
+                    AddButton("Cancel", .16f, -.132f, .15f, () => CloseScreen());
+                    var apply = AddButton("Apply layout", .341f, -.132f, .19f, Apply);
                     apply.ColorMask = new Vector4(.52f, .79f, .83f, 1);
-                    hint = AddLabel("", -.445f, -.043f, .89f);
+                    hint = AddLabel("", -.445f, -.09f, .89f);
 
-                    AddLabel("Element", -.445f, .001f, .09f);
+                    AddLabel("Element", -.445f, -.047f, .09f);
                     element = new MyGuiControlCombobox(
-                        position: new Vector2(-.183f, .001f), size: new Vector2(.334f, .044f),
+                        position: new Vector2(-.199f, -.047f), size: new Vector2(.298f, .044f),
                         openAreaItemsCount: 7, isAutoEllipsisEnabled: true
                     );
                     element.AddItem(0, editor.T("Ship schematic"), sort: false);
@@ -91,8 +106,8 @@ namespace Marigold
                     element.ItemSelected += () => Select((int)element.GetSelectedKey());
                     Add(element);
 
-                    showElement = AddCheckbox(.027f, "Show element");
-                    AddLabel("Show element", .049f, .001f, .17f);
+                    showElement = AddCheckbox(-.023f, "Show element");
+                    AddLabel("Show element", .001f, -.047f, .132f);
                     showElement.IsCheckedChanged += checkbox =>
                     {
                         if (syncing)
@@ -102,8 +117,8 @@ namespace Marigold
                         else
                             Bar(selected).Enabled = checkbox.IsChecked;
                     };
-                    showLabel = AddCheckbox(.25f, "Show label");
-                    AddLabel("Show label", .272f, .001f, .17f);
+                    showLabel = AddCheckbox(.143f, "Show label");
+                    AddLabel("Show label", .167f, -.047f, .118f);
                     showLabel.IsCheckedChanged += checkbox =>
                     {
                         if (syncing)
@@ -111,21 +126,43 @@ namespace Marigold
                         if (selected == 0)
                             draft.Appearance.ShowShipLabel = checkbox.IsChecked;
                         else
+                        {
                             Bar(selected).Label = checkbox.IsChecked;
+                            simpleLabel.Enabled = checkbox.IsChecked;
+                            simpleLabelText.Enabled = checkbox.IsChecked;
+                        }
+                    };
+                    simpleLabel = AddCheckbox(.303f, "Show only the bar title.");
+                    simpleLabelText = AddLabel("Simple label", .327f, -.047f, .122f);
+                    simpleLabel.IsCheckedChanged += checkbox =>
+                    {
+                        if (!syncing && selected != 0)
+                            Bar(selected).TitleOnly = checkbox.IsChecked;
                     };
 
-                    for (int i = 0; i < sliders.Length; i++)
+                    for (int i = 0; i < fields.Length; i++)
                     {
-                        int index = i;
-                        float x = -.445f + .179f * i;
-                        sliderLabels[i] = AddLabel("", x, .047f, .169f);
-                        sliders[i] = new MyGuiControlSlider(
-                            position: new Vector2(x + .081f, .086f), minValue: 0, maxValue: 100, width: .162f,
-                            labelText: "{0}%", labelDecimalPlaces: 1, labelScale: .57f, labelSpaceWidth: .044f,
-                            showLabel: true
-                        );
-                        sliders[i].ValueChanged += slider => SetSlider(index, slider.Value / 100d);
-                        Add(sliders[i]);
+                        float x = -.445f + .224f * (i % 4), y = .034f + .084f * (i / 4);
+                        var field = new NumericField
+                        {
+                            Label = AddLabel("", x, y - .028f, .212f),
+                            Slider = new MyGuiControlSlider(new Vector2(x + .052f, y), width: .104f),
+                            Input = new MyGuiControlTextbox(new Vector2(x + .153f, y), maxLength: 10, textScale: .65f)
+                            {
+                                Size = new Vector2(.078f, .034f)
+                            }
+                        };
+                        field.Slider.ValueChanged += slider => SetFromSlider(field);
+                        field.Input.TextChanged += box => SetFromText(field);
+                        field.Input.EnterPressed += box =>
+                        {
+                            if (ValidateValue(field))
+                                Synchronize(() => SyncValue(field));
+                        };
+                        Add(field.Slider);
+                        Add(field.Input);
+                        field.Unit = AddLabel("%", x + .195f, y, .023f);
+                        fields[i] = field;
                     }
 
                     Select(selected);
@@ -159,7 +196,7 @@ namespace Marigold
 
                 private MyGuiControlCheckbox AddCheckbox(float x, string tooltip)
                 {
-                    var checkbox = new MyGuiControlCheckbox(new Vector2(x, .001f));
+                    var checkbox = new MyGuiControlCheckbox(new Vector2(x, -.047f));
                     checkbox.SetToolTip(editor.T(tooltip));
                     Add(checkbox);
                     return checkbox;
@@ -176,16 +213,19 @@ namespace Marigold
 
                 private void Apply()
                 {
+                    foreach (var field in fields)
+                        if (field.Input.Visible && !ValidateValue(field))
+                            return;
                     try
                     {
-                        editor.owner.ApplyHudLayout(draft);
+                        CustomBarsSaved = editor.owner.ApplyHudLayout(draft);
                         Applied = true;
                         CloseScreen();
                     }
                     catch (Exception error)
                     {
                         hint.Text = editor.T(error.Message);
-                        hint.ColorMask = new Vector4(1, .65f, .55f, 1);
+                        hint.ColorMask = InvalidValueColor;
                     }
                 }
 
@@ -218,26 +258,42 @@ namespace Marigold
                         var bar = key == 0 ? null : Bar(key);
                         showElement.IsChecked = bar == null ? draft.ShipVisible : bar.Enabled;
                         showLabel.IsChecked = bar?.Label ?? draft.Appearance.ShowShipLabel;
-                        hint.Text = editor.T(bar == null
-                            ? "Drag to move. Apply updates the HUD. Save display keeps it."
-                            : key > SystemCount
-                            ? "Drag the corner to resize. Apply, then Save for this ship."
-                            : "Drag the corner to resize. Apply, then Save display.");
-                        hint.ColorMask = Vector4.One;
-                        SetRange(0, "Horizontal position", bar?.X ?? ShipX, 0, 1);
-                        SetRange(1, "Vertical position", bar?.Y ?? draft.Appearance.Y, 0, 1);
+                        simpleLabel.Visible = simpleLabelText.Visible = bar != null;
+                        simpleLabel.Enabled = simpleLabelText.Enabled = bar?.Label ?? false;
+                        simpleLabel.IsChecked = bar?.TitleOnly ?? false;
+                        ResetHint();
+
+                        var appearance = draft.Appearance;
                         if (bar == null)
                         {
-                            SetRange(2, "Scale", draft.Appearance.Size, .12, .7);
-                            SetRange(3, "Background opacity", draft.Appearance.Background, 0, 1);
-                            SetRange(4, Textured ? "Textured ship opacity" : "Outline opacity",
-                                Textured ? draft.Appearance.ShipOpacity : draft.Appearance.Outline, 0, 1);
+                            SetField(0, "Horizontal position", () => ShipX, value => ShipX = value);
+                            SetField(1, "Vertical position", () => appearance.Y, value => appearance.Y = value);
+                            SetField(2, "Scale", () => appearance.Size, value => appearance.Size = value, .12, .7);
+                            SetField(3, "Outline opacity", () => appearance.Outline, value => appearance.Outline = value);
+                            SetField(4, "Background width", () => appearance.BackgroundWidth, value => appearance.BackgroundWidth = value,
+                                HudAppearance.MinBackgroundSize, HudAppearance.MaxBackgroundSize);
+                            SetField(5, "Background height", () => appearance.BackgroundHeight, value => appearance.BackgroundHeight = value,
+                                HudAppearance.MinBackgroundSize, HudAppearance.MaxBackgroundSize);
+                            SetField(6, "Background opacity", () => appearance.Background, value => appearance.Background = value);
+                            if (Textured)
+                                SetField(7, "Textured ship opacity", () => appearance.ShipOpacity, value => appearance.ShipOpacity = value);
                         }
                         else
                         {
-                            SetRange(2, "Width", bar.Width, HealthBarLayout.MinWidth, HealthBarLayout.MaxWidth);
-                            SetRange(3, "Height", bar.Height, HealthBarLayout.MinHeight, HealthBarLayout.MaxHeight);
-                            SetRange(4, "Opacity", bar.Opacity, 0, 1);
+                            SetField(0, "Horizontal position", () => bar.X, value => bar.X = value);
+                            SetField(1, "Vertical position", () => bar.Y, value => bar.Y = value);
+                            SetField(2, "Width", () => bar.Width, value => bar.Width = value,
+                                HealthBarLayout.MinWidth, HealthBarLayout.MaxWidth);
+                            SetField(3, "Height", () => bar.Height, value => bar.Height = value,
+                                HealthBarLayout.MinHeight, HealthBarLayout.MaxHeight);
+                            SetField(4, "Opacity", () => bar.Opacity, value => bar.Opacity = value);
+                        }
+
+                        int visibleFields = bar != null ? 5 : Textured ? 8 : 7;
+                        for (int i = 0; i < fields.Length; i++)
+                        {
+                            var field = fields[i];
+                            field.Label.Visible = field.Slider.Visible = field.Input.Visible = field.Unit.Visible = i < visibleFields;
                         }
                     }
                     finally
@@ -246,54 +302,93 @@ namespace Marigold
                     }
                 }
 
-                private void SetRange(int index, string text, double value, double min, double max)
+                private void ResetHint()
                 {
-                    var slider = sliders[index];
-                    sliderLabels[index].Text = editor.T(text);
-                    slider.SetToolTip(editor.T(text));
-                    slider.SetBounds((float)(min * 100), (float)(max * 100));
-                    slider.Value = (float)(value * 100);
+                    hint.Text = editor.T(selected == 0
+                        ? "Drag to move. Apply updates the HUD. Save display keeps it."
+                        : selected > SystemCount
+                        ? "Drag the corner to resize. Apply layout saves custom bars for this ship."
+                        : "Drag the corner to resize. Apply, then Save display.");
+                    hint.ColorMask = Vector4.One;
                 }
 
-                private void SetSlider(int index, double value)
+                private void SetField(int index, string text, Func<double> read, Action<double> write,
+                    double minimum = 0, double maximum = 1)
+                {
+                    var field = fields[index];
+                    field.Read = read;
+                    field.Write = write;
+                    field.Minimum = minimum;
+                    field.Maximum = maximum;
+                    field.Label.Text = editor.T(text);
+                    field.Slider.SetToolTip(field.Label.Text);
+                    field.Input.SetToolTip(field.Label.Text + " (%)");
+                    field.Slider.SetBounds((float)(minimum * 100), (float)(maximum * 100));
+                    SyncValue(field);
+                }
+
+                private static string Percentage(double value)
+                {
+                    return (value * 100).ToString("0.####", CultureInfo.InvariantCulture);
+                }
+
+                private static void SyncValue(NumericField field)
+                {
+                    double value = field.Read();
+                    field.Slider.Value = (float)(value * 100);
+                    field.Input.Text = Percentage(value);
+                    field.Input.ColorMask = Vector4.One;
+                }
+
+                private void Synchronize(Action action)
+                {
+                    syncing = true;
+                    try { action(); }
+                    finally { syncing = false; }
+                }
+
+                private void SetFromSlider(NumericField field)
                 {
                     if (syncing)
                         return;
-                    value = Clamp(value, 0, 1);
-                    var appearance = draft.Appearance;
-                    if (selected == 0)
+                    field.Write(Math.Max(field.Minimum, Math.Min(field.Maximum, field.Slider.Value / 100d)));
+                    Synchronize(() => SyncValue(field));
+                    ResetHint();
+                }
+
+                private void SetFromText(NumericField field)
+                {
+                    if (syncing)
+                        return;
+                    bool valid = TryReadValue(field, out double value);
+                    field.Input.ColorMask = valid ? Vector4.One : InvalidValueColor;
+                    if (valid)
                     {
-                        switch (index)
-                        {
-                            case 0: ShipX = value; break;
-                            case 1: appearance.Y = value; break;
-                            case 2: appearance.Size = Clamp(value, .12, .7); break;
-                            case 3: appearance.Background = value; break;
-                            case 4:
-                                if (Textured)
-                                    appearance.ShipOpacity = value;
-                                else
-                                    appearance.Outline = value;
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        var bar = Bar(selected);
-                        switch (index)
-                        {
-                            case 0: bar.X = value; break;
-                            case 1: bar.Y = value; break;
-                            case 2: bar.Width = Clamp(value, HealthBarLayout.MinWidth, HealthBarLayout.MaxWidth); break;
-                            case 3: bar.Height = Clamp(value, HealthBarLayout.MinHeight, HealthBarLayout.MaxHeight); break;
-                            case 4: bar.Opacity = value; break;
-                        }
+                        field.Write(value);
+                        Synchronize(() => field.Slider.Value = (float)(value * 100));
+                        ResetHint();
                     }
                 }
 
-                private static double Clamp(double value, double min, double max)
+                private static bool TryReadValue(NumericField field, out double value)
                 {
-                    return Math.Max(min, Math.Min(max, value));
+                    string text = field.Input.Text;
+                    if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                        && !double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out value))
+                        return false;
+                    value /= 100;
+                    return value >= field.Minimum && value <= field.Maximum;
+                }
+
+                private bool ValidateValue(NumericField field)
+                {
+                    if (TryReadValue(field, out _))
+                        return true;
+                    hint.Text = string.Format(editor.T("{0} must be between {1}% and {2}%."), field.Label.Text,
+                        Percentage(field.Minimum), Percentage(field.Maximum));
+                    hint.ColorMask = InvalidValueColor;
+                    FocusedControl = field.Input;
+                    return false;
                 }
 
                 public override bool Update(bool hasFocus)
@@ -413,14 +508,15 @@ namespace Marigold
                         HudLayoutGeometry.MoveBar(dragScreen, bar, selected == 3 && bar.PowerMask != 0, cursor - dragOffset);
 
                     syncing = true;
-                    sliders[0].Value = (float)((bar?.X ?? ShipX) * 100);
-                    sliders[1].Value = (float)((bar?.Y ?? draft.Appearance.Y) * 100);
+                    SyncValue(fields[0]);
+                    SyncValue(fields[1]);
                     if (resizing)
                     {
-                        sliders[2].Value = (float)(bar.Width * 100);
-                        sliders[3].Value = (float)(bar.Height * 100);
+                        SyncValue(fields[2]);
+                        SyncValue(fields[3]);
                     }
                     syncing = false;
+                    ResetHint();
                 }
 
                 public override bool Draw()
@@ -428,7 +524,8 @@ namespace Marigold
                     editor.owner.DrawHudLayout(draft);
                     var screen = ScreenSize();
                     var bounds = Bounds(screen, selected);
-                    DrawSelection(bounds, IsShown(selected), screen.Y);
+                    var selectionColor = IsShown(selected) ? new Color(143, 216, 225) : new Color(135, 164, 176);
+                    DrawSelection(bounds, selectionColor, screen.Y);
                     if (selected != 0)
                         DrawEdge(ResizeHandle(screen, bounds), new Color(143, 216, 225));
                     MyGuiManager.DrawSpriteBatch(
@@ -444,9 +541,8 @@ namespace Marigold
                     return new RectangleF(bounds.Right - side, bounds.Bottom - side, side, side);
                 }
 
-                private static void DrawSelection(RectangleF rect, bool shown, float screenHeight)
+                private static void DrawSelection(RectangleF rect, Color color, float screenHeight)
                 {
-                    var color = shown ? new Color(143, 216, 225) : new Color(135, 164, 176);
                     const float edge = 2;
                     DrawEdge(new RectangleF(rect.X - edge, rect.Y - edge, rect.Width + 2 * edge, edge), color);
                     DrawEdge(new RectangleF(rect.X - edge, Math.Min(rect.Bottom, screenHeight - edge), rect.Width + 2 * edge, edge), color);

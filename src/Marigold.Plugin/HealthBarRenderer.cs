@@ -21,9 +21,11 @@ namespace Marigold
                 int total = health.Total(group);
                 if (layout.Label)
                 {
-                    string text = UiText.Get(controls.Language, ShipHealth.Names[group]) + (healthPreview ? " [preview]" : "") + ": " + (!health.HasBaseline
-                        ? "capture or load a baseline"
-                        : total == 0 ? "no baseline blocks" : health.Counts[group, 0] + "/" + total + " healthy blocks");
+                    string text = UiText.Get(controls.Language, ShipHealth.Names[group]);
+                    if (!layout.TitleOnly)
+                        text += (healthPreview ? " [preview]" : "") + ": " + (!health.HasBaseline
+                            ? "capture or load a baseline"
+                            : total == 0 ? "no baseline blocks" : health.Counts[group, 0] + "/" + total + " healthy blocks");
                     MyGuiManager.DrawString(
                         "White",
                         text,

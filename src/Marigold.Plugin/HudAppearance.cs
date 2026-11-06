@@ -12,10 +12,13 @@ namespace Marigold
         public const int FaultOutlines = 3;
         public const int HdWireframe = 4;
         public const int Textured = 5;
+        public const double MinBackgroundSize = .05, MaxBackgroundSize = .95;
 
         private const double DefaultShipOpacity = .7;
         private const double DefaultExpandedX = .5;
-        public double X = .98, Y = .12, Size = .32, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
+        private const double DefaultSize = .32;
+        public double X = .98, Y = .12, Size = DefaultSize, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
+        public double BackgroundWidth = DefaultSize, BackgroundHeight = DefaultSize;
         public double ExpandedX = DefaultExpandedX;
         public bool NewDamagePulse = true;
         public int Rendering = HdWireframe;
@@ -69,7 +72,9 @@ namespace Marigold
                     MatchHealthyBarColor.ToString(),
                     N(ShipOpacity),
                     N(ExpandedX),
-                    ShowShipLabel.ToString()
+                    ShowShipLabel.ToString(),
+                    N(BackgroundWidth),
+                    N(BackgroundHeight)
                 }
             );
         }
@@ -78,7 +83,7 @@ namespace Marigold
         {
             var a = text.Split(';');
             if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13 && a.Length != 14 && a.Length != 15
-                && a.Length != 16)
+                && a.Length != 16 && a.Length != 18)
                 throw new InvalidDataException("Invalid HUD appearance.");
             var n = new double[7];
             for (int i = 0; i < 7; i++)
@@ -113,6 +118,10 @@ namespace Marigold
                 throw new InvalidDataException("Invalid rendering mode.");
             if (!unifiedRendering && rendering == SdWireframe)
                 rendering = HdWireframe; // The earlier default Full display moves to HD Wireframe.
+            if (rendering == FaultsWithFills)
+                rendering = HdWireframe;
+            else if (rendering == FaultOutlines)
+                rendering = Outlines;
             double context = .15;
             string healthy = "3296FF";
             bool matchHealthy = false;
@@ -140,7 +149,7 @@ namespace Marigold
                     || double.IsNaN(expandedX) || double.IsInfinity(expandedX) || expandedX < 0 || expandedX > 1))
                 throw new InvalidDataException("Expanded horizontal position must be between 0 and 1.");
             bool showShipLabel = true;
-            if (a.Length == 16 && !bool.TryParse(a[15], out showShipLabel))
+            if (a.Length >= 16 && !bool.TryParse(a[15], out showShipLabel))
                 throw new InvalidDataException("Invalid ship label visibility.");
             return new HudAppearance
             {
@@ -155,12 +164,22 @@ namespace Marigold
                 ShowShipLabel = showShipLabel,
                 Y = n[1],
                 Size = n[2],
+                BackgroundWidth = a.Length == 18 ? ParseBackgroundSize(a[16]) : n[2],
+                BackgroundHeight = a.Length == 18 ? ParseBackgroundSize(a[17]) : n[2],
                 Background = n[3],
                 Outline = n[4],
                 Fill = n[5],
                 Pulse = n[6],
                 Colors = a[7]
             };
+        }
+
+        private static double ParseBackgroundSize(string text)
+        {
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double size)
+                || !(size >= MinBackgroundSize && size <= MaxBackgroundSize))
+                throw new InvalidDataException("Background width and height must be 0.05 to 0.95.");
+            return size;
         }
 
         private string cachedColors;
@@ -221,6 +240,8 @@ namespace Marigold
             ExpandedX = parsed.ExpandedX;
             Y = parsed.Y;
             Size = parsed.Size;
+            BackgroundWidth = parsed.BackgroundWidth;
+            BackgroundHeight = parsed.BackgroundHeight;
             Background = parsed.Background;
             Outline = parsed.Outline;
             Fill = parsed.Fill;

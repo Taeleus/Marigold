@@ -34,11 +34,11 @@ internal static class DataPathChecks
             var empty = new ProfileStore(paths.Root);
             Check(empty.Profiles.Count == 0 && empty.Warning == null, "Fresh selected data root has no imported profiles");
             var controls = new SchematicControls();
-            controls.Appearance.Rendering = 3;
+            controls.Appearance.Rendering = HudAppearance.Outlines;
             DisplaySettings.Save(Path.Combine(paths.Root, "display.txt"), controls);
             var loaded = new SchematicControls();
             DisplaySettings.Load(Path.Combine(paths.Root, "display.txt"), loaded);
-            Check(loaded.Appearance.Rendering == 3, "Settings persist under the selected game root");
+            Check(loaded.Appearance.Rendering == HudAppearance.Outlines, "Settings persist under the selected game root");
             Check(!File.Exists(Path.Combine(old, "display.txt")), "New saves never write to a leftover folder");
             var custom = DataPaths.Initialize(Path.Combine(sandbox, "CustomGameData"));
             Check(

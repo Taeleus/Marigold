@@ -27,8 +27,7 @@ namespace Marigold
                 var bar = FindCustomBar(profile.CustomBars, customBarId);
                 if (bar == null)
                     throw new InvalidOperationException("Select a custom bar first.");
-                var layout = owner.EffectiveCustomBarLayout(profile, bar);
-                return ReferenceEquals(bar.Layout, layout) ? bar : CustomBarWithLayout(bar, layout);
+                return bar;
             }
 
             private void ConfirmCustomAction(string key, Action action, string prompt = null)
@@ -85,7 +84,7 @@ namespace Marigold
                     customBarId = profile.CustomBars[i].Id;
                     confirm = null;
                 });
-                ActionControl("Edit name and layout", () =>
+                ActionControl("Edit bar", () =>
                 {
                     customBarDraft = SelectedCustomBar().Copy();
                     Switch(22);
@@ -182,58 +181,21 @@ namespace Marigold
             {
                 if (customBarDraft == null)
                     customBarDraft = SelectedCustomBar().Copy();
-                var layout = customBarDraft.Layout;
+                var draft = customBarDraft;
                 Intro("Changes preview on the HUD. Save bar keeps this ship's edits; leaving this page discards unsaved edits.");
-                var name = TextField("Bar name", customBarDraft.Name, 128);
-                Action rememberName = () => customBarDraft.Name = name.Text;
-                CheckField("Show this bar", layout.Enabled, value =>
+                var name = TextField("Bar name", draft.Name, 128);
+                name.TextChanged += box => draft.Name = box.Text;
+                CheckField("Show this bar", draft.Layout.Enabled, value => draft.Layout.Enabled = value);
+                CheckField("Show its label", draft.Layout.Label, value => draft.Layout.Label = value);
+                PrimaryAction("Save bar", () =>
                 {
-                    rememberName();
-                    layout.Enabled = value;
-                });
-                CheckField("Show its label", layout.Label, value =>
-                {
-                    rememberName();
-                    layout.Label = value;
-                });
-                var applyLayout = BarLayoutFields(layout);
-                ActionRow("Preview layout", () =>
-                {
-                    rememberName();
-                    applyLayout();
-                    Status("Preview updated. Save bar keeps these changes for this ship.");
-                    InspectHud();
-                }, "Save bar", () =>
-                {
-                    rememberName();
-                    applyLayout();
-                    customBarDraft.Name = customBarDraft.Name.Trim();
-                    Status(owner.SaveCustomBar(customBarDraft));
-                });
-                Heading("Move in small steps");
-                ActionRow("Left", () =>
-                {
-                    rememberName();
-                    MoveBar(layout, -.02, 0);
-                }, "Right", () =>
-                {
-                    rememberName();
-                    MoveBar(layout, .02, 0);
-                });
-                ActionRow("Up", () =>
-                {
-                    rememberName();
-                    MoveBar(layout, 0, -.02);
-                }, "Down", () =>
-                {
-                    rememberName();
-                    MoveBar(layout, 0, .02);
+                    draft.Name = draft.Name.Trim();
+                    Status(owner.SaveCustomBar(draft));
                 });
                 ActionControl("Reset layout", () =>
                 {
-                    rememberName();
-                    int index = owner.SelectedProfile().CustomBars.FindIndex(bar => bar.Id == customBarDraft.Id);
-                    customBarDraft.Layout = new HealthBarLayout
+                    int index = owner.SelectedProfile().CustomBars.FindIndex(bar => bar.Id == draft.Id);
+                    draft.Layout = new HealthBarLayout
                     {
                         Enabled = true,
                         X = .45,
@@ -241,23 +203,7 @@ namespace Marigold
                     };
                     RecreateControls(false);
                 });
-                Note("Custom bars use Save bar, separately from Save display.");
-            }
-
-            private void PowerSections()
-            {
-                Intro("Give selected power sources their own labeled section within the Power bar.");
-                var layout = owner.controls.HealthBars.Bars[2];
-                for (int i = 0; i < 3; i++)
-                {
-                    int bit = 1 << i;
-                    CheckField(ShipHealth.PowerNames[i], (layout.PowerMask & bit) != 0, value =>
-                    {
-                        layout.PowerMask = value ? layout.PowerMask | bit : layout.PowerMask & ~bit;
-                    });
-                }
-                Note("Unchecked sources stay in Other. Every baseline power block is still counted.");
-                Note("Use Save display to keep these choices.");
+                Note("Use Arrange HUD to move or resize custom bars.");
             }
         }
     }

@@ -27,77 +27,6 @@ namespace Marigold
         private ShipProfile customAlignedProfile;
         private AnchorFrame customAlignedAnchor;
         private readonly Dictionary<string, CustomHealthBar> customAlignedMembers = new Dictionary<string, CustomHealthBar>();
-        private Dictionary<string, HealthBarLayout> customLayoutOverrides = new Dictionary<string, HealthBarLayout>();
-        private string customLayoutProfileId, customLayoutReferenceId;
-
-        private List<CustomHealthBar> CaptureCustomBarLayouts(out string profileId)
-        {
-            profileId = null;
-            var layouts = new List<CustomHealthBar>();
-            if (grid == null || !references.TryGetValue(grid, out var binding))
-                return layouts;
-
-            var profile = profileStore.Find(binding.ProfileId);
-            profileId = profile.Id;
-            foreach (var bar in profile.CustomBars)
-                layouts.Add(CustomBarWithLayout(bar, EffectiveCustomBarLayout(profile, bar)));
-            return layouts;
-        }
-
-        private void ApplyCustomBarLayouts(string profileId, List<CustomHealthBar> bars)
-        {
-            if (profileId == null)
-                return;
-            var profile = SelectedProfile();
-            if (profile.Id != profileId)
-                throw new InvalidOperationException("The active ship changed. Reopen Arrange HUD to edit its layout.");
-
-            var overrides = new Dictionary<string, HealthBarLayout>();
-            foreach (var saved in profile.CustomBars)
-            {
-                var draft = FindCustomBar(bars, saved.Id);
-                if (draft == null)
-                    continue;
-                string encoded = draft.Layout.Encode();
-                if (encoded != saved.Layout.Encode())
-                    overrides.Add(saved.Id, HealthBarLayout.Parse(encoded));
-            }
-
-            customLayoutOverrides = overrides;
-            customLayoutProfileId = profile.Id;
-            customLayoutReferenceId = profile.ReferenceId;
-        }
-
-        private void ClearCustomBarLayouts()
-        {
-            customLayoutOverrides.Clear();
-            customLayoutProfileId = customLayoutReferenceId = null;
-        }
-
-        private bool HasCustomBarLayouts(ShipProfile profile)
-        {
-            return customLayoutOverrides.Count != 0 && customLayoutProfileId == profile.Id
-                && customLayoutReferenceId == profile.ReferenceId;
-        }
-
-        private HealthBarLayout EffectiveCustomBarLayout(ShipProfile profile, CustomHealthBar bar)
-        {
-            return HasCustomBarLayouts(profile) && customLayoutOverrides.TryGetValue(bar.Id, out var layout)
-                ? layout : bar.Layout;
-        }
-
-        private void SaveCustomBarLayouts(ShipProfile profile)
-        {
-            if (!HasCustomBarLayouts(profile))
-                return;
-
-            var updated = profile.Copy();
-            foreach (var bar in updated.CustomBars)
-                if (customLayoutOverrides.TryGetValue(bar.Id, out var layout))
-                    bar.Layout = layout;
-            profileStore.Put(updated);
-            ClearCustomBarLayouts();
-        }
 
         private static CustomHealthBar FindCustomBar(List<CustomHealthBar> bars, string id)
         {
@@ -106,18 +35,6 @@ namespace Marigold
                     if (bar.Id == id)
                         return bar;
             return null;
-        }
-
-        private static CustomHealthBar CustomBarWithLayout(CustomHealthBar bar, HealthBarLayout layout)
-        {
-            return new CustomHealthBar
-            {
-                Id = bar.Id,
-                Name = bar.Name,
-                GroupName = bar.GroupName,
-                Layout = HealthBarLayout.Parse(layout.Encode()),
-                Members = bar.Members
-            };
         }
 
         private void ResetCustomBarHealth()
@@ -271,8 +188,6 @@ namespace Marigold
             else
                 updated.CustomBars[index] = bar.Copy();
             profileStore.Put(updated);
-            if (HasCustomBarLayouts(updated))
-                customLayoutOverrides.Remove(bar.Id);
             RefreshReference("Custom bar saved; updating its health.");
             return "Custom bar saved for this ship and baseline version.";
         }
@@ -282,8 +197,6 @@ namespace Marigold
             var updated = SelectedProfile().Copy();
             updated.CustomBars.RemoveAll(bar => bar.Id == id);
             profileStore.Put(updated);
-            if (HasCustomBarLayouts(updated))
-                customLayoutOverrides.Remove(id);
             customBarViews = Array.FindAll(customBarViews, view => view.Bar.Id != id);
             RefreshReference("Custom bar deleted.");
             return "Custom bar deleted. The ship baseline is unchanged.";
@@ -318,7 +231,7 @@ namespace Marigold
                 if (draft == null && editorDraft?.Id == saved.Id)
                     draft = editorDraft;
                 var bar = draft ?? saved;
-                var layout = draft?.Layout ?? EffectiveCustomBarLayout(profile, saved);
+                var layout = bar.Layout;
                 if (!layout.Enabled)
                     continue;
                 var bounds = HudLayoutGeometry.Bar(screen, layout);
@@ -328,15 +241,20 @@ namespace Marigold
                 float x = bounds.X, y = bounds.Y;
                 int total = view.Aligned.Members.Length;
                 if (layout.Label)
+                {
+                    string text = bar.Name;
+                    if (!layout.TitleOnly)
+                        text += ": " + view.Counts[0] + "/" + total + " " + UiText.Get(controls.Language, "healthy blocks");
                     MyGuiManager.DrawString(
                         "White",
-                        bar.Name + ": " + view.Counts[0] + "/" + total + " " + UiText.Get(controls.Language, "healthy blocks"),
+                        text,
                         new Vector2(x / screen.X, y / screen.Y),
                         .45f,
                         new Color(255, 255, 255, (byte)(255 * layout.Opacity)),
                         useFullClientArea: true,
                         maxTextWidth: width / screen.X
                     );
+                }
                 y += labelHeight;
                 var background = new RectangleF(x - 2, y - 2, width + 4, height + 4);
                 MyRenderProxy.DrawSprite(Texture, ref background, null, new Color(12, 22, 32, (byte)(210 * layout.Opacity)), 0, false, false);

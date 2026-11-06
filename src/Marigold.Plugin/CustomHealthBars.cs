@@ -28,6 +28,7 @@ namespace Marigold
                 {
                     Enabled = Layout.Enabled,
                     Label = Layout.Label,
+                    TitleOnly = Layout.TitleOnly,
                     X = Layout.X,
                     Y = Layout.Y,
                     Width = Layout.Width,
@@ -44,6 +45,24 @@ namespace Marigold
     {
         public const int MaximumBars = 16;
         public const int MaximumMembers = 250000;
+
+        public static ShipProfile WithLayouts(ShipProfile profile, List<CustomHealthBar> drafts)
+        {
+            ShipProfile updated = null;
+            foreach (var draft in drafts)
+            {
+                int index = profile.CustomBars.FindIndex(bar => bar.Id == draft.Id);
+                if (index < 0)
+                    continue;
+                string layout = draft.Layout.Encode();
+                if (layout == profile.CustomBars[index].Layout.Encode())
+                    continue;
+                if (updated == null)
+                    updated = profile.Copy();
+                updated.CustomBars[index].Layout = HealthBarLayout.Parse(layout);
+            }
+            return updated;
+        }
 
         public static CustomHealthBar Create(string name, string groupName, IEnumerable<BlockSample> members)
         {

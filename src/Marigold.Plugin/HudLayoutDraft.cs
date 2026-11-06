@@ -14,7 +14,7 @@ namespace Marigold
             public HealthBarSettings Bars;
             public bool ShipVisible;
             public bool Expanded;
-            public string ProfileId;
+            public string ReferenceId;
             public List<CustomHealthBar> CustomBars;
         }
 
@@ -29,8 +29,17 @@ namespace Marigold
             if (previewBlocks != null || recoveryPreview != null)
                 throw new InvalidOperationException(UiText.Get(controls.Language, "Finish the baseline preview before arranging the HUD."));
 
-            var customBars = CaptureCustomBarLayouts(out var profileId);
             references.TryGetValue(grid, out var binding);
+            var profile = binding == null ? null : profileStore.Find(binding.ProfileId);
+            var customBars = new List<CustomHealthBar>();
+            if (profile != null)
+                foreach (var bar in profile.CustomBars)
+                    customBars.Add(new CustomHealthBar
+                    {
+                        Id = bar.Id,
+                        Name = bar.Name,
+                        Layout = HealthBarLayout.Parse(bar.Layout.Encode())
+                    });
             return new HudLayoutDraft
             {
                 Grid = grid,
@@ -39,12 +48,12 @@ namespace Marigold
                 Bars = HealthBarSettings.Parse(controls.HealthBars.Encode()),
                 ShipVisible = controls.SchematicVisible,
                 Expanded = controls.Expanded,
-                ProfileId = profileId,
+                ReferenceId = profile?.ReferenceId,
                 CustomBars = customBars
             };
         }
 
-        private void ApplyHudLayout(HudLayoutDraft draft)
+        private bool ApplyHudLayout(HudLayoutDraft draft)
         {
             if (grid == null || !ReferenceEquals(grid, draft.Grid) || grid.Closed || grid.MarkedForClose)
                 throw new InvalidOperationException(UiText.Get(controls.Language, "The controlled grid changed. Reopen Arrange HUD."));
@@ -54,10 +63,20 @@ namespace Marigold
 
             var appearance = HudAppearance.Parse(draft.Appearance.Encode());
             var bars = HealthBarSettings.Parse(draft.Bars.Encode());
-            ApplyCustomBarLayouts(draft.ProfileId, draft.CustomBars);
+            ShipProfile updated = null;
+            if (draft.CustomBars.Count > 0)
+            {
+                var profile = profileStore.Find(binding.ProfileId);
+                if (profile.ReferenceId != draft.ReferenceId)
+                    throw new InvalidOperationException(UiText.Get(controls.Language, "The active baseline changed. Reopen Arrange HUD."));
+                updated = CustomHealthBars.WithLayouts(profile, draft.CustomBars);
+                if (updated != null)
+                    profileStore.Put(updated);
+            }
             controls.Appearance = appearance;
             controls.HealthBars = bars;
             controls.SchematicVisible = draft.ShipVisible;
+            return updated != null;
         }
 
         private void DrawHudLayout(HudLayoutDraft draft)

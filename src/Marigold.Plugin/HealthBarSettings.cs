@@ -8,13 +8,13 @@ namespace Marigold
     {
         public const double MinWidth = .05, MaxWidth = .8, MinHeight = .005, MaxHeight = .08;
 
-        public bool Enabled, Label = true;
+        public bool Enabled, Label = true, TitleOnly;
         public int PowerMask;
         public double X = .75, Y = .48, Width = .22, Height = .014, Opacity = 1;
 
         public string Encode()
         {
-            return string.Join(
+            string layout = string.Join(
                 ",",
                 new[]
                 {
@@ -28,6 +28,7 @@ namespace Marigold
                     PowerMask.ToString(CultureInfo.InvariantCulture)
                 }
             );
+            return TitleOnly ? layout + ",True" : layout;
         }
 
         private static string N(double n)
@@ -39,7 +40,7 @@ namespace Marigold
         {
             var a = text.Split(',');
             bool enabled, label;
-            if ((a.Length != 7 && a.Length != 8) || !bool.TryParse(a[0], out enabled) || !bool.TryParse(a[1], out label))
+            if (a.Length < 7 || a.Length > 9 || !bool.TryParse(a[0], out enabled) || !bool.TryParse(a[1], out label))
                 throw new InvalidDataException("Invalid health bar settings.");
             var n = new double[5];
             for (int i = 0; i < 5; i++)
@@ -52,13 +53,17 @@ namespace Marigold
             if (n[2] < MinWidth || n[2] > MaxWidth || n[3] < MinHeight || n[3] > MaxHeight)
                 throw new InvalidDataException("Width: 0.05 to 0.8; height: 0.005 to 0.08.");
             int mask = 0;
-            if (a.Length == 8 && (!int.TryParse(a[7], out mask) || mask < 0 || mask > 7))
+            if (a.Length >= 8 && (!int.TryParse(a[7], out mask) || mask < 0 || mask > 7))
                 throw new InvalidDataException("Invalid power sections.");
+            bool titleOnly = false;
+            if (a.Length == 9 && !bool.TryParse(a[8], out titleOnly))
+                throw new InvalidDataException("Invalid health bar settings.");
             return new HealthBarLayout
             {
                 PowerMask = mask,
                 Enabled = enabled,
                 Label = label,
+                TitleOnly = titleOnly,
                 X = n[0],
                 Y = n[1],
                 Width = n[2],

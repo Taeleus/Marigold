@@ -85,7 +85,6 @@ namespace Marigold
                 var p = SelectedProfile();
                 string shipPath = ShipSettingsPath(p.Id);
                 DisplaySettings.Save(shipPath, controls);
-                SaveCustomBarLayouts(p);
                 DisplaySettings.EnableShipLayout(shipPath);
                 return "Saved this ship's layout. It will load on reconnect.";
             }
@@ -94,8 +93,6 @@ namespace Marigold
             {
                 bool useSaved = verb == "ship-load";
                 DisplaySettings.SelectShipLayout(settingsPath, ShipSettingsPath(SelectedProfile().Id), controls, useSaved);
-                if (useSaved)
-                    ClearCustomBarLayouts();
                 string message = useSaved ? "Saved ship layout loaded and selected for reconnect."
                     : "This ship will load the default display on reconnect.";
                 RefreshReference(message);

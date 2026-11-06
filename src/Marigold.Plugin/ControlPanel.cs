@@ -237,33 +237,34 @@ namespace Marigold
                 RecreateControls(false);
             }
 
+            // Page IDs are also used by navigation history and child-screen state.
             private static readonly string[] PageNames =
             {
                 "Ship",
                 "Baselines",
                 "Import a blueprint",
-                "View and zoom",
+                "", // View controls moved to Ship.
                 "Ship display",
                 "Systems and filters",
                 "Baseline versions",
                 "Recovery alignment",
                 "Health bars",
-                "Appearance",
+                "",
                 "Saved ships",
                 "Keyboard shortcuts",
                 "Preferences",
                 "Save and share",
-                "Damage report",
+                "", // Damage report and diagnostics moved to Ship.
                 "Recovery tools",
                 "State colors",
                 "Copy or paste layout",
                 "Find a blueprint",
-                "Performance options",
+                "", // Rendering and pulses moved to Ship display and Preferences.
                 "Custom health bars",
                 "Create a custom bar",
                 "Edit a custom bar",
-                "Power bar sections",
-                "Background systems",
+                "", // Power sections moved to Health bars.
+                "", // Background opacity moved to Systems and filters.
                 "Health bar colors",
                 "Choose a color",
                 "Named layouts"
@@ -304,27 +305,21 @@ namespace Marigold
                     case 0: Display(); break;
                     case 1: Baseline(); break;
                     case 2: Blueprints(); break;
-                    case 3: Views(); break;
                     case 4: Appearance(); break;
                     case 5: Systems(); break;
                     case 6: Library(); break;
                     case 8: HealthBars(); break;
-                    case 9: Customize(); break;
                     case 10: Profiles(); break;
                     case 11: Shortcuts(); break;
                     case 12: Preferences(); break;
                     case 13: SavedDisplays(); break;
-                    case 14: Diagnostics(); break;
                     case 15: Recovery(); break;
                     case 16: Colors(); break;
                     case 17: ClipboardConfig(); break;
                     case 18: BlueprintBrowser(); break;
-                    case 19: Performance(); break;
                     case 20: CustomBars(); break;
                     case 21: CreateCustomBar(); break;
                     case 22: CustomBarLayout(); break;
-                    case 23: PowerSections(); break;
-                    case 24: ContextSettings(); break;
                     case 25: BarColors(); break;
                     case 26: ColorPicker(); break;
                     case 27: NamedLayouts(); break;

@@ -22,6 +22,7 @@ namespace Marigold
             private MyGuiControlBase firstContentFocus;
             private float flowY;
             private int renderedTab = -1;
+            private bool advancedControls;
 
             public RectangleF PreviewBounds
             {
@@ -62,13 +63,13 @@ namespace Marigold
             {
                 get
                 {
-                    if (tab == 0 || tab == 3 || tab == 5 || tab == 14 || tab == 24)
+                    if (tab == 0 || tab == 5)
                         return 0;
                     if (tab == 1 || tab == 2 || tab == 6 || tab == 7 || tab == 10 || tab == 15 || tab == 18)
                         return 1;
-                    if (tab == 8 || tab == 20 || tab == 21 || tab == 22 || tab == 23 || tab == 25 || (tab == 26 && pickingBarColor))
+                    if (tab == 8 || tab == 20 || tab == 21 || tab == 22 || tab == 25 || (tab == 26 && pickingBarColor))
                         return 3;
-                    if (tab == 11 || tab == 12 || tab == 19)
+                    if (tab == 11 || tab == 12)
                         return 4;
                     return tab == 13 || tab == 17 || tab == 27 ? 5 : 2;
                 }
@@ -113,10 +114,24 @@ namespace Marigold
                 separators.AddVertical(new Vector2(-.235f, -.39f), .77f);
                 separators.AddHorizontal(new Vector2(-.20f, .29f), .64f);
                 Controls.Add(separators);
+                bool showMode = tab == 0 || tab == 4 || tab == 5 || tab == 8;
                 Controls.Add(new MyGuiControlLabel(
                     new Vector2(-.19f, -.36f), text: T(PageNames[tab]), textScale: .88f,
-                    font: "White", maxWidth: .63f, isAutoEllipsisEnabled: true
+                    font: "White", maxWidth: showMode ? .38f : .63f, isAutoEllipsisEnabled: true
                 ));
+                if (showMode)
+                {
+                    var standard = MakeAction("Standard", () => ChangeMenuMode(false), .115f);
+                    standard.Position = new Vector2(.26f, -.36f);
+                    standard.Checked = !advancedControls;
+                    standard.SetToolTip(T("Show everyday controls."));
+                    Controls.Add(standard);
+                    var advanced = MakeAction("Advanced", () => ChangeMenuMode(true), .115f);
+                    advanced.Position = new Vector2(.385f, -.36f);
+                    advanced.Checked = advancedControls;
+                    advanced.SetToolTip(T("Show detailed controls and diagnostics."));
+                    Controls.Add(advanced);
+                }
                 var inspect = MakeAction("Preview HUD", InspectHud, .19f);
                 inspect.Position = new Vector2(-.35f, .115f);
                 inspect.Size = new Vector2(.19f, .044f);
@@ -157,6 +172,16 @@ namespace Marigold
                 flowY = 0;
                 flowControls.Clear();
                 firstContentFocus = null;
+            }
+
+            private void ChangeMenuMode(bool advanced)
+            {
+                if (advancedControls == advanced)
+                    return;
+                advancedControls = advanced;
+                pageScroll.Remove(tab);
+                renderedTab = -1;
+                RecreateControls(false);
             }
 
             private void PlaceContent(MyGuiControlBase control, float x, float y)

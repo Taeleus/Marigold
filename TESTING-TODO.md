@@ -12,6 +12,20 @@ Main 0.17.2 Legacy beta checks passed in game on November 5, 2026.
 - [x] **Textured filters.** Cycle Armor, Thrusters and All systems with Other systems opacity at zero and above zero. Try Damaged and Missing with a baseline.
 - [x] **Retest textured station rotation and shapes.** The 2,257-block station looked much better in Legacy. At 768 px, `/mg stats` reported 16.5 preview FPS, 48.47 ms for the last raster and 181.77 ms for the last mesh job. It used 18 reduced meshes and reported zero painted box replacements. The earlier 441 px preview reported a 73.81 ms worker job and 126 simplified parts.
 
+## 0.17.3 beta results
+
+- [x] **Arrange HUD values.** Typed values and sliders match.
+- [x] **Simple labels.** Title-only labels work. Power section captions need their own follow-up.
+- [x] **Custom bar persistence.** The custom bar stays put after applying the layout and returning to the ship.
+- [x] **Rendering choices.** The revised list is organized correctly.
+
+## 0.17.4 beta results
+
+- [x] **Standard and Advanced.** The Advanced tab works in game.
+- [x] **Place the ship display at the bottom.** A shorter background lets the display move lower at the same scale.
+- [x] **Keep the ship label by its display.** The caption sits just below the resized background.
+- [x] **Keep Power section captions.** **Simple label** keeps the enabled section captions visible.
+
 ## Pending beta checks
 
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.

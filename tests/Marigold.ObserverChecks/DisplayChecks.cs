@@ -157,26 +157,36 @@ internal static class DisplayChecks
         styled.Appearance.ShipOpacity = .48;
         styled.Appearance.ExpandedX = .23;
         styled.Appearance.ShowShipLabel = false;
+        styled.Appearance.BackgroundWidth = .43;
+        styled.Appearance.BackgroundHeight = .16;
         DisplaySettings.Import(DisplaySettings.Export(styled), c);
         Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48
             && c.Appearance.DrawFills && c.Appearance.DrawHull, "Textured style and opacity round-trip with the layout");
         Check(c.Appearance.ExpandedX == .23 && c.Appearance.X == .98,
             "Expanded horizontal placement round-trips independently of compact placement");
         Check(!c.Appearance.ShowShipLabel && c.SchematicVisible, "A layout can hide the label while keeping the schematic visible");
+        Check(c.Appearance.BackgroundWidth == .43 && c.Appearance.BackgroundHeight == .16 && c.Appearance.Size == .32,
+            "Background dimensions round-trip separately from ship scale");
         c.Appearance.Set("size", "0.5");
         Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48,
             "Resizing retains textured style and opacity");
         Check(c.Appearance.ExpandedX == .23, "Other appearance edits retain expanded horizontal placement");
         Check(!c.Appearance.ShowShipLabel, "Other appearance edits retain a hidden ship label");
+        Check(c.Appearance.BackgroundWidth == .43 && c.Appearance.BackgroundHeight == .16,
+            "Changing ship scale leaves background dimensions intact");
         DisplaySettings.Import(wireframe, c);
         Check(c.Appearance.Rendering == HudAppearance.HdWireframe && c.Appearance.ShipOpacity == .7
             && c.Appearance.ExpandedX == .5, "HD Wireframe round-trips with default model opacity and centered expanded view");
         Check(c.Appearance.ShowShipLabel, "New layouts show the ship label by default");
 
-        var explicitSd = new HudAppearance { Rendering = HudAppearance.SdWireframe }.Encode();
+        var explicitSd = new HudAppearance { Rendering = HudAppearance.SdWireframe, Size = .5 }.Encode();
         Check(HudAppearance.Parse(explicitSd).Rendering == HudAppearance.SdWireframe,
             "Explicit SD Wireframe remains selected after saving");
-        var positionedSd = explicitSd.Substring(0, explicitSd.LastIndexOf(';'));
+        string oldSquare = string.Join(";", explicitSd.Split(';'), 0, 16);
+        var migratedSquare = HudAppearance.Parse(oldSquare);
+        Check(migratedSquare.BackgroundWidth == .5 && migratedSquare.BackgroundHeight == .5,
+            "Older layouts retain their saved square background dimensions");
+        var positionedSd = oldSquare.Substring(0, oldSquare.LastIndexOf(';'));
         Check(HudAppearance.Parse(positionedSd).ShowShipLabel, "Saved layouts from before the label toggle keep showing the label");
         var unifiedSd = positionedSd.Substring(0, positionedSd.LastIndexOf(';'));
         var oldFullDisplay = unifiedSd.Substring(0, unifiedSd.LastIndexOf(';'));

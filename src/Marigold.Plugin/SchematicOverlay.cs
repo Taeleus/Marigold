@@ -75,7 +75,6 @@ namespace Marigold
             foreach (var pair in references)
                 pair.Key.OnGridSplit -= OnSplit;
             references.Clear();
-            ClearCustomBarLayouts();
             stationByGrid.Clear();
             stationBaselines.Clear();
             generation++;
@@ -124,7 +123,6 @@ namespace Marigold
         {
             if (target == grid)
             {
-                ClearCustomBarLayouts();
                 CancelRecovery();
                 CancelBlueprintPreview();
             }
@@ -137,7 +135,6 @@ namespace Marigold
         {
             health = new ShipHealth();
             healthPreview = false;
-            ClearCustomBarLayouts();
             ResetCustomBarHealth();
             CancelRecovery();
             stationBaselines.Clear();
@@ -856,7 +853,6 @@ namespace Marigold
             grid = next;
             health = new ShipHealth();
             healthPreview = false;
-            ClearCustomBarLayouts();
             ResetCustomBarHealth();
             bool auto = controls.AutoAssociate;
             string language = controls.Language;
@@ -1169,16 +1165,28 @@ namespace Marigold
                 bool expanded = layout?.Expanded ?? controls.Expanded;
                 if ((layout?.ShipVisible ?? controls.SchematicVisible) || recoveryFocus)
                 {
-                    var bounds = editingPanel ? panel.PreviewBounds : HudLayoutGeometry.Ship(screen, DrawingAppearance, expanded);
+                    var appearance = DrawingAppearance;
+                    RectangleF bounds, panelRect;
+                    if (editingPanel)
+                    {
+                        bounds = panel.PreviewBounds;
+                        float panelTop = bounds.Y - 8;
+                        panelRect = new RectangleF(bounds.X - 8, panelTop, bounds.Width + 16,
+                            Math.Min(bounds.Height + 16, screen.Y - panelTop));
+                    }
+                    else
+                    {
+                        var layoutBounds = HudLayoutGeometry.ShipLayout(screen, appearance, expanded);
+                        bounds = layoutBounds.Model;
+                        panelRect = layoutBounds.Background;
+                    }
                     float side = bounds.Width, left = bounds.X, top = bounds.Y;
 
-                    float panelTop = top - 8;
-                    var panelRect = new RectangleF(left - 8, panelTop, side + 16, Math.Min(side + 16, screen.Y - panelTop));
                     MyRenderProxy.DrawSprite(
                         Texture,
                         ref panelRect,
                         null,
-                        new Color(5, 18, 25, (byte)(255 * DrawingAppearance.Background)),
+                        new Color(5, 18, 25, (byte)(255 * appearance.Background)),
                         0,
                         false,
                         false
@@ -1197,7 +1205,9 @@ namespace Marigold
 
                     DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
 
-                    bool showShipLabel = !editingPanel && DrawingAppearance.ShowShipLabel;
+                    bool showShipLabel = !editingPanel && appearance.ShowShipLabel;
+                    float labelX = panelRect.X / screen.X;
+                    float labelTop = panelRect.Bottom;
                     if (showShipLabel)
                         MyGuiManager.DrawString(
                             "White",
@@ -1208,7 +1218,7 @@ namespace Marigold
                                 : controls.Category.Replace("weapons", "Offensive").Replace(",", ", ")) + " | " + (controls.StateFilter == "all"
                                 ? "All states"
                                 : controls.StateFilter == "broken" ? "Non-functional" : controls.StateFilter),
-                            new Vector2((left - 8) / screen.X, (top + side + 12) / screen.Y),
+                            new Vector2(labelX, (labelTop + 4) / screen.Y),
                             0.55f,
                             useFullClientArea: true,
                             maxTextWidth: expanded ? .65f : .28f
@@ -1218,7 +1228,7 @@ namespace Marigold
                             "White",
                             controls.Mode + " | " + controls.Category.Replace("weapons", "Offensive") + " | "
                                 + controls.StateFilter + " | /mg report for counts",
-                            new Vector2((left - 8) / screen.X, (top + side + 32) / screen.Y),
+                            new Vector2(labelX, (labelTop + 24) / screen.Y),
                             .5f,
                             useFullClientArea: true,
                             maxTextWidth: .65f

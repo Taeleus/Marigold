@@ -2,7 +2,21 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-The **0.17.2** beta is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+The **0.17.4** beta is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+
+## 0.17.4 — November 6, 2026
+
+- Arrange HUD uses the ship background to set the selection box and how far the display can move. A shorter background can sit lower at the same ship scale.
+- The ship label follows the background's lower edge, including when the background is shorter than the model viewport.
+- **Simple label** shortens the Power bar's heading and keeps the enabled section captions.
+- **Standard** offers quick system selection and Hide or Dim controls. **Advanced** lets you combine systems, set exact background opacity and style individual systems. Exact RGB entry is in the color picker.
+
+## 0.17.3 — November 6, 2026
+
+- The HUD menu groups related controls. **Standard** shows everyday actions, and **Advanced** reveals fine rotation, rendering detail, system styles and diagnostics.
+- **Arrange HUD** accepts typed percentages alongside sliders. Adjust the schematic background width and height independently of ship scale.
+- Health bars can show full status text, just the title, or no label. **Apply layout** saves custom bar changes directly with the ship profile so they can carry across reseating and server transfers.
+- **Ship display** lists **Textured Ship** above **HD Wireframe**, which is still the default. The two fault-only rendering modes are removed from the menu. Saved fault modes load as HD Wireframe or Outlines only.
 
 ## 0.17.2 — November 5, 2026
 

@@ -12,8 +12,7 @@ namespace Marigold
         {
             private void Appearance()
             {
-                Intro("Arrange the ship schematic. Health bars have their own layout settings.");
-                ActionRow("State colors", () => Switch(16), "Systems and filters", () => Switch(5));
+                Intro("Choose how the schematic looks. Use Arrange HUD to move, resize or fade it.");
                 CheckField("Show ship schematic", owner.controls.SchematicVisible, visible =>
                 {
                     owner.controls.SchematicVisible = visible;
@@ -24,59 +23,25 @@ namespace Marigold
                     owner.controls.Appearance.ShowShipLabel = visible;
                     Status("Updated. Save display to keep this setting.");
                 });
-
-                Heading("Position and size");
-                var appearance = owner.controls.Appearance;
-                bool expanded = owner.controls.Expanded;
-                var x = TextField("Horizontal position (0 = left, 1 = right)", Number(expanded ? appearance.ExpandedX : appearance.X), 24);
-                var y = TextField("Vertical position (0 = top, 1 = bottom)", Number(appearance.Y), 24);
-                var size = TextField("Size (0.12 to 0.7 of screen height)", Number(appearance.Size), 24);
-                PrimaryAction("Apply position and size", () =>
-                {
-                    var updated = HudAppearance.Parse(owner.controls.Appearance.Encode());
-                    updated.Set(expanded ? "expandedx" : "x", x.Text);
-                    updated.Set("y", y.Text);
-                    updated.Set("size", size.Text);
-                    owner.controls.Appearance = updated;
-                    Status("Updated. Save display to keep this layout.");
-                });
-
-                Heading("Transparency");
-                Note("Use 0 for invisible and 1 for fully visible.");
-                var background = TextField("Background opacity (0 to 1)", Number(appearance.Background), 24);
-                var outline = TextField("Outline opacity (0 to 1)", Number(appearance.Outline), 24);
-                var fill = TextField("Damage fill opacity (0 to 1)", Number(appearance.Fill), 24);
-                TextRow("Textured ship opacity");
-                var shipOpacity = new MyGuiControlSlider(
-                    minValue: 0, maxValue: 100, width: ContentWidth, defaultValue: (float)(appearance.ShipOpacity * 100),
-                    labelText: "{0}%", labelDecimalPlaces: 0, labelScale: .68f, labelSpaceWidth: .075f,
-                    intValue: true, showLabel: true
-                );
-                AddContent(shipOpacity, shipOpacity.Size.Y);
-                Note("The slider fades the textured ship and damage fills together. Damage outlines stay visible.");
-                PrimaryAction("Apply transparency", () =>
-                {
-                    var updated = HudAppearance.Parse(owner.controls.Appearance.Encode());
-                    updated.Set("background", background.Text);
-                    updated.Set("outline", outline.Text);
-                    updated.Set("fill", fill.Text);
-                    updated.ShipOpacity = shipOpacity.Value / 100d;
-                    owner.controls.Appearance = updated;
-                    Status("Updated. Save display to keep this layout.");
-                });
-
-                Heading("View style");
                 ChoiceField("Schematic layout", new[] { "Compact", "Expanded" }, owner.controls.Expanded ? 1 : 0,
-                    i =>
-                    {
-                        Run("layout " + (i == 1 ? "expanded" : "compact"));
-                        RecreateControls(false);
-                    });
+                    i => Run("layout " + (i == 1 ? "expanded" : "compact")));
+                RenderingMode();
+                ActionControl("State colors", () => Switch(16));
+
+                if (!advancedControls)
+                    return;
+                Heading("Rendering detail");
                 var details = new[] { "low", "medium", "high" };
                 ChoiceField("Outline detail", new[] { "Low", "Medium", "High" },
                     Math.Max(0, Array.IndexOf(details, owner.controls.DetailName)), i => Run("detail " + details[i]));
-                Note("Use Save display to keep your layout after restarting.");
-                PrimaryAction("Reset HUD layout", () =>
+                var fill = TextField("Damage fill opacity (0 to 1)", Number(owner.controls.Appearance.Fill), 24);
+                ActionControl("Apply opacity", () =>
+                {
+                    owner.controls.Appearance.Set("fill", fill.Text);
+                    Status("Updated. Save display to keep this setting.");
+                });
+                Heading("Reset layout");
+                ActionControl("Reset HUD layout", () =>
                 {
                     var previous = owner.controls.Appearance;
                     owner.controls.Appearance = new HudAppearance
@@ -101,19 +66,16 @@ namespace Marigold
                 return value.ToString(CultureInfo.InvariantCulture);
             }
 
-            private void Performance()
+            private void RenderingMode()
             {
-                Intro("Choose how much the schematic draws on large or heavily damaged ships.");
                 var modes = new[]
                 {
-                    HudAppearance.HdWireframe, HudAppearance.SdWireframe, HudAppearance.Textured,
-                    HudAppearance.Outlines, HudAppearance.FaultsWithFills, HudAppearance.FaultOutlines
+                    HudAppearance.Textured, HudAppearance.HdWireframe, HudAppearance.SdWireframe, HudAppearance.Outlines
                 };
                 ChoiceField("Rendering mode", new[]
                 {
-                    "HD Wireframe", "SD Wireframe", "Textured Ship",
-                    "Outlines only", "Faults with fills", "Fault outlines only"
-                }, Math.Max(0, Array.IndexOf(modes, owner.controls.Appearance.Rendering)), i =>
+                    "Textured Ship", "HD Wireframe", "SD Wireframe", "Outlines only"
+                }, Array.IndexOf(modes, owner.controls.Appearance.Rendering), i =>
                 {
                     owner.controls.Appearance.Rendering = modes[i];
                     owner.ReleaseTexturedShip();
@@ -123,11 +85,11 @@ namespace Marigold
                     owner.RefreshReference("Rendering mode changed.");
                     Status("Updated. Save display to keep this setting.");
                 });
-                Note("HD Wireframe has sharper lines and fill edges. SD Wireframe uses the original sprite display.");
-                Note("Textured Ship uses the live ship's models, paint, and available textures. Adjust its opacity in Ship display.");
-                Note("Outlines only removes the translucent damage shading.");
-                Note("Fault modes hide healthy hull context. Every filtered fault remains represented, and health-bar counts stay the same.");
+                Note("Textured Ship shows models and paint. HD Wireframe draws sharper lines. Outlines only skips damage shading.");
+            }
 
+            private void DamagePulses()
+            {
                 Heading("Damage pulses");
                 CheckField("Pulse missing blocks", owner.controls.Appearance.Pulse > 0, enabled =>
                 {
@@ -140,7 +102,6 @@ namespace Marigold
                     Status("Updated. Save display to keep this setting.");
                 });
                 Note("Fresh orange/red faults pulse together for four seconds. Yellow stays steady. Turn both options off for a still display.");
-                Note("Use Save display to keep these choices. Recovery previews use wireframe with damage shading.");
             }
 
             private void Shortcuts()
@@ -175,7 +136,6 @@ namespace Marigold
 
             private void Preferences()
             {
-                Intro("Choose how Marigold recognizes ships and which connected grids it shows.");
                 Heading("Ships and connections");
                 CheckField("Automatically match saved ships", owner.controls.AutoAssociate,
                     enabled => Run("auto " + (enabled ? "on" : "off")));
@@ -193,9 +153,8 @@ namespace Marigold
                     });
                 Note("Language and automatic matching save when changed. Station mode saves with this ship's profile once it has one.");
 
-                Heading("Drawing and feedback");
-                ActionRow("Performance options", () => Switch(19), "Keyboard shortcuts", () => Switch(11));
-                Note("Choose lighter rendering and turn missing-block or fresh-damage pulses on or off.");
+                ActionControl("Keyboard shortcuts", () => Switch(11));
+                DamagePulses();
             }
 
             private void SavedDisplays()
@@ -206,7 +165,7 @@ namespace Marigold
                 {
                     ActionRow("Save as my default", () => ChangeDefault("settings save"),
                         "Save for this ship", () => ChangeShipDisplay("ship-save"));
-                    Note("Ships use your default unless you save a layout for them. Custom bar positions and sizes are saved per ship.");
+                    Note("Ships use your default unless you save a layout for them. Arrange HUD saves custom bars with their ship.");
                 }
                 else
                 {
@@ -321,20 +280,53 @@ namespace Marigold
             private void Systems()
             {
                 Intro("Focus on the systems you need while keeping the rest of the ship in context.");
-                Heading("Quick selections");
-                ActionRow("All systems", () => SelectSystems("all"), "No systems", () => SelectSystems("none"));
                 ActionRow("Damage overview", () =>
                 {
                     Run("isolate all");
                     Run("filter faults");
                     RecreateControls(false);
-                }, "Propulsion", () => SelectSystems("thrusters,power,gas,control"));
-                ActionRow("Conveyors and cargo", () => SelectSystems("conveyors,cargo"),
-                    "Show all states", () => Run("filter all"));
+                }, "Show all states", () => Run("filter all"));
 
-                Heading("Systems in focus");
-                Note("Check any combination. Unselected systems use the background opacity below.");
                 var items = DisplayFilter.Categories.Split(' ');
+                if (advancedControls)
+                    CombinedSystemChoices(items);
+                else
+                    QuickSystemChoices(items);
+
+                ContextSettings();
+                if (advancedControls)
+                    SystemPresentation(items);
+            }
+
+            private void QuickSystemChoices(string[] items)
+            {
+                var choices = new List<string> { "all", "none", "thrusters,power,tanks,control", "conveyors,cargo" };
+                var names = new List<string> { T("All systems"), T("No systems"), T("Propulsion"), T("Conveyors and cargo") };
+                for (int i = 1; i < items.Length; i++)
+                {
+                    choices.Add(items[i]);
+                    names.Add(SystemName(items[i]));
+                }
+
+                string current = owner.controls.Category;
+                int selected = choices.IndexOf(current);
+                if (selected < 0)
+                {
+                    selected = choices.Count;
+                    choices.Add(current);
+                    names.Add(T("Multiple systems"));
+                }
+                ChoiceField("Systems in focus", names.ToArray(), selected,
+                    i => SelectSystems(choices[i]), translateItems: false);
+                Note("Use Advanced to combine systems and adjust their appearance.");
+            }
+
+            private void CombinedSystemChoices(string[] items)
+            {
+                Heading("Systems in focus");
+                ActionRow("All systems", () => SelectSystems("all"), "No systems", () => SelectSystems("none"));
+                ActionRow("Propulsion", () => SelectSystems("thrusters,power,tanks,control"),
+                    "Conveyors and cargo", () => SelectSystems("conveyors,cargo"));
                 for (int i = 1; i < items.Length; i++)
                 {
                     string category = items[i];
@@ -353,7 +345,10 @@ namespace Marigold
                         Run("isolate " + (current.Count == 0 ? "none" : string.Join(",", current)));
                     });
                 }
+            }
 
+            private void SystemPresentation(string[] items)
+            {
                 Heading("Outline presentation");
                 Note("Set a style for one system or all systems. Damage markers keep their state colors.");
                 MyGuiControlCombobox style = null;
@@ -379,7 +374,6 @@ namespace Marigold
                     owner.RefreshReference("System presentation updated; damage markers retain their state colors.");
                     Status(owner.comparisonReport);
                 });
-                PrimaryAction("Other systems opacity...", () => Switch(24));
             }
 
             private void SelectSystems(string categories)
@@ -396,7 +390,12 @@ namespace Marigold
 
             private void ContextSettings()
             {
-                Intro("Keep the rest of your ship visible while focusing on selected systems.");
+                Heading("Background systems");
+                if (!advancedControls)
+                {
+                    ActionRow("Hide other systems", () => SetContextOpacity(0), "Dim other systems", () => SetContextOpacity(.15));
+                    return;
+                }
                 var value = TextField("Other systems opacity (0 to 1)", Number(owner.controls.Appearance.ContextOpacity), 24);
                 PrimaryAction("Apply opacity", () =>
                 {
@@ -410,13 +409,12 @@ namespace Marigold
                 {
                     SetContextOpacity(0);
                     value.Text = "0";
-                }, "Use faint outlines", () =>
+                }, "Dim other systems", () =>
                 {
                     SetContextOpacity(.15);
                     value.Text = "0.15";
                 });
-                Note("0 hides other systems; 1 uses full outline opacity. Background systems use outlines only, and fault-only rendering modes hide them.");
-                Note("Selected systems keep their damage colors. Use Save display to keep these choices.");
+                Note("Set opacity to 0 to hide unselected systems or 1 to show them at full strength.");
             }
 
             private void SetContextOpacity(double opacity)
