@@ -4,6 +4,12 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 The **0.17.4** beta is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
+## 0.17.5 — Unreleased
+
+- **HD Wireframe** reuses the last image while the view and damage indicators are still. Rotating, changing the layout or animating damage still refreshes the image.
+- **Textured Ship** transforms only the vertices used by the preview. It also checks model data before allocating preview meshes and falls back to painted shapes when a model cannot be read safely.
+- **Arrange HUD** updates its preview even when the regular HUD is hidden. Long ship labels shift left as needed to fit along the right edge.
+
 ## 0.17.4 — November 6, 2026
 
 - Arrange HUD uses the ship background to set the selection box and how far the display can move. A shorter background can sit lower at the same ship scale.

@@ -43,8 +43,17 @@ internal static class HudLayoutChecks
             var labeled = HudLayoutGeometry.ShipLayout(screen, appearance, expanded);
             Check(Near(labeled.Background.Bottom, screen.Y - 49) && labeled.Model.Bottom > labeled.Background.Bottom,
                 "The background reserves space for its caption even when the model viewport extends below it");
+
+            appearance.X = appearance.ExpandedX = 1;
+            appearance.BackgroundWidth = .05;
+            var rightPanel = HudLayoutGeometry.ShipLayout(screen, appearance, expanded).Background;
+            float captionLeft = HudLayoutGeometry.CaptionLeft(screen.X, rightPanel.X, 320);
+            Check(captionLeft < rightPanel.X && Near(captionLeft + 320 + 2, screen.X),
+                "Long captions move left at the right edge");
+            Check(Near(HudLayoutGeometry.CaptionLeft(screen.X, rightPanel.X, 20), rightPanel.X),
+                "Short captions retain their background alignment");
         }
-        Console.WriteLine("PASS: 24 HUD layout checks for background anchoring, drag and captions.");
+        Console.WriteLine("PASS: 32 HUD layout checks for background anchoring, drag and captions.");
     }
 }
 

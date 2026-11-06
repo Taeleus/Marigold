@@ -28,6 +28,9 @@ Main 0.17.2 Legacy beta checks passed in game on November 5, 2026.
 
 ## Pending beta checks
 
+- [ ] **Check 0.17.5 HUD fixes.** Hide Marigold, change seats or ships, then open **Arrange HUD**. The preview should build while the regular HUD stays hidden. Make the ship background narrow and move it against the right edge. A long caption should stay below the display and fit on screen.
+- [ ] **Check paused HD Wireframe.** Pause rotation on a ship with a baseline. Check `/mg stats` while the HUD is still, then change the view, size or colors and confirm it refreshes. Damage a block and check that fresh and missing pulses still animate and stop when expected.
+- [ ] **Check textured model compatibility.** Try Textured Ship on a vanilla ship and the same modded Expanse drive used in the earlier test. Confirm the models and colors still show. Switch to a dense grid with repeated parts and note how long its first preview takes.
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
 - [ ] **Compare performance during sustained damage.** Compare HD, SD and Textured Ship at the same view and detail. Check that markers agree with the health bars, and record FPS with the display shown and hidden plus `/mg stats`. [Performance test procedure](docs/PERFORMANCE-TEST.md)
 - [ ] **Smoke-test Pulsar Interim.** Launch with the separate Interim package, open `/mg ui`, switch render modes, cycle filters and save a layout.

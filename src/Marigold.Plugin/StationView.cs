@@ -19,7 +19,7 @@ namespace Marigold
             stationObservers.Clear();
         }
 
-        private void UpdateStationObservers()
+        private void UpdateStationObservers(bool updateHud)
         {
             if (!controls.Station)
             {
@@ -27,7 +27,7 @@ namespace Marigold
                 return;
             }
 
-            if (!controls.Visible)
+            if (!updateHud)
                 return;
             int budget = System.Math.Max(32, 512 / System.Math.Max(1, stationObservers.Count));
             foreach (var observer in stationObservers.Values)

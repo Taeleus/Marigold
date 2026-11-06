@@ -961,7 +961,8 @@ namespace Marigold
             UpdateBlueprint();
             UpdateRecovery();
             UpdateHotkeys();
-            if (observation != null && (controls.Visible || controls.AutoAssociate))
+            bool updateHud = controls.Visible || panel?.ArrangingHud == true;
+            if (observation != null && (updateHud || controls.AutoAssociate))
             {
                 var sampling = Stopwatch.StartNew();
                 observation.Step(512);
@@ -973,7 +974,7 @@ namespace Marigold
                 }
             }
 
-            UpdateStationObservers();
+            UpdateStationObservers(updateHud);
             UpdateAssociation();
             if (grid == null || faulted)
                 return;
@@ -989,7 +990,7 @@ namespace Marigold
                 cockpitBackward = new Point3(orientation.Backward.X, orientation.Backward.Y, orientation.Backward.Z);
                 double now = clock.Elapsed.TotalSeconds, elapsed = Math.Min(0.1, now - lastTime);
                 lastTime = now;
-                if (!controls.Visible)
+                if (!updateHud)
                     return;
                 if (controls.Spin && !(panel?.RecoveryFocus ?? false))
                     controls.Yaw = (controls.Yaw + elapsed * 0.25) % (Math.PI * 2);
@@ -1200,39 +1201,10 @@ namespace Marigold
                         Zoom = view.Zoom
                     };
                     bool textured = TryDrawTexturedShip(ref projection, left, top, side, recoveryFocus);
-                    for (int i = 0; i < points.Length; i++)
-                        rotated[i] = projection.Project(points[i]);
-
                     DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
 
-                    bool showShipLabel = !editingPanel && appearance.ShowShipLabel;
-                    float labelX = panelRect.X / screen.X;
-                    float labelTop = panelRect.Bottom;
-                    if (showShipLabel)
-                        MyGuiManager.DrawString(
-                            "White",
-                            caption + TexturedCaption(textured) + " | " + (controls.Category == "all"
-                                ? "All systems"
-                                : controls.Category == "none"
-                                ? "No systems"
-                                : controls.Category.Replace("weapons", "Offensive").Replace(",", ", ")) + " | " + (controls.StateFilter == "all"
-                                ? "All states"
-                                : controls.StateFilter == "broken" ? "Non-functional" : controls.StateFilter),
-                            new Vector2(labelX, (labelTop + 4) / screen.Y),
-                            0.55f,
-                            useFullClientArea: true,
-                            maxTextWidth: expanded ? .65f : .28f
-                        );
-                    if (expanded && showShipLabel)
-                        MyGuiManager.DrawString(
-                            "White",
-                            controls.Mode + " | " + controls.Category.Replace("weapons", "Offensive") + " | "
-                                + controls.StateFilter + " | /mg report for counts",
-                            new Vector2(labelX, (labelTop + 24) / screen.Y),
-                            .5f,
-                            useFullClientArea: true,
-                            maxTextWidth: .65f
-                        );
+                    if (!editingPanel && appearance.ShowShipLabel)
+                        DrawShipCaption(screen, panelRect, expanded, textured);
                 }
 
                 if (!editingPanel)
@@ -1252,6 +1224,36 @@ namespace Marigold
             {
                 Fail(e);
             }
+        }
+
+        private void DrawShipCaption(Vector2 screen, RectangleF background, bool expanded, bool textured)
+        {
+            const string font = "White";
+            const float titleScale = .55f, detailScale = .5f;
+            string category = controls.Category.Replace("weapons", "Offensive");
+            string systems = category == "all" ? "All systems" : category == "none" ? "No systems" : category.Replace(",", ", ");
+            string state = controls.StateFilter == "all" ? "All states"
+                : controls.StateFilter == "broken" ? "Non-functional" : controls.StateFilter;
+            string title = caption + TexturedCaption(textured) + " | " + systems + " | " + state;
+            string details = expanded ? controls.Mode + " | " + category + " | " + controls.StateFilter + " | /mg report for counts" : null;
+            float maxWidth = expanded ? .65f : .28f;
+            float safeWidth = MyGuiManager.GetScreenSizeFromNormalizedSize(Vector2.One).X;
+            float left = background.X;
+            // DrawString uses the safe GUI width for its text limit, even with full-client positioning.
+            if (left + maxWidth * safeWidth + 2 > screen.X)
+            {
+                float width = MyGuiManager.MeasureString(font, title, titleScale).X;
+                if (details != null)
+                    width = Math.Max(width, MyGuiManager.MeasureString(font, details, detailScale).X);
+                left = HudLayoutGeometry.CaptionLeft(screen.X, left, Math.Min(maxWidth, width) * safeWidth);
+            }
+
+            float x = left / screen.X;
+            MyGuiManager.DrawString(font, title, new Vector2(x, (background.Bottom + 4) / screen.Y), titleScale,
+                useFullClientArea: true, maxTextWidth: maxWidth);
+            if (details != null)
+                MyGuiManager.DrawString(font, details, new Vector2(x, (background.Bottom + 24) / screen.Y), detailScale,
+                    useFullClientArea: true, maxTextWidth: maxWidth);
         }
 
         private void Fail(Exception e)

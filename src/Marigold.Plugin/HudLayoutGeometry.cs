@@ -62,6 +62,11 @@ namespace Marigold
             );
         }
 
+        public static float CaptionLeft(float screenWidth, float preferredLeft, float textWidth)
+        {
+            return Math.Max(0, Math.Min(preferredLeft, screenWidth - textWidth - 2));
+        }
+
         public static void MoveShip(Vector2 screen, HudAppearance appearance, bool expanded, Vector2 position)
         {
             var bounds = Ship(screen, appearance, expanded);

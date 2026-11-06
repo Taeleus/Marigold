@@ -25,18 +25,23 @@ namespace Marigold
         private SchematicRaster schematicRaster;
         private bool schematicTextureCreated;
         private int schematicRasterSize;
-        private double rasterTick = -1;
+        private Point3[] rasterPoints;
+        private double rasterAnimationTick;
+        private bool rasterHasMissing;
+        private double rasterLatestFreshPulse;
         private ShipProjection rasterProjection;
         private TexturedShipImage rasterSurface;
         private bool rasterRecovery, rasterTextured;
         private float rasterSide;
-        private double rasterFillOpacity;
+        private (string Colors, double Outline, double ContextOpacity, double FillOpacity,
+            double MissingPulse, bool FreshPulse, int Mode, bool Station) rasterStyle;
 
         private void DrawSchematicModel(ShipProjection projection, float left, float top, float side, bool recoveryFocus, bool textured)
         {
             if (textured && mainHullLines == points.Length / 2)
             {
                 renderedLines = renderedFills = unmergedFills = 0;
+                rasterPoints = null;
                 return;
             }
 
@@ -59,6 +64,8 @@ namespace Marigold
                 }
             }
 
+            rasterPoints = null;
+            ProjectSchematic(projection);
             DrawModel(projection.Zoom, left, top, side, recoveryFocus, null, fillOpacity, hideMainHull: textured);
         }
 
@@ -74,12 +81,24 @@ namespace Marigold
                 schematicRasterSize = size;
             }
 
-            // The HUD can draw more often than Update advances the model.
             var surface = textured ? texturedImage : null;
-            if (rasterTick != lastTime || !rasterProjection.SameView(projection) || rasterSide != side
+            var appearance = DrawingAppearance;
+            var style = (appearance.Colors, appearance.Outline, appearance.ContextOpacity, fillOpacity,
+                appearance.Pulse, appearance.NewDamagePulse, appearance.Rendering, controls.Station);
+            // All raster inputs for a published model (lines, fills, and alerts) share the points array's lifetime.
+            bool modelChanged = rasterPoints != points;
+            if (modelChanged)
+                ReadRasterAlerts();
+            double now = clock.Elapsed.TotalSeconds;
+            bool animating = (rasterHasMissing && appearance.Pulse > 0)
+                || (appearance.NewDamagePulse && now - rasterLatestFreshPulse < 4);
+            // Redraw at most once per update for a pulse, and once more when the final fresh pulse expires.
+            double animationTick = animating ? lastTime : double.NegativeInfinity;
+            if (modelChanged || rasterAnimationTick != animationTick || !rasterProjection.SameView(projection) || rasterSide != side
                 || rasterSurface != surface || rasterRecovery != recoveryFocus || rasterTextured != textured
-                || rasterFillOpacity != fillOpacity)
+                || rasterStyle != style)
             {
+                ProjectSchematic(projection);
                 schematicRaster.Begin(surface?.Depth, surface?.Size ?? 0, TexturedDepthTolerance(surface));
                 DrawModel(projection.Zoom, left, top, side, recoveryFocus, schematicRaster, fillOpacity, hideMainHull: textured);
                 schematicRaster.Finish();
@@ -95,17 +114,40 @@ namespace Marigold
                     schematicTextureCreated = true;
                 }
 
-                rasterTick = lastTime;
+                rasterPoints = points;
+                rasterAnimationTick = animationTick;
                 rasterProjection = projection;
                 rasterSurface = surface;
                 rasterRecovery = recoveryFocus;
                 rasterTextured = textured;
                 rasterSide = side;
-                rasterFillOpacity = fillOpacity;
+                rasterStyle = style;
             }
 
             var rectangle = new RectangleF(left, top, side, side);
             MyRenderProxy.DrawSprite(schematicTexture, ref rectangle, null, Color.White, 0, false, false);
+        }
+
+        private void ProjectSchematic(ShipProjection projection)
+        {
+            for (int i = 0; i < points.Length; i++)
+                rotated[i] = projection.Project(points[i]);
+        }
+
+        private void ReadRasterAlerts()
+        {
+            rasterHasMissing = false;
+            rasterLatestFreshPulse = double.NegativeInfinity;
+            for (int i = 0; i < lineKinds.Length; i++)
+            {
+                var kind = lineKinds[i];
+                if (!DamagePulse.VisibleFor(kind))
+                    continue;
+
+                rasterHasMissing |= kind == ChangeKind.Missing;
+                if (i < pulseStarts.Length)
+                    rasterLatestFreshPulse = Math.Max(rasterLatestFreshPulse, pulseStarts[i]);
+            }
         }
 
         private static double TexturedDepthTolerance(TexturedShipImage surface)
@@ -129,7 +171,7 @@ namespace Marigold
             schematicTextureCreated = false;
             schematicRaster = null;
             schematicRasterSize = 0;
-            rasterTick = -1;
+            rasterPoints = null;
             rasterSurface = null;
         }
 

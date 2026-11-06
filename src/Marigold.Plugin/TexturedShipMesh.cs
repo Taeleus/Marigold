@@ -61,8 +61,6 @@ namespace Marigold
         private const int MaximumTexturePaths = 4096;
         private const long MaximumModelBytes = 16 * 1024 * 1024;
         private const long MaximumTotalModelBytes = 128 * 1024 * 1024;
-        private static readonly string[] ModelTags = { "Vertices", "TexCoords0", "MeshParts", "GeometryDataAsset" };
-        private static readonly string[] LodTags = { "LODs" };
         private static readonly int[] BoxIndices =
         {
             0, 2, 3, 0, 3, 1, 4, 5, 7, 4, 7, 6,
@@ -539,6 +537,11 @@ namespace Marigold
 
         private sealed class MeshCapture
         {
+            private struct CachedVertex
+            {
+                public int Part, Index;
+            }
+
             private readonly Snapshot snapshot;
             private readonly Dictionary<string, Template> models;
             private readonly HashSet<string> roots;
@@ -546,10 +549,8 @@ namespace Marigold
             private readonly Dictionary<string, string> textures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             private readonly List<TexturedShipVertex> vertices = new List<TexturedShipVertex>();
             private readonly List<TexturedShipTriangle> triangles = new List<TexturedShipTriangle>();
-            private readonly MyModelImporter importer = new MyModelImporter();
             private readonly Vector3[] boxCorners = new Vector3[8];
-            private Vector3[] positions = new Vector3[0];
-            private int[] vertexIndices = new int[0];
+            private CachedVertex[] vertexIndices = Array.Empty<CachedVertex>();
             private long modelBytes;
             private int simplifiedModels, reducedModels, realModels;
             private string simplificationReason;
@@ -666,24 +667,9 @@ namespace Marigold
             private void AddModel(ModelPart source, int partIndex, Template template, bool reduced, int proxyTriangles)
             {
                 var model = source.Asset;
-                var modelPositions = template.Positions;
-                if (positions.Length < modelPositions.Length)
-                {
-                    positions = new Vector3[modelPositions.Length];
-                    vertexIndices = new int[modelPositions.Length];
-                }
-                else
-                    Array.Clear(vertexIndices, 0, modelPositions.Length);
-                for (int i = 0; i < modelPositions.Length; i++)
-                {
-                    Vector3 position = Vector3.Transform(modelPositions[i] * model.Scale, source.Transform) * snapshot.CellsPerMeter;
-                    if (!Finite(position))
-                    {
-                        AddProxy(source, partIndex, proxyTriangles, "Some parts had invalid model coordinates.");
-                        return;
-                    }
-                    positions[i] = position;
-                }
+                if (vertexIndices.Length < template.Positions.Length)
+                    vertexIndices = new CachedVertex[template.Positions.Length];
+                int firstVertex = vertices.Count, firstTriangle = triangles.Count;
 
                 float scale = Finite(model.PatternScale) && model.PatternScale > .0001f ? model.PatternScale : 1;
                 foreach (var part in template.Parts)
@@ -698,9 +684,16 @@ namespace Marigold
                     var indices = part.m_indices;
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        int a = VertexIndex(template, indices[i], scale, source.UvOffset);
-                        int b = VertexIndex(template, indices[i + 1], scale, source.UvOffset);
-                        int c = VertexIndex(template, indices[i + 2], scale, source.UvOffset);
+                        int a = VertexIndex(template, indices[i], source, partIndex, scale);
+                        int b = VertexIndex(template, indices[i + 1], source, partIndex, scale);
+                        int c = VertexIndex(template, indices[i + 2], source, partIndex, scale);
+                        if (a < 0 || b < 0 || c < 0)
+                        {
+                            vertices.RemoveRange(firstVertex, vertices.Count - firstVertex);
+                            triangles.RemoveRange(firstTriangle, triangles.Count - firstTriangle);
+                            AddProxy(source, partIndex, proxyTriangles, "Some parts had invalid model coordinates.");
+                            return;
+                        }
                         triangles.Add(new TexturedShipTriangle(a, b, c, colorTexture, source.Paint, partIndex));
                     }
                 }
@@ -709,15 +702,22 @@ namespace Marigold
                     reducedModels++;
             }
 
-            private int VertexIndex(Template template, int index, float scale, Vector2 offset)
+            private int VertexIndex(Template template, int index, in ModelPart source, int partIndex, float scale)
             {
-                int stored = vertexIndices[index];
-                if (stored != 0)
-                    return stored - 1;
+                // One stamp per model instance avoids clearing unused source indices after reduction.
+                ref var cached = ref vertexIndices[index];
+                int stamp = partIndex + 1;
+                if (cached.Part == stamp)
+                    return cached.Index;
+
+                var position = Vector3.Transform(template.Positions[index] * source.Asset.Scale, source.Transform) * snapshot.CellsPerMeter;
+                if (!Finite(position))
+                    return -1;
 
                 int next = vertices.Count;
-                vertices.Add(new TexturedShipVertex(positions[index], TextureCoordinate(template, index, scale, offset)));
-                vertexIndices[index] = next + 1;
+                vertices.Add(new TexturedShipVertex(position, TextureCoordinate(template, index, scale, source.UvOffset)));
+                cached.Part = stamp;
+                cached.Index = next;
                 return next;
             }
 
@@ -735,12 +735,19 @@ namespace Marigold
                     throw new InvalidDataException("A ship model is unavailable for textured view.");
                 string root = FindRoot(asset);
                 var lods = model.Lods;
-                if (lods.Length == 0 && new FileInfo(asset).Length <= MaximumModelBytes)
+                if (lods.Length == 0)
                 {
                     // Partially loaded game models can omit LODs even when the local asset provides them.
-                    importer.ImportData(asset, LodTags);
-                    if (importer.GetTagData().TryGetValue("LODs", out var tag))
-                        lods = CopyLods(tag as MyLODDescriptor[]);
+                    try
+                    {
+                        using (var reader = new BinaryReader(File.OpenRead(asset)))
+                            if (reader.BaseStream.Length <= MaximumModelBytes)
+                                lods = new TexturedModelReader(reader).ReadLods(MaximumLods);
+                    }
+                    catch (Exception error) when (IsUnreadableAsset(error))
+                    {
+                        // The optional LOD table is unavailable. The primary mesh is tried below.
+                    }
                 }
                 // Use the coarsest model the game ships for this asset at HUD scale.
                 foreach (string name in lods)
@@ -748,18 +755,25 @@ namespace Marigold
                     string lod = ResolveLod(name, asset, root);
                     if (lod != null && !string.Equals(lod, asset, StringComparison.OrdinalIgnoreCase))
                     {
-                        var preview = Import(lod, root);
-                        if (preview != null)
-                            return preview;
+                        try
+                        {
+                            var preview = Import(lod, root, out _);
+                            if (preview != null)
+                                return preview;
+                        }
+                        catch (Exception error) when (IsUnreadableAsset(error))
+                        {
+                            // A broken optional LOD can leave the primary mesh usable.
+                        }
                     }
                 }
-                var template = Import(asset, root);
-                if (template == null && importer.GetTagData().TryGetValue("GeometryDataAsset", out var geometryTag))
+                var template = Import(asset, root, out string geometryAsset);
+                if (template == null && !string.IsNullOrEmpty(geometryAsset))
                 {
                     // A model descriptor can keep its vertex and texture data in a separate file.
-                    string geometry = ResolveModel(geometryTag as string, root);
+                    string geometry = ResolveModel(geometryAsset, root);
                     if (geometry != null && !string.Equals(geometry, asset, StringComparison.OrdinalIgnoreCase))
-                        template = Import(geometry, root);
+                        template = Import(geometry, root, out _);
                 }
                 return template ?? throw new InvalidDataException("A ship model has no readable mesh.");
             }
@@ -792,45 +806,39 @@ namespace Marigold
                 return ResolveAsset(asset, root, ".mwm");
             }
 
-            private Template Import(string path, string root)
+            private Template Import(string path, string root, out string geometryAsset)
             {
-                long bytes = new FileInfo(path).Length;
-                if (bytes > MaximumModelBytes)
-                    throw new InvalidDataException("A model exceeds the textured preview asset size limit.");
-                if (bytes > MaximumTotalModelBytes - modelBytes)
-                    throw new CaptureLimitException("The ship exceeds the preview model file budget.");
-                modelBytes += bytes;
-                // Read mesh tags on a private importer. Shared models and game render state stay untouched.
-                importer.ImportData(path, ModelTags);
-                var data = importer.GetTagData();
-                if (!data.TryGetValue("Vertices", out var verticesTag) || !(verticesTag is HalfVector4[] vertices)
-                    || vertices.Length == 0 || vertices.Length > 3 * MaximumTriangles
-                    || !data.TryGetValue("MeshParts", out var partsTag) || !(partsTag is List<MyMeshPartInfo> parts)
-                    || parts.Count == 0 || parts.Count > MaximumMaterialParts)
-                    return null;
-
-                int triangleCount = 0;
-                foreach (var part in parts)
+                geometryAsset = null;
+                using (var reader = new BinaryReader(File.OpenRead(path)))
                 {
-                    if (part.m_indices.Count % 3 != 0 || part.m_indices.Count / 3 > MaximumTriangles - triangleCount)
+                    long bytes = reader.BaseStream.Length;
+                    if (bytes > MaximumModelBytes)
+                        throw new InvalidDataException("A model exceeds the textured preview asset size limit.");
+                    if (bytes > MaximumTotalModelBytes - modelBytes)
+                        throw new CaptureLimitException("The ship exceeds the preview model file budget.");
+                    modelBytes += bytes;
+
+                    var model = new TexturedModelReader(reader);
+                    int vertexLimit = 3 * MaximumTriangles;
+                    var vertices = model.ReadVertices(vertexLimit);
+                    int triangleCount = 0;
+                    var parts = vertices.Length == 0 ? null
+                        : model.ReadParts(MaximumMaterialParts, vertexLimit, vertices.Length, out triangleCount);
+                    if (triangleCount == 0)
+                    {
+                        geometryAsset = model.ReadGeometryAsset();
                         return null;
-                    triangleCount += part.m_indices.Count / 3;
-                    foreach (int index in part.m_indices)
-                        if (index < 0 || index >= vertices.Length)
-                            return null;
-                }
+                    }
 
-                if (triangleCount == 0)
-                    return null;
-                var unpacked = new Vector3[vertices.Length];
-                for (int i = 0; i < vertices.Length; i++)
-                    unpacked[i] = VF_Packer.UnpackPosition(vertices[i]);
-                data.TryGetValue("TexCoords0", out var uvTag);
-                return new Template
-                {
-                    Positions = unpacked, Uvs = uvTag as HalfVector2[], Parts = parts,
-                    Root = root, TriangleCount = triangleCount, SourceBytes = bytes
-                };
+                    var unpacked = new Vector3[vertices.Length];
+                    for (int i = 0; i < vertices.Length; i++)
+                        unpacked[i] = VF_Packer.UnpackPosition(vertices[i]);
+                    return new Template
+                    {
+                        Positions = unpacked, Uvs = model.ReadUvs(vertexLimit), Parts = parts,
+                        Root = root, TriangleCount = triangleCount, SourceBytes = bytes
+                    };
+                }
             }
 
             private string ResolveTexture(string texture, string root)

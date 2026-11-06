@@ -10,6 +10,8 @@ namespace Marigold
         {
             private MyGuiScreenBase hudPreview;
 
+            public bool ArrangingHud => hudPreview is HudLayoutScreen;
+
             public bool PreviewingHud
             {
                 get { return hudPreview != null; }
