@@ -37,6 +37,18 @@ Main 0.17.2 Legacy beta checks passed in game on November 5, 2026.
 
 ---
 
+## Completed Pulsar Interim checks — 0.16.1
+
+All five checks below are user-reported passed on November 8, 2026, on `Interim.exe` (Pulsar 2.4.3, runtime `CoreCLR`) with a local 0.16.1 `net10.0` Release build. The build was installed in the shared `%APPDATA%/Pulsar/Legacy/Local/Marigold` folder with `plugin.xml` tagged `<Runtimes>CoreCLR</Runtimes>`. Interim uses `%APPDATA%/Pulsar/Interim` only when that folder exists; otherwise it shares the Legacy folder, and this test ran on that shared setup. Loading from PluginHub source and the 0.17 features are not covered here. See **Smoke-test Pulsar Interim** above.
+
+- [x] **Loads on Interim.** Marigold initializes without dependency or Harmony errors.
+- [x] **Overlay and UI.** Sit in a cockpit, open `/mg ui`, capture a baseline and preview the HUD. The schematic draws over the HUD as it does on Legacy.
+- [x] **Shared data.** Profiles and settings saved on Legacy load on Interim, and the reverse.
+- [x] **Clipboard.** Export the display config to the clipboard and import it again.
+- [x] **Unload.** Leave to the main menu and load another world: no duplicate overlay and no errors. This check used a heavily modded world.
+
+---
+
 ## Completed review-fix checks — 0.16.1
 
 Both focused checks below are user-reported passed on October 28, 2026, using the deployed Legacy package. The build, regression suite (including the new removal/translation checks) and source compilation also passed. Earlier completed results remain below.
@@ -104,7 +116,7 @@ Already reported working: blueprint repairs, automatic matching, recovery contro
 
 The core checks above passed. Final Legacy source-loader testing with the local DLL disabled remains separate; updating the source pin does not claim that check passed. See [PR #285](https://github.com/StarCpt/PluginHub/pull/285) for the submitted pin.
 
-Earlier results: [history](docs/history/README.md), [performance results](docs/PERFORMANCE-RESULTS.md). Interim testing remains deferred.
+Earlier results: [history](docs/history/README.md), [performance results](docs/PERFORMANCE-RESULTS.md).
 
 ## October 26 results
 

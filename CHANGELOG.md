@@ -6,6 +6,7 @@ The **0.17.4** beta is on `dev`. The published PluginHub release is **0.16.1 for
 
 ## 0.17.5 — Unreleased
 
+- Added Pulsar Interim (.NET 10) support. The PluginHub manifest and `prepare-release.ps1` now declare `CLR;CoreCLR`, so one hub entry serves Legacy and Interim. No code changes were needed: Marigold's Harmony patch (`MyGuiScreenHudSpace.Draw` postfix) targets a large virtual override that the .NET 10 JIT cannot inline, the text clipboard uses the game's STA-thread service, which Interim's Windows Desktop runtime supports, and profile and settings files are shared between editions. A local 0.16.1 `net10.0` build passed the [Interim checks](TESTING-TODO.md#completed-pulsar-interim-checks--0161) in game. The 0.17 Interim smoke test under Pending beta checks is still open.
 - **HD Wireframe** reuses the last image while the view and damage indicators are still. Rotating, changing the layout or animating damage still refreshes the image.
 - **Textured Ship** transforms only the vertices used by the preview. It also checks model data before allocating preview meshes and falls back to painted shapes when a model cannot be read safely.
 - **Arrange HUD** updates its preview even when the regular HUD is hidden. Long ship labels shift left as needed to fit along the right edge.

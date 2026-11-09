@@ -1,6 +1,6 @@
-# Legacy release procedure
+# Release procedure
 
-Development version **0.17.1** improves Textured Ship on dense grids. The published PluginHub version is **0.16.1** for **Legacy/CLR**. Interim packages are available for local testing.
+Development version **0.17.1** improves Textured Ship on dense grids. The published PluginHub version is **0.16.1** for **Legacy/CLR**. Interim packages are available for local testing. The PluginHub manifest declares **Legacy and Interim** (`<Runtimes>CLR;CoreCLR</Runtimes>`, written by `prepare-release.ps1`): Pulsar compiles the pinned source for whichever edition is running, so no separate Interim package is published. Local packages stay edition-specific (`build.ps1` for Legacy, `build.ps1 -Runtime Interim` for Interim).
 
 Building locally requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies and the installed Space Engineers Bin64 folder. The build scripts accept `-Bin64 'D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64'` if you need to specify the game location.
 

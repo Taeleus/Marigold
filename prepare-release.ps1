@@ -22,7 +22,8 @@ if ($LASTEXITCODE -ne 0) {
 foreach ($pair in @(
     @('RepoId', 'Taeleus/Marigold'),
     @('Commit', $revision),
-    @('Runtimes', 'CLR')
+    # Pulsar compiles hub source for the running edition: CLR = Legacy, CoreCLR = Interim.
+    @('Runtimes', 'CLR;CoreCLR')
 )) {
     $node = $manifest.PluginData.SelectSingleNode($pair[0])
     if ($null -eq $node) {

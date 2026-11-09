@@ -97,13 +97,19 @@ The schematic uses block bounds, so it will not reproduce every slope or small d
 
 ## Install a local package
 
-Use **Pulsar Legacy**. Interim builds remain experimental and untested in-game.
+Marigold runs on **Pulsar Legacy** (`Legacy.exe`, .NET Framework 4.8) and **Pulsar Interim** (`Interim.exe`, .NET 10). Once the PluginHub entry declares both runtimes (`CLR;CoreCLR`), one entry serves both, because Pulsar compiles the source for whichever edition is running. A local package is edition-specific: use the Legacy package (`build.ps1`) on Legacy and the Interim package (`build.ps1 -Runtime Interim`) on Interim.
 
 1. Close Space Engineers.
-2. Copy `plugin.dll`, `plugin.pdb` and `plugin.xml` from the Legacy package into `%APPDATA%/Pulsar/Legacy/Local/Marigold`. An existing `MarigoldDev` folder also works. Enable only one copy.
+2. Copy `plugin.dll`, `plugin.pdb` and `plugin.xml` from the package into the matching folder:
+   - Legacy: `%APPDATA%/Pulsar/Legacy/Local/Marigold`
+   - Interim: `%APPDATA%/Pulsar/Interim/Local/Marigold` if that folder exists. Otherwise use `%APPDATA%/Pulsar/Legacy/Local/Marigold`, because Interim then shares the Legacy folder. Don't create `Pulsar/Interim` just for Marigold: Interim would switch to that empty folder and stop seeing your existing profile and plugins. The Interim package's `plugin.xml` is tagged `CoreCLR`, so Legacy ignores it in a shared folder, but a shared folder can hold only one of the two packages.
+
+   An existing `MarigoldDev` folder also works. Enable only one copy.
 3. Start Pulsar, enable Marigold and restart if prompted. Sit in a cockpit and open **`/mg ui`**.
 
 On Bazzite, a player using Pulsar Legacy from the game's Steam folder confirmed this local plugin path. Put the three files in `~/.local/share/Steam/steamapps/common/SpaceEngineers/Pulsar/Legacy/Local/Marigold/`. On Bazzite, `~` can resolve to `/var/home/<username>`. If Steam or Pulsar is installed elsewhere, use the `Legacy/Local` folder under that Pulsar install.
+
+Both editions share the same saved data (see below).
 
 If Windows blocks a trusted downloaded package with error **0x80131515**, unblock the ZIP in Properties before extracting it, or unblock the installed DLL.
 
