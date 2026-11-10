@@ -119,6 +119,20 @@ namespace Marigold
             comparisonReport = message;
         }
 
+        private void ClearDisplayedPreview()
+        {
+            if (!healthPreview)
+                return;
+
+            points = Array.Empty<Point3>();
+            shadedMarkers = Array.Empty<int>();
+            fillBands.Clear();
+            schematicBounds = null;
+            mainHullLines = 0;
+            health = new ShipHealth();
+            healthPreview = false;
+        }
+
         private void Detach(MyCubeGrid target)
         {
             if (target == grid)
@@ -133,6 +147,7 @@ namespace Marigold
 
         private void BindProfile(ShipProfile profile, AnchorFrame anchor)
         {
+            CancelBlueprintPreview();
             health = new ShipHealth();
             healthPreview = false;
             ResetCustomBarHealth();
@@ -144,7 +159,6 @@ namespace Marigold
                     closed.Add(pair.Key);
             foreach (var old in closed)
                 Detach(old);
-            CancelBlueprintPreview();
             if (!references.ContainsKey(grid))
                 grid.OnGridSplit += OnSplit;
             controls.Station = profile.Station;

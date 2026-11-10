@@ -138,7 +138,9 @@ namespace Marigold
                 version4 = a.Length == 12 && a[0] == "Marigold display 4",
                 version5 = a.Length == 13 && a[0] == "Marigold display 5",
                 version6 = a.Length == 14 && a[0] == "Marigold display 6";
-            var appearance = (version4 || version5 || version6) ? HudAppearance.Parse(a[11]) : new HudAppearance();
+            var appearance = (version4 || version5 || version6)
+                ? HudAppearance.Parse(a[11])
+                : new HudAppearance { ScaleBackgroundWithShip = false };
             if ((!version1 && !version2 && !version3 && !version4 && !version5 && !version6)
                 || !int.TryParse(a[1], out detail)
                 || detail < 0

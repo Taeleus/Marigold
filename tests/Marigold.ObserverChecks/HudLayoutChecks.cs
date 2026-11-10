@@ -53,7 +53,27 @@ internal static class HudLayoutChecks
             Check(Near(HudLayoutGeometry.CaptionLeft(screen.X, rightPanel.X, 20), rightPanel.X),
                 "Short captions retain their background alignment");
         }
-        Console.WriteLine("PASS: 32 HUD layout checks for background anchoring, drag and captions.");
+        var linked = new HudAppearance { Size = .3, BackgroundWidth = .4, BackgroundHeight = .2 };
+        linked.ScaleBackgroundWithShip = false;
+        linked.ResizeShip(.4);
+        Check(linked.BackgroundWidth == .4 && linked.BackgroundHeight == .2, "Unlinked resizing changes only ship scale");
+        linked.ScaleBackgroundWithShip = true;
+        Check(linked.BackgroundWidth == .4 && linked.BackgroundHeight == .2, "Enabling the link keeps the current dimensions");
+        linked.ResizeShip(.6);
+        Check(Near(linked.BackgroundWidth, .6) && Near(linked.BackgroundHeight, .3), "Linked resizing keeps custom proportions");
+        linked.BackgroundWidth = .8;
+        linked.BackgroundHeight = .2;
+        linked.Set("size", "0.7");
+        Check(Near(linked.BackgroundWidth, .8 * .7 / .6) && Near(linked.BackgroundHeight, .2 * .7 / .6),
+            "Manually edited dimensions are the basis for the next linked resize");
+        linked.ResizeShip(.5);
+        linked.BackgroundWidth = .85;
+        linked.BackgroundHeight = .34;
+        linked.ResizeShip(.7);
+        Check(linked.Size == .7 && linked.BackgroundWidth <= HudAppearance.MaxBackgroundSize
+            && Near(linked.BackgroundWidth / linked.BackgroundHeight, 2.5),
+            "The background respects its size limit and aspect ratio while the ship can keep growing");
+        Console.WriteLine("PASS: 37 HUD layout checks for background scaling, anchoring, drag and captions.");
     }
 }
 

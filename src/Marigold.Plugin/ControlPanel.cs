@@ -25,7 +25,7 @@ namespace Marigold
                 if (ReferenceEquals(panel, opened))
                 {
                     panel = null;
-                    EndPanelRecovery();
+                    EndPanelPreviews();
                 }
             };
             MyGuiSandbox.AddScreen(opened);
@@ -35,8 +35,15 @@ namespace Marigold
         {
             var previous = panel;
             panel = null;
-            EndPanelRecovery();
+            EndPanelPreviews();
             previous?.CloseScreen();
+        }
+
+        private void EndPanelPreviews()
+        {
+            EndPanelRecovery();
+            if (previewBlocks != null)
+                EndBlueprintPreview();
         }
 
         private void EndPanelRecovery()
@@ -44,12 +51,7 @@ namespace Marigold
             if (recoveryProfile == null && recoveryPreview == null && recoveryTask == null)
                 return;
             CancelRecovery();
-            // Remove preview geometry immediately and reject any pending preview build.
-            points = new Point3[0];
-            shadedMarkers = new int[0];
-            fillBands.Clear();
-            health = new ShipHealth();
-            healthPreview = false;
+            ClearDisplayedPreview();
             RefreshReference("Recovery preview closed; saved baseline retained.");
         }
 

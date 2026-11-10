@@ -2,9 +2,19 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-The **0.17.4** beta is on `dev`. The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
-## 0.17.5 — Unreleased
+## 0.17.7 — November 10, 2026
+
+- Closing Marigold with **Escape** or **Close** ends an unsaved blueprint preview and returns the HUD to its previous baseline.
+
+The Legacy smoke test passed. [Testing checklist](TESTING-TODO.md#0177-legacy-smoke-test)
+
+## 0.17.6 — November 7, 2026
+
+- In **Arrange HUD**, **Scale background with ship** lets the background follow **Ship scale** while keeping the proportions you set with **Background width** and **Background height**. New layouts start linked. Existing layouts keep their independent sizing.
+
+## 0.17.5 — November 6, 2026
 
 - **HD Wireframe** reuses the last image while the view and damage indicators are still. Rotating, changing the layout or animating damage still refreshes the image.
 - **Textured Ship** transforms only the vertices used by the preview. It also checks model data before allocating preview meshes and falls back to painted shapes when a model cannot be read safely.

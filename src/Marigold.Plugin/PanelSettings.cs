@@ -53,7 +53,8 @@ namespace Marigold
                         MatchHealthyBarColor = previous.MatchHealthyBarColor,
                         ContextOpacity = previous.ContextOpacity,
                         Rendering = previous.Rendering,
-                        ShowShipLabel = previous.ShowShipLabel
+                        ShowShipLabel = previous.ShowShipLabel,
+                        ScaleBackgroundWithShip = previous.ScaleBackgroundWithShip
                     };
                     RecreateControls(false);
                     Status("Position, size and opacity reset. Colors unchanged.");

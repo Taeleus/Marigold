@@ -27,6 +27,7 @@ namespace Marigold
         public bool MatchHealthyBarColor;
         public double ShipOpacity = DefaultShipOpacity;
         public bool ShowShipLabel = true;
+        public bool ScaleBackgroundWithShip = true;
 
         public bool DrawFills
         {
@@ -74,7 +75,8 @@ namespace Marigold
                     N(ExpandedX),
                     ShowShipLabel.ToString(),
                     N(BackgroundWidth),
-                    N(BackgroundHeight)
+                    N(BackgroundHeight),
+                    ScaleBackgroundWithShip.ToString()
                 }
             );
         }
@@ -83,7 +85,7 @@ namespace Marigold
         {
             var a = text.Split(';');
             if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13 && a.Length != 14 && a.Length != 15
-                && a.Length != 16 && a.Length != 18)
+                && a.Length != 16 && a.Length != 18 && a.Length != 19)
                 throw new InvalidDataException("Invalid HUD appearance.");
             var n = new double[7];
             for (int i = 0; i < 7; i++)
@@ -151,6 +153,9 @@ namespace Marigold
             bool showShipLabel = true;
             if (a.Length >= 16 && !bool.TryParse(a[15], out showShipLabel))
                 throw new InvalidDataException("Invalid ship label visibility.");
+            bool scaleBackgroundWithShip = false;
+            if (a.Length == 19 && !bool.TryParse(a[18], out scaleBackgroundWithShip))
+                throw new InvalidDataException("Invalid background scale link.");
             return new HudAppearance
             {
                 ContextOpacity = context,
@@ -164,8 +169,9 @@ namespace Marigold
                 ShowShipLabel = showShipLabel,
                 Y = n[1],
                 Size = n[2],
-                BackgroundWidth = a.Length == 18 ? ParseBackgroundSize(a[16]) : n[2],
-                BackgroundHeight = a.Length == 18 ? ParseBackgroundSize(a[17]) : n[2],
+                BackgroundWidth = a.Length >= 18 ? ParseBackgroundSize(a[16]) : n[2],
+                BackgroundHeight = a.Length >= 18 ? ParseBackgroundSize(a[17]) : n[2],
+                ScaleBackgroundWithShip = scaleBackgroundWithShip,
                 Background = n[3],
                 Outline = n[4],
                 Fill = n[5],
@@ -180,6 +186,25 @@ namespace Marigold
                 || !(size >= MinBackgroundSize && size <= MaxBackgroundSize))
                 throw new InvalidDataException("Background width and height must be 0.05 to 0.95.");
             return size;
+        }
+
+        public void ResizeShip(double size)
+        {
+            if (ScaleBackgroundWithShip && size != Size)
+            {
+                // Keep the panel's proportions if either dimension reaches its allowed range.
+                double minimum = MinBackgroundSize / Math.Min(BackgroundWidth, BackgroundHeight);
+                double maximum = MaxBackgroundSize / Math.Max(BackgroundWidth, BackgroundHeight);
+                double factor = Math.Max(minimum, Math.Min(maximum, size / Size));
+                BackgroundWidth = ClampBackgroundSize(BackgroundWidth * factor);
+                BackgroundHeight = ClampBackgroundSize(BackgroundHeight * factor);
+            }
+            Size = size;
+        }
+
+        private static double ClampBackgroundSize(double size)
+        {
+            return Math.Max(MinBackgroundSize, Math.Min(MaxBackgroundSize, size));
         }
 
         private string cachedColors;
@@ -236,12 +261,11 @@ namespace Marigold
                 throw new InvalidOperationException("Unknown appearance setting.");
             a[index] = value;
             var parsed = Parse(string.Join(";", a));
+            if (field == "size")
+                ResizeShip(parsed.Size);
             X = parsed.X;
             ExpandedX = parsed.ExpandedX;
             Y = parsed.Y;
-            Size = parsed.Size;
-            BackgroundWidth = parsed.BackgroundWidth;
-            BackgroundHeight = parsed.BackgroundHeight;
             Background = parsed.Background;
             Outline = parsed.Outline;
             Fill = parsed.Fill;

@@ -2,14 +2,14 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-Beta **0.17.4** is on `dev` and targets Legacy, with an experimental Interim artifact. [Changelog](CHANGELOG.md#0174--november-6-2026)
+The **0.17.7** source is on `master` and passed the Legacy smoke test. Interim builds are experimental. [Changelog](CHANGELOG.md#0177--november-10-2026)
 
 ## Suggestions
 
 | Idea | Status | What it would do |
 | --- | --- | --- |
 | Simplify the control panel | Confirmed in game | **Standard** shows everyday controls. **Advanced** reveals detailed settings and diagnostics. Related controls share pages, and positioning and resizing are handled in **Arrange HUD**. |
-| Resize the ship display background | Confirmed in game | Set background width and height in **Arrange HUD** independently of ship scale. The display follows the resized background and the caption stays below it. |
+| Resize the ship display background | Confirmed in game | Set background width and height in **Arrange HUD**. Enable **Scale background with ship** to resize them with the ship. The caption stays below the background. |
 | Title-only health bar labels | Confirmed in game | **Simple label** shows the title for system and custom bars. The Power bar keeps its enabled section captions. Turn **Show label** off to hide the text entirely. |
 | Exact values in Arrange HUD | Confirmed in game | Every numeric slider has a percentage field. Typing values, dragging and moving sliders update the same live preview. |
 | Simplify rendering mode choices | Confirmed in game | **Ship display** lists **Textured Ship** above **HD Wireframe**, followed by **SD Wireframe** and **Outlines only**. HD remains the default. |
@@ -31,7 +31,7 @@ As feedback comes in, add a row with the request, its status and a link to the d
 - **Spanish translation.** Translate the remaining diagnostic messages as gaps are reported.
 - **Performance.** Revisit filled rendering if an improvement can preserve its appearance and damage coverage. Outline modes are available for large grids. [Performance results](docs/PERFORMANCE-RESULTS.md)
 
-Blueprint imports currently require XML, and the schematic uses block bounds. Ambiguous ship matches may need manual recovery. Station mode supports connector-docked ships. Mechanical subgrids on rotors, hinges or pistons are outside scope.
+Blueprint imports require XML. Wireframe modes draw from block bounds, and **Textured Ship** uses available models and textures. Ambiguous ship matches may need manual recovery. Station mode supports connector-docked ships. Mechanical subgrids on rotors, hinges or pistons are outside scope.
 
 ## Share feedback
 

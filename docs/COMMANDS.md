@@ -1,4 +1,4 @@
-# Marigold commands — 0.16.1
+# Marigold commands
 
 All commands use `/mg`; `/marigold` is an alias. `/m` belongs to the game. Commands are handled locally.
 
@@ -22,7 +22,7 @@ Automatic matching is enabled by default. After reconnect or world transfer, con
 
 5. Inspect top, bottom and reset views and `/mg report`. The preview has a purple reference outline and an explicit unsaved caption.
 
-6. `/mg blueprint accept` saves the intended layout. `/mg blueprint cancel` leaves the original baseline intact. After cancel, the prepared grid remains available for another preview.
+6. `/mg blueprint accept` saves the intended layout. Use `/mg blueprint cancel`, **Escape**, or **Close** to discard the draft and keep the previous baseline. The prepared grid remains available for another preview.
 
 Import uses installed block definitions for exact multi-cell bounds and cockpit orientation. It treats the intended blocks as fully built. The cockpit definition and grid size must match. Blueprint scripts, inventories and ownership are never applied. Only the selected grid is imported; mechanical subgrids are excluded. Unavailable mod definitions are skipped with an explicit count. Compound blocks, legacy quaternion-only orientations and supergrids remain unsupported. Files can be plain or gzip-compressed SBC, with bounded XML/file sizes. Blueprint files are read-only.
 
@@ -96,9 +96,9 @@ Spin off snaps to a fixed isometric view. Reset restores rotation. Missing regio
 
 `/mg isolate thrusters,power,tanks` combines categories; legacy `gas` settings/commands migrate to `tanks`, and `mechanical` migrates to `other`. `none` hides all. Systems offers hidden/wireframe/faint/highlighted hull styles. Damage markers retain state colors; station hulls use the same category visibility and brightness styles.
 
-Focusing on selected systems now retains the others as faint outlines. **Ship > Systems and filters > Other systems opacity** adjusts this context; zero hides it. Hidden system styles remain hidden, and fault-only rendering modes omit context.
+Focusing on selected systems shows the others as faint outlines. **Ship > Systems and filters > Other systems opacity** adjusts their visibility. Set it to zero to hide them.
 
-**Arrange HUD** accepts typed percentages for position, size, background dimensions and opacity. **Ship display > State colors** edits one state at a time. **Preferences** contains the missing-block and fresh-damage pulse toggles. **Save as my default** writes the default layout. **Save for this ship** writes the bound profile's layout. Ship and named layout loads preserve language, automatic matching and station settings. In Arrange HUD, **Apply layout** saves custom bars with the ship profile. Named layouts use up to 40 letters, digits, spaces, hyphens or underscores.
+**Arrange HUD** accepts typed percentages for position, size, background dimensions and opacity. Enable **Scale background with ship** to resize the background with **Ship scale**. **Ship display > State colors** edits one state at a time. **Preferences** contains the missing-block and fresh-damage pulse toggles. **Save as my default** writes the default layout. **Save for this ship** writes the bound profile's layout. Ship and named layout loads preserve language, automatic matching and station settings. In Arrange HUD, **Apply layout** saves custom bars with the ship profile. Named layouts use up to 40 letters, digits, spaces, hyphens or underscores.
 
 In **Ship display > State colors**, **Choose color visually...** opens a hue strip and a saturation/brightness square for the selected state. The swatches show the draft and original colors. **Set RGB** updates the picker from an exact six-digit value; **Use color** applies the selection, while Back/Cancel discards it. **Save display** keeps an applied color. The same picker is available under **Health bars > Bar colors**; applying an independent bar color disables outline matching.
 

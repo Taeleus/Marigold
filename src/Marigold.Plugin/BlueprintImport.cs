@@ -44,20 +44,25 @@ namespace Marigold
 
         private void CancelBlueprintPreview()
         {
+            if (previewBlocks != null)
+                ClearDisplayedPreview();
             previewBlocks = null;
             previewProfile = null;
             previewCandidate = null;
+        }
+
+        private string EndBlueprintPreview()
+        {
+            CancelBlueprintPreview();
+            RefreshReference("Blueprint preview canceled; saved baseline unchanged.");
+            return comparisonReport;
         }
 
         private string BlueprintCommand(string verb)
         {
             CancelRecovery();
             if (verb == "cancel")
-            {
-                CancelBlueprintPreview();
-                RefreshReference("Blueprint preview canceled; saved baseline unchanged.");
-                return comparisonReport;
-            }
+                return EndBlueprintPreview();
 
             if (verb == "load")
             {
