@@ -16,7 +16,7 @@ namespace Marigold
 {
     public sealed class Plugin : IPlugin
     {
-        internal const string Version = "0.17.7";
+        internal const string Version = "0.17.8";
 
         private readonly OffensiveDefinitions offensiveDefinitions = new OffensiveDefinitions();
         private MySession session;

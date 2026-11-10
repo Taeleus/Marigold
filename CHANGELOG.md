@@ -4,6 +4,11 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
+## 0.17.8 — November 10, 2026
+
+- Linked background sizing keeps its proportions after reaching a size limit, including after saving and reopening the layout.
+- The custom-bar editor explains how to return to **Arrange HUD** and keep your edits.
+
 ## 0.17.7 — November 10, 2026
 
 - Closing Marigold with **Escape** or **Close** ends an unsaved blueprint preview and returns the HUD to its previous baseline.

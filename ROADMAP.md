@@ -2,7 +2,7 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-The **0.17.7** source is on `master` and passed the Legacy smoke test. Interim builds are experimental. [Changelog](CHANGELOG.md#0177--november-10-2026)
+The **0.17.8** source is on `master`. The 0.17.7 Legacy smoke test passed, and the 0.17.8 layout fixes passed automated checks. Interim builds are experimental. [Changelog](CHANGELOG.md#0178--november-10-2026)
 
 ## Suggestions
 

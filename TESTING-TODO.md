@@ -37,6 +37,7 @@ The user confirmed all four checks in Pulsar Legacy on November 10, 2026.
 
 ## Pending beta checks
 
+- [ ] **Check 0.17.8 layout fixes.** Link an 85% × 34% background at 50% ship scale. Raise ship scale to 70%, save and reload, then return to 50%. The background should return to 85% × 34%. In the custom-bar editor, check that the hint explains saving and going back before using **Arrange HUD**.
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
 - [ ] **Compare performance during sustained damage.** Compare HD, SD and Textured Ship at the same view and detail. Check that markers agree with the health bars, and record FPS with the display shown and hidden plus `/mg stats`. [Performance test procedure](docs/PERFORMANCE-TEST.md)
 - [ ] **Smoke-test Pulsar Interim.** Launch with the separate Interim package, open `/mg ui`, switch render modes, cycle filters and save a layout.

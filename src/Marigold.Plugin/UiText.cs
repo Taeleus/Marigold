@@ -718,7 +718,7 @@ namespace Marigold
             { "Set opacity to 0 to hide unselected systems or 1 to show them at full strength.", "Usa 0 para ocultar los sistemas no seleccionados o 1 para mostrarlos con opacidad completa." },
             { "Choose which bars to show. Use Arrange HUD to move or resize them.", "Elige qué barras mostrar. Usa Organizar HUD para moverlas o cambiar su tamaño." },
             { "Edit bar", "Editar barra" },
-            { "Use Arrange HUD to move or resize custom bars.", "Usa Organizar HUD para mover o cambiar el tamaño de las barras personalizadas." },
+            { "Go back to use Arrange HUD. Save bar first to keep your edits.", "Vuelve atrás para usar Organizar HUD. Primero guarda la barra para conservar tus cambios." },
             { "Dim other systems", "Atenuar otros sistemas" },
             { "Use Advanced to combine systems and adjust their appearance.", "Usa Avanzado para combinar sistemas y ajustar su aspecto." },
             { "Sit in a cockpit to arrange the HUD.", "Siéntate en una cabina para organizar el HUD." },
