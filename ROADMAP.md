@@ -2,7 +2,7 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-The **0.17.8** source is on `master`. The 0.17.7 Legacy smoke test passed, and the 0.17.8 layout fixes passed automated checks. Interim builds are experimental. [Changelog](CHANGELOG.md#0178--november-10-2026)
+The **0.17.14** source is on `master`. GPU Textured Ship passed the Legacy seat-exit and seat-loss recovery tests. Interim builds are experimental. [Changelog](CHANGELOG.md#01714--gpu-test-build)
 
 ## Suggestions
 
