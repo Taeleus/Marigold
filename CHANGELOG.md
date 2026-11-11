@@ -4,6 +4,34 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
+## 0.17.14 — GPU test build
+
+- Textured Ship uses GPU by default when no renderer preference has been saved. A saved CPU choice still takes precedence.
+
+## 0.17.13 — GPU test build
+
+- GPU mode keeps its HUD textures available to queued draws after leaving a seat or resizing the preview.
+
+## 0.17.12 — GPU test build
+
+- Preferences lets you select CPU or **GPU (experimental)** for Textured Ship. The choice applies across ships and CPU is the default.
+- The GPU preview uses shared meshes, hardware texture filtering, and the hull depth to shade obscured damage. Expanded previews can reach 1,536 px.
+- `/mg stats` identifies the renderer and shows the preview resolution and update rate.
+
+## 0.17.11 — November 11, 2026
+
+- Expanded Textured Ship can render at up to 1,024 px. It reduces resolution for dense views and keeps the previous image visible while the new size renders.
+- Textured Ship uses prefiltered texture levels for small or angled details to reduce speckling during rotation.
+
+## 0.17.10 — November 11, 2026
+
+- Textured Ship gives larger models more room in the triangle budget so parts such as Canterbury drives keep their rounded shape on crowded grids.
+
+## 0.17.9 — November 11, 2026
+
+- Textured Ship gives complete block models priority over armor tiles and clears unused model cache entries so large, heavily modded ships can keep more of their functional parts visible.
+- Overlapping faces at the same depth draw in a consistent order to reduce flicker during rotation.
+
 ## 0.17.8 — November 10, 2026
 
 - Linked background sizing keeps its proportions after reaching a size limit, including after saving and reopening the layout.

@@ -305,5 +305,32 @@ internal static class DisplayChecks
         Check(nextGrid.HealthBars.Bars[2].X == .75 && nextGrid.Language == "es"
             && !nextGrid.AutoAssociate && nextGrid.Station,
             "Selecting defaults with no file restores built-in placement and preserves preferences");
+
+        var renderer = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, renderer);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(renderer.UseGpuTexturedShip && renderer.Appearance.Rendering == defaults.Appearance.Rendering,
+            "A saved display without a renderer preference defaults Textured Ship to GPU and retains its display mode");
+        string defaultLayout = File.ReadAllText(defaultsPath);
+        DisplaySettings.SaveTexturedShipRenderer(defaultsPath, true);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(renderer.UseGpuTexturedShip && File.ReadAllText(defaultsPath) == defaultLayout,
+            "GPU preference reloads without changing the default layout file");
+
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, renderer);
+        DisplaySettings.Import(DisplaySettings.Export(defaults), renderer);
+        DisplaySettings.Reset(renderer);
+        Check(renderer.UseGpuTexturedShip,
+            "Ship layouts, shared layouts, and display reset keep the global renderer preference");
+
+        DisplaySettings.SaveTexturedShipRenderer(defaultsPath, false);
+        renderer = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, renderer);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(!renderer.UseGpuTexturedShip, "An explicit CPU preference overrides the GPU default on restart");
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, renderer);
+        DisplaySettings.Import(DisplaySettings.Export(defaults), renderer);
+        DisplaySettings.Reset(renderer);
+        Check(!renderer.UseGpuTexturedShip, "Ship layouts, shared layouts, and display reset keep a saved CPU preference");
     }
 }

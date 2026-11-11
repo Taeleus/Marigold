@@ -17,6 +17,7 @@ The **0.17.8** source is on `master`. The 0.17.7 Legacy smoke test passed, and t
 | Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. **Apply layout** saves custom bar changes with the ship. Use **Save display** to keep the schematic and system bar layout. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Sharper, steadier ship display | Confirmed in game | **HD Wireframe** is the default. A performance comparison with **SD Wireframe** on the damaged station is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The Legacy station retest showed smoother rotation and textured shapes. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
+| GPU textured rendering | Confirmed in game | The Legacy test build uses GPU by default for Textured Ship and offers CPU under **Preferences > Performance**. Seat exit and recovery after losing the main seat passed in game. [GPU stress test](TESTING-TODO.md#01714-gpu-stress-test) |
 
 As feedback comes in, add a row with the request, its status and a link to the discussion when available. Use **Suggested**, **Planned**, **In progress**, **Ready to test** or **Confirmed in game**. Once a change ships, record it in the [changelog](CHANGELOG.md). Put in-game checks in the [testing checklist](TESTING-TODO.md).
 

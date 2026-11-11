@@ -826,6 +826,14 @@ namespace Marigold
             {
                 MyLog.Default.WriteLineAndConsole("[Marigold] Display settings: " + e.Message);
             }
+            try
+            {
+                DisplaySettings.LoadTexturedShipRenderer(settingsPath, controls);
+            }
+            catch (Exception e)
+            {
+                MyLog.Default.WriteLineAndConsole("[Marigold] Textured Ship renderer preference: " + e.Message);
+            }
 
             if (profileStore.Warning != null)
                 MyLog.Default.WriteLineAndConsole("[Marigold] " + profileStore.Warning);
@@ -1214,8 +1222,10 @@ namespace Marigold
                         Z = view.Project(SchematicGeometry.ToBasis(new Point3(0, 0, 1), cockpitRight, cockpitUp, cockpitBackward)),
                         Zoom = view.Zoom
                     };
-                    bool textured = TryDrawTexturedShip(ref projection, left, top, side, recoveryFocus);
-                    DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
+                    bool gpuTextured = IsGpuTexturedShip(recoveryFocus);
+                    bool textured = TryDrawTexturedShip(ref projection, left, top, side, recoveryFocus, expanded && !editingPanel);
+                    if (!gpuTextured)
+                        DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
 
                     if (!editingPanel && appearance.ShowShipLabel)
                         DrawShipCaption(screen, panelRect, expanded, textured);
@@ -1281,6 +1291,8 @@ namespace Marigold
             if (ReferenceEquals(active, this))
                 active = null;
             SetGrid(null);
+            gpuShipRenderer?.Dispose();
+            gpuShipRenderer = null;
             ClearReferences();
             BindCommands(null);
             harmony?.Unpatch(AccessTools.Method(typeof(MyGuiScreenHudSpace), "Draw"), HarmonyPatchType.Postfix, PatchId);

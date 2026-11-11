@@ -7,7 +7,7 @@
     <LangVersion>7.3</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <Version>0.17.8</Version>
+    <Version>0.17.14</Version>
     <DefineConstants>$(DefineConstants);LOCAL_BUILD</DefineConstants>
     <Bin64 Condition="'$(Bin64)' == ''">D:\SteamLibrary\steamapps\common\SpaceEngineers\Bin64</Bin64>
   </PropertyGroup>
@@ -48,6 +48,22 @@
     </Reference>
     <Reference Include="VRage.Math">
       <HintPath>$(Bin64)\VRage.Math.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>$(Bin64)\SharpDX.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11">
+      <HintPath>$(Bin64)\SharpDX.Direct3D11.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SharpDX.DXGI">
+      <HintPath>$(Bin64)\SharpDX.DXGI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SharpDX.D3DCompiler">
+      <HintPath>$(Bin64)\SharpDX.D3DCompiler.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
