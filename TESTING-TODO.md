@@ -45,14 +45,24 @@ The user confirmed all four checks in Pulsar Legacy on November 10, 2026.
 
 ## 0.17.14 GPU stress test
 
+These results are from the local Pulsar Legacy package built from the source pinned in PluginHub PR #344 (`2af48f3`).
+
+- [x] **Canterbury drive shapes.** The Canterbury drive retest passed on 0.17.14.
+- [x] **Renderer and HUD transitions.** Entered and exited the seat, showed and hid the display, switched between CPU and GPU and back, toggled compact and expanded at both slow and rapid speeds, and resized the ship display. All passed.
 - [x] **Recover after losing the main seat.** Capybarra lost its main seat and much of its hull in a collision. The GPU preview worked after repair and applying recovery. At 768 px, `/mg stats` showed 25.0 preview FPS before the collision and 23.4 after recovery, with 566 damage fills in the second view.
+
+## 0.17.15 GPU preview retest
+
+- [x] **First GPU frame.** The wireframe briefly appeared at startup, then GPU Textured Ship took over as expected.
+- [x] **Display changes.** Changing resolution and switching between fullscreen and borderless worked in Legacy.
 
 ## Pending beta checks
 
 - [ ] **Check the 0.17.14 renderer default.** With no saved renderer preference, choose **Textured Ship** and check `/mg stats` for GPU. Choose CPU, restart, and confirm Textured Ship still uses CPU.
-- [ ] **Compare the CPU and GPU previews.** Open **Preferences → Performance → Textured Ship renderer** and switch between CPU and GPU on the drive test grid and Natim. Use `/mg stats` and the game FPS counter to compare compact and expanded views. Check that each nozzle retains its shape, cargo textures look steady, and damage behind the hull stays visible with lower intensity.
-- [ ] **Exercise the GPU preview lifecycle.** Change system and state filters, pause and spin, resize the display, and switch ships. Check a graphics mode change with a paused preview. Check the saved renderer after restarting, then select CPU and confirm the preview returns with the CPU status.
-- [ ] **Compare 0.17.11 textured previews.** Toggle compact and expanded on the same ship. Check the actual preview size and FPS in `/mg stats`, confirm damage markers stay aligned during the switch, and rotate past the 7×11×3 cargo faces to check for speckling. Check the large-grid RCS variants on the same pass.
+- [ ] **Developer check for unavailable GPU output.** Verify that the wireframe and damage markers remain visible if GPU Textured Ship cannot produce a frame, and that the GPU preference stays selected.
+- [ ] **Developer check for graphics-device loss.** If the game recreates its Direct3D device while the preview is paused, verify that the GPU preview recovers. A window or HUD resize exercises a separate path.
+- [ ] **Check GPU filters and ship switching.** Change system and state filters, pause and spin, and switch ships. Check that the image and damage markers update together.
+- [ ] **Compare textured preview performance.** Use `/mg stats` and the game FPS counter to compare CPU and GPU in compact and expanded views. Check that damage behind the hull stays visible at lower intensity. Check the 7×11×3 cargo faces and large-grid RCS variants on the same pass.
 - [ ] **Check 0.17.8 layout fixes.** Link an 85% × 34% background at 50% ship scale. Raise ship scale to 70%, save and reload, then return to 50%. The background should return to 85% × 34%. In the custom-bar editor, check that the hint explains saving and going back before using **Arrange HUD**.
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
 - [ ] **Compare performance during sustained damage.** Compare HD, SD and Textured Ship at the same view and detail. Check that markers agree with the health bars, and record FPS with the display shown and hidden plus `/mg stats`. [Performance test procedure](docs/PERFORMANCE-TEST.md)

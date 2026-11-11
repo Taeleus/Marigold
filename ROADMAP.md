@@ -2,7 +2,7 @@
 
 Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
-The **0.17.14** source is on `master`. GPU Textured Ship passed the Legacy seat-exit and seat-loss recovery tests. Interim builds are experimental. [Changelog](CHANGELOG.md#01714--gpu-test-build)
+The **0.17.15** source is on `master`. The Legacy build keeps the wireframe visible until the first GPU frame is ready. Interim builds are experimental. [Changelog](CHANGELOG.md#01715--november-11-2026)
 
 ## Suggestions
 
@@ -17,7 +17,7 @@ The **0.17.14** source is on `master`. GPU Textured Ship passed the Legacy seat-
 | Drag and drop HUD layout | Confirmed in game | Move and resize the ship display and health bars in **Arrange HUD**. **Apply layout** saves custom bar changes with the ship. Use **Save display** to keep the schematic and system bar layout. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Sharper, steadier ship display | Confirmed in game | **HD Wireframe** is the default. A performance comparison with **SD Wireframe** on the damaged station is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
 | Textured ship display | Confirmed in game | The textured renderer works in game, including the Expanse drive. The Legacy station retest showed smoother rotation and textured shapes. The live performance and appearance check on grids near **50,000 blocks** is still open. [Follow-up checks](TESTING-TODO.md#display-follow-up) |
-| GPU textured rendering | Confirmed in game | The Legacy test build uses GPU by default for Textured Ship and offers CPU under **Preferences > Performance**. Seat exit and recovery after losing the main seat passed in game. [GPU stress test](TESTING-TODO.md#01714-gpu-stress-test) |
+| GPU textured rendering | Confirmed in game | The Legacy test build uses GPU by default for Textured Ship and offers CPU under **Preferences > Performance**. Seat entry and exit, renderer switching, HUD layout and scale changes, and recovery after losing the main seat passed on 0.17.14. On 0.17.15, the wireframe stayed visible while the first GPU frame loaded, and resolution and display-mode changes passed. [GPU preview retest](TESTING-TODO.md#01715-gpu-preview-retest) |
 
 As feedback comes in, add a row with the request, its status and a link to the discussion when available. Use **Suggested**, **Planned**, **In progress**, **Ready to test** or **Confirmed in game**. Once a change ships, record it in the [changelog](CHANGELOG.md). Put in-game checks in the [testing checklist](TESTING-TODO.md).
 

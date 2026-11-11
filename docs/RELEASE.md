@@ -1,6 +1,6 @@
 # Legacy release procedure
 
-The source version is **0.17.14**. The Legacy build, regression suite and stock Legacy compiler checks passed. GPU Textured Ship passed the local Legacy seat-exit and seat-loss recovery tests. PluginHub currently lists **0.16.1** for **Legacy/CLR**. [Test checklist](../TESTING-TODO.md)
+The source version is **0.17.15**. The Legacy build and regression suite passed. The local Legacy package showed the wireframe while the first GPU frame loaded and passed resolution and display-mode changes. PluginHub currently lists **0.16.1** for **Legacy/CLR**. [Test checklist](../TESTING-TODO.md#01715-gpu-preview-retest)
 
 ## Merge the source
 

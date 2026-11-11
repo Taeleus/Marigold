@@ -1224,7 +1224,7 @@ namespace Marigold
                     };
                     bool gpuTextured = IsGpuTexturedShip(recoveryFocus);
                     bool textured = TryDrawTexturedShip(ref projection, left, top, side, recoveryFocus, expanded && !editingPanel);
-                    if (!gpuTextured)
+                    if (!gpuTextured || !textured)
                         DrawSchematicModel(projection, left, top, side, recoveryFocus, textured);
 
                     if (!editingPanel && appearance.ShowShipLabel)

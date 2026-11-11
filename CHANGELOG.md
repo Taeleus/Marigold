@@ -4,6 +4,10 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 The published PluginHub release is **0.16.1 for Pulsar Legacy**.
 
+## 0.17.15 — November 11, 2026
+
+- The ship wireframe and damage markers stay visible while GPU Textured Ship is loading or cannot draw. The textured view takes over as soon as a frame is ready.
+
 ## 0.17.14 — GPU test build
 
 - Textured Ship uses GPU by default when no renderer preference has been saved. A saved CPU choice still takes precedence.
