@@ -93,7 +93,7 @@ Filled displays can cost more FPS on large, heavily damaged ships. Choose **Outl
 
 In the GPU test build, **Textured Ship** uses **GPU (experimental)** by default. Choose **CPU** under **Preferences > Performance > Textured Ship renderer** to save a different preference. Use `/mg stats` to check the active renderer, preview resolution and update rate.
 
-Optional **Show connector-docked ships** adds context for ships attached through connectors. It starts off. Connected ships with saved profiles can show their own damage, but do not become part of your main ship's baseline or bars. Rotor, hinge and piston subgrids are excluded.
+**Show connector-docked ships** is off by default and available from a static station you own or that is shared with your faction. The same access check applies to every docked grid. More than half of a grid's ownership-capable blocks must be yours, or more than half must be explicitly shared with your faction. Docked ships with saved profiles can show their own damage. The station's baseline and health bars cover the station itself. Rotor, hinge and piston subgrids are excluded.
 
 Wireframe modes draw from block bounds. **Textured Ship** uses available models, paint and textures, with simpler shapes where needed.
 

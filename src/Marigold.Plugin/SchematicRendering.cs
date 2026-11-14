@@ -11,6 +11,7 @@ namespace Marigold
         private const byte MissingOutlineAlpha = 205;
         private const int MaximumRasterSize = 512;
         private const int MaximumTexturedOverlaySize = 768;
+        private const double PulseRedrawInterval = 1.0 / 30;
         private static readonly byte[] LinearRgb = BuildLinearRgb();
         private static readonly byte[] Srgb = BuildSrgb();
         private static readonly ChangeKind[] FillKinds =
@@ -26,7 +27,7 @@ namespace Marigold
         private bool schematicTextureCreated;
         private int schematicRasterSize;
         private Point3[] rasterPoints;
-        private double rasterAnimationTick;
+        private double rasterPulseDrawTime;
         private bool rasterHasMissing;
         private double rasterLatestFreshPulse;
         private ShipProjection rasterProjection;
@@ -84,7 +85,7 @@ namespace Marigold
             var surface = textured ? texturedImage : null;
             var appearance = DrawingAppearance;
             var style = (appearance.Colors, appearance.Outline, appearance.ContextOpacity, fillOpacity,
-                appearance.Pulse, appearance.NewDamagePulse, appearance.Rendering, controls.Station);
+                appearance.Pulse, appearance.NewDamagePulse, appearance.Rendering, stationModeActive);
             // All raster inputs for a published model (lines, fills, and alerts) share the points array's lifetime.
             bool modelChanged = rasterPoints != points;
             if (modelChanged)
@@ -92,9 +93,10 @@ namespace Marigold
             double now = clock.Elapsed.TotalSeconds;
             bool animating = (rasterHasMissing && appearance.Pulse > 0)
                 || (appearance.NewDamagePulse && now - rasterLatestFreshPulse < 4);
-            // Redraw at most once per update for a pulse, and once more when the final fresh pulse expires.
-            double animationTick = animating ? lastTime : double.NegativeInfinity;
-            if (modelChanged || rasterAnimationTick != animationTick || !rasterProjection.SameView(projection) || rasterSide != side
+            // Limit pulse-only redraws and draw once more when the final pulse ends.
+            bool pulseChanged = animating ? now - rasterPulseDrawTime >= PulseRedrawInterval
+                : !double.IsNegativeInfinity(rasterPulseDrawTime);
+            if (modelChanged || pulseChanged || !rasterProjection.SameView(projection) || rasterSide != side
                 || rasterSurface != surface || rasterRecovery != recoveryFocus || rasterTextured != textured
                 || rasterStyle != style)
             {
@@ -115,7 +117,7 @@ namespace Marigold
                 }
 
                 rasterPoints = points;
-                rasterAnimationTick = animationTick;
+                rasterPulseDrawTime = animating ? now : double.NegativeInfinity;
                 rasterProjection = projection;
                 rasterSurface = surface;
                 rasterRecovery = recoveryFocus;
@@ -191,7 +193,7 @@ namespace Marigold
             else
                 // The main ship's image does not cover docked grids drawn in station mode.
                 RasterizeFills(raster, zoom, drawFills, now, wave, fillOpacity,
-                    hideMainHull && !controls.Station ? texturedImage : null);
+                    hideMainHull && !stationModeActive ? texturedImage : null);
 
             double rasterThickness = raster == null ? 0 : Math.Max(1, schematicRasterSize / (double)side);
             renderedLines = 0;

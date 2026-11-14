@@ -408,14 +408,30 @@ namespace Marigold
                 depth?.Dispose();
                 renderTarget?.Dispose();
                 color?.Dispose();
+                depthView = null;
+                depthTarget = null;
+                depth = color = null;
+                renderTarget = null;
+                size = 0;
+            }
+
+            public void ClearScene()
+            {
+                // Keep device-specific shaders and state for the next ship.
+                ReleaseBatches();
+                mesh = null;
+                alphas = null;
+                TexturesPending = false;
+                ReleaseTargets();
+                overlayFills?.Dispose();
+                overlayLines?.Dispose();
+                overlayFills = overlayLines = null;
+                uploadedFills = uploadedLines = null;
             }
 
             public void Dispose()
             {
-                ReleaseBatches();
-                ReleaseTargets();
-                overlayFills?.Dispose();
-                overlayLines?.Dispose();
+                ClearScene();
                 cameraBuffer?.Dispose();
                 sampler?.Dispose();
                 noDepth?.Dispose();

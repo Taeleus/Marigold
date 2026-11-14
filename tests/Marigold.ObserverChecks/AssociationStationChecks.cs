@@ -135,6 +135,16 @@ internal static class AssociationStationChecks
         stable.Reset();
         Check(!stable.Observe(profile.Id, damaged), "Reconnect resets stability");
         Check(!stable.Observe(null, damaged), "No candidate never accepted");
+
+        Check(StationGeometry.HasAccess(7, 4, 0), "Personal ownership majority grants station access");
+        Check(StationGeometry.HasAccess(10, 0, 6), "Faction sharing majority grants station access");
+        Check(StationGeometry.HasAccess(9, 5, 5), "Overlapping ownership and sharing majorities grant station access");
+        Check(!StationGeometry.HasAccess(10, 5, 0), "Personal ownership tie does not grant station access");
+        Check(!StationGeometry.HasAccess(10, 0, 5), "Faction sharing tie does not grant station access");
+        Check(!StationGeometry.HasAccess(10, 4, 4), "Neither plurality nor combining ownership and sharing grants station access");
+        Check(!StationGeometry.HasAccess(10, 0, 0), "Foreign ownership without faction sharing denies station access");
+        Check(!StationGeometry.HasAccess(0, 0, 0), "Unowned grid denies station access");
+
         var station = new StationGrid
         {
             Blocks = Ship(1),

@@ -4,9 +4,12 @@ Changes to Marigold, newest first. Early entries were reconstructed from develop
 
 The published PluginHub release is **0.17.15 for Pulsar Legacy**.
 
-## Unreleased
+## 0.17.16 — Development build
 
-- The development manifest can target both Pulsar Legacy and Interim. A local Interim build of 0.16.1 passed in-game checks. Current-version Interim testing is pending.
+- The release manifest targets both Pulsar Legacy and Interim by default. A local Interim build of 0.16.1 passed in-game checks. Current-version Interim testing is pending.
+- Station mode is available from static stations you own or that are shared with your faction. It only shows and follows connector links to grids that pass the same access check.
+- HD Wireframe limits pulse-only redraws to 30 Hz. Ship rotation, damage changes and layout edits still update as they happen.
+- GPU Textured Ship reuses shaders and render states when you switch ships or display modes, avoiding recompilation on those transitions.
 
 ## 0.17.15 — November 11, 2026
 

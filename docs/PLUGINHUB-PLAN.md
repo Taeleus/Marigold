@@ -1,19 +1,9 @@
-# PluginHub submission plan — Legacy
+# PluginHub submission plan
 
-PluginHub lists **0.16.1 for Pulsar Legacy**. The initial listing merged on November 4, 2026. [PluginHub PR #285](https://github.com/StarCpt/PluginHub/pull/285)
+PluginHub currently lists **0.17.15 for Pulsar Legacy**. The next update targets **Legacy and Interim** once the current build passes in-game testing on both launchers. [Current listing](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Previous release](https://github.com/StarCpt/PluginHub/pull/344)
 
-The proposed **0.17.15** update uses the existing draft PR against `StarCpt/PluginHub:main`. The descriptor references the tested `master` commit in `Taeleus/Marigold`. [PluginHub PR #344](https://github.com/StarCpt/PluginHub/pull/344)
+Run both local builds, regressions and source compilation. Verify the exact candidate pin with the local DLL disabled on each launcher. The contributor's Interim test covered 0.16.1. The current Interim checklist also covers CPU and GPU Textured Ship. [Release procedure](RELEASE.md) · [Testing checklist](../TESTING-TODO.md#pending-beta-checks)
 
-Use the existing ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, author Taeleus and runtime `CLR`. Use `src/Marigold.Plugin` as the sole production `SourceDirectories` entry. Pulsar supplies Harmony at runtime and the project uses its package reference for local builds. Submit the descriptor by itself.
+Generate the candidate with `prepare-release.ps1`. Verify the full source commit, `RepoId` of `Taeleus/Marigold`, existing ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, `src/Marigold.Plugin` as the source directory, and `CLR;CoreCLR` as the runtime list. Keep the description within 1,000 characters and run the PluginHub validator. [PluginHub rules](https://github.com/StarCpt/PluginHub/wiki/Plugins#rules)
 
-Run the Legacy build, regressions and source checks before generating the descriptor with `prepare-release.ps1`. Verify one element each for `RepoId`, `Commit` and `Runtimes`, a description of at most 1,000 characters and the existing GUID. Check the upstream validator and rules before opening the PR. [Release procedure](RELEASE.md)
-
-Use **Update Marigold to 0.17.15 for Pulsar Legacy** as the proposed PR title. Summarize the improved modded meshes, CPU and GPU renderer choices, and the layout and blueprint changes since 0.16.1. [Changelog](../CHANGELOG.md)
-
-The 0.17.15 Legacy build and regressions passed. Local Legacy testing confirmed the wireframe stays visible until the first GPU frame is ready and that resolution and display-mode changes work. The 0.17.14 tests covered the Canterbury drives, renderer and HUD transitions, and recovery after losing the main seat. [Testing checklist](../TESTING-TODO.md#01715-gpu-preview-retest)
-
-Check the upstream repository and descriptor example when preparing the update. [PluginHub](https://github.com/StarCpt/PluginHub) · [Sample descriptor](https://github.com/StarCpt/PluginHub/blob/main/SamplePlugin.xml)
-
-Reference submission: [Taeleus TetherSE PR #260](https://github.com/StarCpt/PluginHub/pull/260), merged. Follow its GUID + RepoId + full source Commit + CLR structure and concise behavior/validation description. Current [client template](https://github.com/CometWorks/client-plugin-template) confirms CLR runtime spelling and explicit source directories. Existing Marigold project layout need not be renamed to match template folders; the manifest is authoritative.
-
-The 0.14.16 review fixes remain in 0.16.1. Marigold uses the selected game-data root, limits rebuild logging, relies on Pulsar's Harmony dependency and includes the MIT license. Core runtime checks, the recorded custom-`-appdata` check and prior log inspection passed. The later removal-notification and short Spanish-name findings are fixed in 0.16.1 with regression tests.
+Submit the descriptor by itself and summarize the player-facing changes and validation in the pull request. [Changelog](../CHANGELOG.md)

@@ -141,9 +141,14 @@ namespace Marigold
                 CheckField("Automatically match saved ships", owner.controls.AutoAssociate,
                     enabled => Run("auto " + (enabled ? "on" : "off")));
                 Note("After reconnecting, Marigold looks for a unique matching baseline. Ambiguous layouts still need manual selection.");
-                CheckField("Show connector-docked ships", owner.controls.Station,
-                    enabled => Run("station " + (enabled ? "on" : "off")));
-                Note("This ship's station mode adds connector-docked context. Rotor, hinge and piston subgrids are excluded.");
+                if (owner.CanUseStationMode())
+                {
+                    CheckField("Show connector-docked ships", owner.controls.Station,
+                        enabled => Run("station " + (enabled ? "on" : "off")));
+                    Note("Shows connector-docked grids you own or that are shared with your faction.");
+                }
+                else
+                    Note(StationModeRequirement);
 
                 Heading("Language");
                 ChoiceField("Interface language", new[] { "English", "Español" },

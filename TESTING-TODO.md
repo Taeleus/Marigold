@@ -56,6 +56,16 @@ These results are from the local Pulsar Legacy package built from the source pin
 - [x] **First GPU frame.** The wireframe briefly appeared at startup, then GPU Textured Ship took over as expected.
 - [x] **Display changes.** Changing resolution and switching between fullscreen and borderless worked in Legacy.
 
+## 0.17.16 performance retest
+
+- [ ] **Pulse on a parked schematic.** In HD Wireframe, pause rotation on a damaged ship with a baseline and some missing blocks. Use `/mg stats` to compare HUD CPU with **Missing block pulse** on and off. Confirm the pulse still animates. Repair or remove a block, rotate the ship view, and resize the display to check that those changes still update promptly.
+- [ ] **Return to GPU Textured Ship.** Once a GPU preview has loaded, switch seats or ships, switch to HD Wireframe and back, and try CPU then GPU again. Watch for a hitch or a stale ship image. The wireframe should cover any gap before the next textured frame.
+
+## Station access
+
+- [ ] **Station mode access.** Check that the Preferences toggle and `/mg station on` work from a static station you own. Dock one ship you own, one whose blocks are mostly shared with your faction, and one private or public-only foreign ship. Only the first two should appear. Check the schematic and `/mg report`.
+- [ ] **Access changes.** Change a docked ship from faction sharing to private while the HUD is open. It should disappear, along with any ships reachable only through that connector chain. Check that a mobile controlled grid cannot enable station mode.
+
 ## Pending beta checks
 
 - [ ] **Check the 0.17.14 renderer default.** With no saved renderer preference, choose **Textured Ship** and check `/mg stats` for GPU. Choose CPU, restart, and confirm Textured Ship still uses CPU.

@@ -114,26 +114,30 @@ namespace Marigold
 
             var request = Interlocked.Exchange(ref pending, null);
             int currentGeneration = Volatile.Read(ref generation);
-            if (renderGeneration != currentGeneration)
-            {
-                ReleasePipeline();
-                renderGeneration = currentGeneration;
-            }
-
-            if (request == null || request.Generation != currentGeneration)
+            if (request != null && request.Generation != currentGeneration)
+                request = null;
+            bool sceneChanged = renderGeneration != currentGeneration;
+            if (request == null && !sceneChanged)
                 return;
 
+            renderGeneration = currentGeneration;
             long start = Stopwatch.GetTimestamp();
             try
             {
                 var device = game.Device;
-                if (device == null || device.NativePointer == IntPtr.Zero)
-                    throw new InvalidOperationException("The game Direct3D device is unavailable.");
-                if (pipeline == null || !ReferenceEquals(pipeline.Device, device))
-                {
+                bool deviceAvailable = device != null && device.NativePointer != IntPtr.Zero;
+                if (pipeline != null && (!deviceAvailable || !ReferenceEquals(pipeline.Device, device)))
                     ReleasePipeline();
+
+                if (sceneChanged)
+                    pipeline?.ClearScene();
+                if (request == null)
+                    return;
+
+                if (!deviceAvailable)
+                    throw new InvalidOperationException("The game Direct3D device is unavailable.");
+                if (pipeline == null)
                     pipeline = new Pipeline(game, device, TexturePrefix);
-                }
                 string texture = pipeline.Draw(request.Frame);
                 var result = new GpuShipResult(request.Frame, texture, null,
                     (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency, request.Generation,
@@ -142,9 +146,11 @@ namespace Marigold
             }
             catch (Exception error)
             {
+                ReleasePipeline();
+                if (request == null)
+                    return;
                 if (error is TargetInvocationException reflectionError && reflectionError.InnerException != null)
                     error = reflectionError.InnerException;
-                ReleasePipeline();
                 Volatile.Write(ref latest, new GpuShipResult(request.Frame, null,
                     "GPU Textured Ship unavailable: " + error.Message, 0, request.Generation, false));
             }

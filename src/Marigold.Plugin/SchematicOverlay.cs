@@ -225,6 +225,9 @@ namespace Marigold
                     if (grid == null)
                         return "Control the grid whose station mode you want to change.";
                     bool enabled = action == "station on";
+                    if (enabled && !CanUseStationMode())
+                        return StationModeRequirement;
+
                     Reference binding;
                     if (references.TryGetValue(grid, out binding))
                     {
@@ -238,7 +241,10 @@ namespace Marigold
                     stationByGrid[grid] = enabled;
                 }
 
-                return "Station mode " + (controls.Station ? "on" : "off") + ". " + stationStatus;
+                UpdateStationConnections();
+                if (action == "station status" && !CanUseStationMode())
+                    return StationModeRequirement;
+                return "Station mode " + (stationModeActive ? "on" : "off") + ". " + stationStatus;
             }
 
             if (action.StartsWith("settings ", StringComparison.Ordinal))
@@ -304,6 +310,8 @@ namespace Marigold
             Reference selected;
             references.TryGetValue(grid, out selected);
             if (action == "report")
+            {
+                UpdateStationConnections();
                 return (recoveryPreview != null
                     ? "UNSAVED recovery preview. "
                     : previewBlocks == null ? "" : "UNSAVED blueprint preview. ") + (selected == null
@@ -311,6 +319,7 @@ namespace Marigold
                     : "Profile " + profileStore.Find(selected.ProfileId).Number + ". ")
                     + (!controls.Visible ? "Hidden; comparison paused. " : dirty || pending != null ? "Refresh pending. " : "")
                     + comparisonReport + " " + stationStatus;
+            }
             if (action == "profile suggest")
             {
                 var anchor = SeatedAnchor();
@@ -996,6 +1005,7 @@ namespace Marigold
                 }
             }
 
+            UpdateStationConnections();
             UpdateStationObservers(updateHud);
             UpdateAssociation();
             if (grid == null || faulted)
@@ -1004,7 +1014,7 @@ namespace Marigold
             {
                 caption = (string.IsNullOrWhiteSpace(grid.DisplayName) ? "Unnamed ship" : grid.DisplayName)
                     + (recoveryPreview != null ? " [recovery preview]" : previewBlocks == null ? "" : " [blueprint preview]")
-                    + (controls.Station ? " [station]" : "");
+                    + (stationModeActive ? " [station]" : "");
                 Matrix orientation;
                 controller.Orientation.GetMatrix(out orientation);
                 cockpitRight = new Point3(orientation.Right.X, orientation.Right.Y, orientation.Right.Z);
@@ -1104,7 +1114,7 @@ namespace Marigold
                     }
                 }
 
-                if (++reconcile >= (references.ContainsKey(grid) || controls.Station ? 60 : 600))
+                if (++reconcile >= (references.ContainsKey(grid) || stationModeActive ? 60 : 600))
                 {
                     dirty = true;
                     reconcile = 0;
@@ -1120,7 +1130,7 @@ namespace Marigold
                     references.TryGetValue(grid, out reference);
                     var baseline = recoveryPreview ?? previewBlocks ?? (reference == null ? null : reference.Blocks);
                     var station = SampleStation();
-                    if (!controls.Station
+                    if (!stationModeActive
                         && lastObservationGeneration == generation
                         && ObservationCache.Same(lastObservation, snapshot))
                     {

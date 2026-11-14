@@ -1,14 +1,24 @@
+using System;
 using System.Collections.Generic;
 using Sandbox.Game.Entities;
-using Sandbox.ModAPI;
+using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
+using VRage.Game;
+using VRage.Game.Entity.EntityComponents;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace Marigold
 {
     internal sealed partial class SchematicOverlay
     {
+        private const string StationModeRequirement = "Station mode requires a static grid you own or that is shared with your faction.";
         private string stationStatus = "";
+        private bool stationModeActive, stationGridLimit;
+        private List<MyCubeGrid> stationGrids = new List<MyCubeGrid>();
+        private List<MyCubeGrid> nextStationGrids = new List<MyCubeGrid>();
+        private readonly HashSet<MyCubeGrid> examinedStationGrids = new HashSet<MyCubeGrid>();
+        private readonly Queue<MyCubeGrid> stationQueue = new Queue<MyCubeGrid>();
         private readonly Dictionary<long, StationGrid> stationBaselines = new Dictionary<long, StationGrid>();
         private readonly Dictionary<MyCubeGrid, GridObservation> stationObservers = new Dictionary<MyCubeGrid, GridObservation>();
 
@@ -17,61 +27,150 @@ namespace Marigold
             foreach (var value in stationObservers.Values)
                 value.Dispose();
             stationObservers.Clear();
+            stationGrids.Clear();
+            nextStationGrids.Clear();
+            examinedStationGrids.Clear();
+            stationQueue.Clear();
+            stationModeActive = stationGridLimit = false;
+        }
+
+        private bool CanUseStationMode()
+        {
+            var session = MySession.Static;
+            long player = session?.LocalPlayerId ?? 0;
+            return player != 0 && grid != null && grid.IsStatic
+                && HasStationAccess(grid, player, session.Factions.TryGetPlayerFaction(player));
+        }
+
+        private static bool HasStationAccess(MyCubeGrid candidate, long player, IMyFaction faction)
+        {
+            if (candidate.Closed || candidate.MarkedForClose)
+                return false;
+
+            int total = 0, owned = 0, shared = 0;
+            foreach (var block in candidate.GetFatBlocks())
+            {
+                var ownership = block.Components.Get<MyEntityOwnershipComponent>();
+                var module = block.IDModule;
+                if (ownership == null && module == null)
+                    continue;
+
+                long owner = ownership?.OwnerId ?? module.Owner;
+                var mode = ownership?.ShareMode ?? module.ShareMode;
+                total++;
+                if (owner == player)
+                    owned++;
+                if (owner != 0 && mode == MyOwnershipShareModeEnum.Faction && faction?.IsMember(owner) == true)
+                    shared++;
+            }
+
+            return StationGeometry.HasAccess(total, owned, shared);
+        }
+
+        private void UpdateStationConnections()
+        {
+            if (!controls.Station && !stationModeActive)
+                return;
+
+            var session = MySession.Static;
+            long player = session?.LocalPlayerId ?? 0;
+            var faction = player != 0 ? session.Factions.TryGetPlayerFaction(player) : null;
+            bool allowed = controls.Station && player != 0 && grid != null && grid.IsStatic
+                && HasStationAccess(grid, player, faction);
+            stationGridLimit = false;
+
+            if (allowed)
+            {
+                examinedStationGrids.Add(grid);
+                stationQueue.Enqueue(grid);
+                while (stationQueue.Count > 0)
+                {
+                    foreach (var block in stationQueue.Dequeue().GetFatBlocks())
+                    {
+                        if (!(block is Sandbox.ModAPI.IMyShipConnector connector)
+                            || connector.Status != MyShipConnectorStatus.Connected)
+                            continue;
+
+                        var next = connector.OtherConnector?.CubeGrid as MyCubeGrid;
+                        if (next == null || !examinedStationGrids.Add(next) || !HasStationAccess(next, player, faction))
+                            continue;
+
+                        if (nextStationGrids.Count >= 8)
+                        {
+                            stationGridLimit = true;
+                            continue;
+                        }
+
+                        nextStationGrids.Add(next);
+                        stationQueue.Enqueue(next);
+                    }
+                }
+                examinedStationGrids.Clear();
+            }
+
+            bool removed = stationModeActive && !allowed;
+            foreach (var previous in stationGrids)
+            {
+                if (nextStationGrids.Contains(previous))
+                    continue;
+
+                removed = true;
+                stationBaselines.Remove(previous.EntityId);
+                if (stationObservers.TryGetValue(previous, out var observer))
+                {
+                    observer.Dispose();
+                    stationObservers.Remove(previous);
+                }
+            }
+
+            // Docked grids affect the merged geometry, its bounds, and the damage report.
+            if (removed)
+                ClearDisplayedStation();
+            else if (stationModeActive != allowed || stationGrids.Count != nextStationGrids.Count)
+            {
+                dirty = true;
+                cooldown = 0;
+            }
+
+            stationModeActive = allowed;
+            var old = stationGrids;
+            stationGrids = nextStationGrids;
+            nextStationGrids = old;
+            nextStationGrids.Clear();
+        }
+
+        private void ClearDisplayedStation()
+        {
+            RefreshReference(references.ContainsKey(grid) ? "Comparison pending." : "No reference captured.");
+            stationStatus = "";
+            points = Array.Empty<Point3>();
+            shadedMarkers = Array.Empty<int>();
+            fillBands.Clear();
+            schematicBounds = null;
+            mainHullLines = 0;
+            ReleaseSchematicTexture();
+            ReleaseTexturedShip();
         }
 
         private void UpdateStationObservers(bool updateHud)
         {
-            if (!controls.Station)
-            {
-                ClearStationObservers();
-                return;
-            }
-
             if (!updateHud)
                 return;
-            int budget = System.Math.Max(32, 512 / System.Math.Max(1, stationObservers.Count));
+            int budget = Math.Max(32, 512 / Math.Max(1, stationObservers.Count));
             foreach (var observer in stationObservers.Values)
                 observer.Step(budget);
         }
 
         private StationGrid[] SampleStation()
         {
-            if (!controls.Station)
-            {
-                stationStatus = "";
-                return new StationGrid[0];
-            }
+            if (!stationModeActive)
+                return Array.Empty<StationGrid>();
 
-            var seen = new HashSet<MyCubeGrid>();
-            var queue = new Queue<MyCubeGrid>();
             var result = new List<StationGrid>();
-            seen.Add(grid);
-            queue.Enqueue(grid);
             int blocks = 0;
-            bool limited = false;
-            while (queue.Count > 0)
+            bool limited = stationGridLimit;
+            foreach (var current in stationGrids)
             {
-                var current = queue.Dequeue();
-                foreach (var block in current.GetBlocks())
-                {
-                    var connector = block.FatBlock as Sandbox.ModAPI.IMyShipConnector;
-                    if (connector == null || connector.Status != MyShipConnectorStatus.Connected)
-                        continue;
-                    var next = connector.OtherConnector?.CubeGrid as MyCubeGrid;
-                    if (next == null || next.Closed || next.MarkedForClose || seen.Contains(next))
-                        continue;
-                    if (seen.Count >= 9)
-                    {
-                        limited = true;
-                        continue;
-                    }
-
-                    seen.Add(next);
-                    queue.Enqueue(next);
-                }
-
-                if (current == grid)
-                    continue;
                 GridObservation observer;
                 if (!stationObservers.TryGetValue(current, out observer))
                 {
@@ -119,10 +218,10 @@ namespace Marigold
                 }
 
                 var anchors = new List<AnchorFrame>();
-                foreach (var block in current.GetBlocks())
-                    if (block.FatBlock is MyCockpit)
+                foreach (var block in current.GetFatBlocks())
+                    if (block is MyCockpit cockpit)
                     {
-                        anchors.Add(CockpitAnchor((MyCockpit)block.FatBlock));
+                        anchors.Add(CockpitAnchor(cockpit));
                         if (anchors.Count > 16)
                             break;
                     }
@@ -143,16 +242,6 @@ namespace Marigold
                     Y = new Point3(y.X, y.Y, y.Z),
                     Z = new Point3(z.X, z.Y, z.Z)
                 });
-            }
-
-            var stale = new List<MyCubeGrid>();
-            foreach (var pair in stationObservers)
-                if (!seen.Contains(pair.Key) || pair.Key.Closed || pair.Key.MarkedForClose)
-                    stale.Add(pair.Key);
-            foreach (var old in stale)
-            {
-                stationObservers[old].Dispose();
-                stationObservers.Remove(old);
             }
 
             stationStatus = "Station context: " + result.Count + " connector-linked grids"

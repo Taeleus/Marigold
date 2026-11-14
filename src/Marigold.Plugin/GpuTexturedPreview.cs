@@ -104,7 +104,7 @@ namespace Marigold
             var appearance = DrawingAppearance;
             double fillOpacity = appearance.DrawFills ? appearance.Fill * opacity : 0;
             var style = (appearance.Colors, appearance.Outline, appearance.ContextOpacity, fillOpacity,
-                appearance.Pulse, appearance.NewDamagePulse, appearance.DrawHull, controls.Station);
+                appearance.Pulse, appearance.NewDamagePulse, appearance.DrawHull, stationModeActive);
             bool changed = gpuOverlayPoints != points;
             if (changed)
                 ReadRasterAlerts();
@@ -158,7 +158,7 @@ namespace Marigold
                             corners[i] = new Point3((i & 1) == 0 ? min.X : max.X,
                                 (i & 2) == 0 ? min.Y : max.Y, (i & 4) == 0 ? min.Z : max.Z);
                         uint rgba = GpuOverlayColor(color);
-                        bool depthAware = !controls.Station;
+                        bool depthAware = !stationModeActive;
                         bool requireHull = depthAware && kind != ChangeKind.Missing;
                         // Only draw the three front faces so each box tints its silhouette once.
                         AddGpuFillFace(fills, corners, facing & 1, 2, 4, rgba, depthAware, requireHull);

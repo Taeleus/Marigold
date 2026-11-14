@@ -44,6 +44,11 @@ namespace Marigold
 
     internal static class StationGeometry
     {
+        internal static bool HasAccess(int ownershipBlocks, int personallyOwnedBlocks, int factionSharedBlocks)
+        {
+            return personallyOwnedBlocks > ownershipBlocks / 2 || factionSharedBlocks > ownershipBlocks / 2;
+        }
+
         internal static List<Box3> StyledBoxes(BlockSample[] blocks, string category, string styles, char style)
         {
             var result = new List<Box3>();
