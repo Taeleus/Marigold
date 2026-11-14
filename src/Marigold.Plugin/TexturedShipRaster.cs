@@ -27,6 +27,7 @@ namespace Marigold
         public ShipProjection View;
         public Box3 Bounds;
         public int Size, RequestedSize;
+        public bool Expanded;
         public byte[] Pixels;
         // Projected depth in ship-radius units. Open pixels are negative infinity.
         public float[] Depth;
@@ -104,7 +105,9 @@ namespace Marigold
     {
         private const int TextureCacheLimit = 256;
         private const int DetailedTextureLimit = 96;
-        private const int SampleBudget = 2500000;
+        private const int CompactSampleBudget = 2500000;
+        private const int ExpandedSampleBudget = 4000000;
+        private const float DepthTieTolerance = .002f; // In projected pixels.
         private static readonly byte[][] PremultipliedRgb = BuildPremultipliedRgb();
         private readonly Dictionary<string, TexturedShipTexture> textures = new Dictionary<string, TexturedShipTexture>(StringComparer.OrdinalIgnoreCase);
         private TexturedShipMesh filteredMesh;
@@ -119,11 +122,13 @@ namespace Marigold
             public float X, Y, Z, U, V;
         }
 
-        public TexturedShipImage Render(TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size, int preferredSize, TexturedShipFilter requestedFilter)
+        public TexturedShipImage Render(TexturedShipMesh mesh, Box3 bounds, ShipProjection view, int size,
+            int preferredSize, TexturedShipFilter requestedFilter, bool expanded)
         {
             var image = new TexturedShipImage
             {
-                Bounds = bounds, View = view, Filter = requestedFilter, Size = preferredSize > 0 ? preferredSize : size, RequestedSize = size
+                Bounds = bounds, View = view, Filter = requestedFilter, Size = preferredSize > 0 ? preferredSize : size,
+                RequestedSize = size, Expanded = expanded
             };
             try
             {
@@ -142,13 +147,17 @@ namespace Marigold
                 }
 
                 int initialSize = image.Size;
+                int lastAttempt = expanded ? 4 : 3;
                 for (int attempt = 0; ; attempt++)
                 {
-                    if (Draw(mesh, image, out bool overBudget) || !overBudget || attempt == 3 || image.Size <= 80)
+                    if (Draw(mesh, image, out bool overBudget) || !overBudget || attempt == lastAttempt || image.Size <= 80)
                         break;
-                    // Try a modest reduction first. A dense view can fall back to a smaller image.
-                    image.Size = Math.Max(80, attempt == 0 ? initialSize * 3 / 4
-                        : attempt == 1 ? initialSize / 2 : initialSize / 4);
+                    // Expanded views get a final small fallback when the ordinary reductions are still too large.
+                    int nextSize = Math.Max(80, attempt == 0 ? initialSize * 3 / 4
+                        : attempt == 1 ? initialSize / 2 : attempt == 2 ? initialSize / 4 : 96);
+                    if (nextSize >= image.Size)
+                        break;
+                    image.Size = nextSize;
                 }
                 if (image.Pixels != null && image.Size < image.RequestedSize)
                     image.Status += " Preview resolution reduced to fit the drawing budget.";
@@ -204,7 +213,7 @@ namespace Marigold
                 };
             }
 
-            int samples = SampleBudget;
+            int samples = image.Expanded ? ExpandedSampleBudget : CompactSampleBudget;
             bool foundTexture = false;
             bool foundColorPath = false;
             bool usedPaintFallback = false;
@@ -326,6 +335,15 @@ namespace Marigold
             float invArea = 1 / area;
             float dBx = (c.Y - a.Y) * invArea, dBy = (a.X - c.X) * invArea;
             float dCx = (a.Y - b.Y) * invArea, dCy = (b.X - a.X) * invArea;
+            float abZ = b.Z - a.Z, acZ = c.Z - a.Z;
+            if (texture != null)
+            {
+                // Keep UVs unwrapped here. Tiled coordinates wrap only when sampling a texel.
+                float abU = b.U - a.U, acU = c.U - a.U;
+                float abV = b.V - a.V, acV = c.V - a.V;
+                texture = texture.SelectMip(abU * dBx + acU * dCx, abV * dBx + acV * dCx,
+                    abU * dBy + acU * dCy, abV * dBy + acV * dCy);
+            }
             float red = ((paint >> 16) & 255) / 255f;
             float green = ((paint >> 8) & 255) / 255f;
             float blue = (paint & 255) / 255f;
@@ -345,12 +363,13 @@ namespace Marigold
                     float wa = 1 - wb - wc;
                     if (wa < -.00001f || wb < -.00001f || wc < -.00001f)
                         continue;
-                    float z = wa * a.Z + wb * b.Z + wc * c.Z;
+                    float z = a.Z + wb * abZ + wc * acZ;
                     int pixel = y * size + x;
                     int offset = pixel * 4;
                     // Keep full-strength surfaces visible through faint context.
                     bool previousFocused = partAlphas == null || pixels[offset + 3] == 255;
-                    if (focused == previousFocused ? z <= depth[pixel] : previousFocused)
+                    // Let the first surface win a depth tie so coplanar faces do not trade pixels.
+                    if (focused == previousFocused ? z <= depth[pixel] + DepthTieTolerance : previousFocused)
                         continue;
                     depth[pixel] = z;
                     drewPixel = true;

@@ -53,7 +53,8 @@ namespace Marigold
                         MatchHealthyBarColor = previous.MatchHealthyBarColor,
                         ContextOpacity = previous.ContextOpacity,
                         Rendering = previous.Rendering,
-                        ShowShipLabel = previous.ShowShipLabel
+                        ShowShipLabel = previous.ShowShipLabel,
+                        ScaleBackgroundWithShip = previous.ScaleBackgroundWithShip
                     };
                     RecreateControls(false);
                     Status("Position, size and opacity reset. Colors unchanged.");
@@ -154,6 +155,30 @@ namespace Marigold
                 Note("Language and automatic matching save when changed. Station mode saves with this ship's profile once it has one.");
 
                 ActionControl("Keyboard shortcuts", () => Switch(11));
+
+                Heading("Performance");
+                var renderer = ChoiceField("Textured Ship renderer", new[] { "CPU", "GPU (experimental)" },
+                    owner.controls.UseGpuTexturedShip ? 1 : 0);
+                renderer.ItemSelected += () =>
+                {
+                    bool useGpu = renderer.GetSelectedKey() == 1;
+                    if (useGpu == owner.controls.UseGpuTexturedShip)
+                        return;
+
+                    string message = "Textured Ship renderer saved for all ships.";
+                    try
+                    {
+                        DisplaySettings.SaveTexturedShipRenderer(owner.settingsPath, useGpu);
+                        owner.controls.UseGpuTexturedShip = useGpu;
+                    }
+                    catch (Exception error)
+                    {
+                        renderer.SelectItemByKey(owner.controls.UseGpuTexturedShip ? 1 : 0, false);
+                        message = error.Message;
+                    }
+                    Status(message);
+                };
+                Note("Switch to CPU here if the experimental GPU renderer cannot draw the ship.");
                 DamagePulses();
             }
 

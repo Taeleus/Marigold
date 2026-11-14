@@ -3,8 +3,8 @@ using System.IO;
 
 namespace Marigold
 {
-    // CPU color sampler for the HUD miniature. Read one small DDS mip, leaving the
-    // original texture and the game's render resources alone.
+    // CPU color sampler for the HUD miniature. Read the small DDS mips without
+    // touching the original texture or the game's render resources.
     internal sealed class TexturedShipTexture
     {
         private const uint DdsMagic = 0x20534444;
@@ -20,6 +20,7 @@ namespace Marigold
 
         private readonly int width, height;
         private readonly uint[] pixels;
+        private TexturedShipTexture smaller;
 
         private TexturedShipTexture(int width, int height, uint[] pixels)
         {
@@ -33,6 +34,21 @@ namespace Marigold
             int x = (int)((u - Math.Floor(u)) * width);
             int y = (int)((v - Math.Floor(v)) * height);
             return (uint)x < (uint)width && (uint)y < (uint)height ? pixels[y * width + x] : 0;
+        }
+
+        public TexturedShipTexture SelectMip(float duDx, float dvDx, float duDy, float dvDy)
+        {
+            var mip = this;
+            while (mip.smaller != null)
+            {
+                float uX = duDx * mip.width, vX = dvDx * mip.height;
+                float uY = duDy * mip.width, vY = dvDy * mip.height;
+                // A squared footprint of two is halfway to the next mip on a logarithmic scale.
+                if (Math.Max(uX * uX + vX * vX, uY * uY + vY * vY) <= 2)
+                    break;
+                mip = mip.smaller;
+            }
+            return mip;
         }
 
         public static bool TryLoad(string assetPath, out TexturedShipTexture result, int maximumSide = 256)
@@ -143,31 +159,38 @@ namespace Marigold
                     return null;
                 rowBytes = (int)pitch;
             }
+            TexturedShipTexture first = null, previous = null;
             for (int level = 0; level < levels; level++)
             {
                 int byteCount = compressed
                     ? ((width + 3) / 4) * ((height + 3) / 4) * blockBytes
                     : rowBytes * height;
                 if (byteCount > reader.BaseStream.Length - reader.BaseStream.Position)
-                    return null;
+                    break;
                 if (width <= maximumSide && height <= maximumSide)
                 {
                     byte[] data = reader.ReadBytes(byteCount);
                     if (data.Length != byteCount)
-                        return null;
+                        break;
                     uint[] pixels = compressed
                         ? DecodeBlocks(data, width, height, blockBytes, format)
                         : DecodePixels(data, width, height, rowBytes, format == Format.Bgra);
-                    return new TexturedShipTexture(width, height, pixels);
+                    var mip = new TexturedShipTexture(width, height, pixels);
+                    if (previous == null)
+                        first = mip;
+                    else
+                        previous.smaller = mip;
+                    previous = mip;
+                    if (width == 1 && height == 1)
+                        break;
                 }
-
-                reader.BaseStream.Position += byteCount;
+                else
+                    reader.BaseStream.Position += byteCount;
                 width = Math.Max(1, width / 2);
                 height = Math.Max(1, height / 2);
                 rowBytes = width * 4;
             }
-
-            return null;
+            return first;
         }
 
         private static uint[] DecodePixels(byte[] data, int width, int height, int rowBytes, bool bgra)

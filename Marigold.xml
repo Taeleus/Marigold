@@ -16,7 +16,7 @@ Yellow marks damage, orange non-functional blocks and red missing blocks. Option
 
 Save ship profiles, named baseline versions and display presets. Profiles persist across sessions; automatic matching recognizes sufficiently similar layouts. Recovery tools let you inspect, adjust and accept alignment when the original cockpit is gone. Baselines never update automatically.
 
-Connector-docked context is optional and off by default. Rotor, hinge and piston subgrids are excluded. Supports Pulsar Legacy and Interim. /marigold is an alias for /mg.</Description>
+Connector-docked context is optional and off by default. Rotor, hinge and piston subgrids are excluded. Supports Pulsar Legacy. Interim is available for testing. /marigold is an alias for /mg.</Description>
 
   <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
 

@@ -17,8 +17,28 @@ namespace Marigold
         private const double DefaultShipOpacity = .7;
         private const double DefaultExpandedX = .5;
         private const double DefaultSize = .32;
-        public double X = .98, Y = .12, Size = DefaultSize, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
-        public double BackgroundWidth = DefaultSize, BackgroundHeight = DefaultSize;
+        public double X = .98, Y = .12, Background = .75, Outline = 1, Fill = 1, Pulse = 1;
+        private double size = DefaultSize, backgroundWidth = DefaultSize, backgroundHeight = DefaultSize;
+        private double linkedWidth, linkedHeight;
+        private bool scaleBackgroundWithShip = true;
+
+        public double Size
+        {
+            get { return size; }
+            set { size = value; linkedWidth = 0; }
+        }
+
+        public double BackgroundWidth
+        {
+            get { return backgroundWidth; }
+            set { backgroundWidth = value; linkedWidth = 0; }
+        }
+
+        public double BackgroundHeight
+        {
+            get { return backgroundHeight; }
+            set { backgroundHeight = value; linkedWidth = 0; }
+        }
         public double ExpandedX = DefaultExpandedX;
         public bool NewDamagePulse = true;
         public int Rendering = HdWireframe;
@@ -27,6 +47,16 @@ namespace Marigold
         public bool MatchHealthyBarColor;
         public double ShipOpacity = DefaultShipOpacity;
         public bool ShowShipLabel = true;
+        public bool ScaleBackgroundWithShip
+        {
+            get { return scaleBackgroundWithShip; }
+            set
+            {
+                if (scaleBackgroundWithShip != value)
+                    linkedWidth = 0;
+                scaleBackgroundWithShip = value;
+            }
+        }
 
         public bool DrawFills
         {
@@ -74,7 +104,10 @@ namespace Marigold
                     N(ExpandedX),
                     ShowShipLabel.ToString(),
                     N(BackgroundWidth),
-                    N(BackgroundHeight)
+                    N(BackgroundHeight),
+                    ScaleBackgroundWithShip.ToString(),
+                    N(linkedWidth == 0 ? BackgroundWidth / Size : linkedWidth),
+                    N(linkedWidth == 0 ? BackgroundHeight / Size : linkedHeight)
                 }
             );
         }
@@ -83,7 +116,7 @@ namespace Marigold
         {
             var a = text.Split(';');
             if (a.Length != 8 && a.Length != 9 && a.Length != 10 && a.Length != 13 && a.Length != 14 && a.Length != 15
-                && a.Length != 16 && a.Length != 18)
+                && a.Length != 16 && a.Length != 18 && a.Length != 19 && a.Length != 21)
                 throw new InvalidDataException("Invalid HUD appearance.");
             var n = new double[7];
             for (int i = 0; i < 7; i++)
@@ -151,7 +184,10 @@ namespace Marigold
             bool showShipLabel = true;
             if (a.Length >= 16 && !bool.TryParse(a[15], out showShipLabel))
                 throw new InvalidDataException("Invalid ship label visibility.");
-            return new HudAppearance
+            bool scaleBackgroundWithShip = false;
+            if (a.Length >= 19 && !bool.TryParse(a[18], out scaleBackgroundWithShip))
+                throw new InvalidDataException("Invalid background scale link.");
+            var appearance = new HudAppearance
             {
                 ContextOpacity = context,
                 HealthyBarColor = healthy,
@@ -164,14 +200,24 @@ namespace Marigold
                 ShowShipLabel = showShipLabel,
                 Y = n[1],
                 Size = n[2],
-                BackgroundWidth = a.Length == 18 ? ParseBackgroundSize(a[16]) : n[2],
-                BackgroundHeight = a.Length == 18 ? ParseBackgroundSize(a[17]) : n[2],
+                BackgroundWidth = a.Length >= 18 ? ParseBackgroundSize(a[16]) : n[2],
+                BackgroundHeight = a.Length >= 18 ? ParseBackgroundSize(a[17]) : n[2],
+                ScaleBackgroundWithShip = scaleBackgroundWithShip,
                 Background = n[3],
                 Outline = n[4],
                 Fill = n[5],
                 Pulse = n[6],
                 Colors = a[7]
             };
+            if (a.Length == 21)
+            {
+                appearance.linkedWidth = ParseBackgroundRatio(a[19]);
+                appearance.linkedHeight = ParseBackgroundRatio(a[20]);
+                if (Math.Max(appearance.linkedWidth, appearance.linkedHeight) * MinBackgroundSize
+                    > Math.Min(appearance.linkedWidth, appearance.linkedHeight) * MaxBackgroundSize + 1e-12)
+                    throw new InvalidDataException("Linked background proportions exceed the size limits.");
+            }
+            return appearance;
         }
 
         private static double ParseBackgroundSize(string text)
@@ -180,6 +226,38 @@ namespace Marigold
                 || !(size >= MinBackgroundSize && size <= MaxBackgroundSize))
                 throw new InvalidDataException("Background width and height must be 0.05 to 0.95.");
             return size;
+        }
+
+        private static double ParseBackgroundRatio(string text)
+        {
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double ratio)
+                || !(ratio >= MinBackgroundSize / .7 && ratio <= MaxBackgroundSize / .12))
+                throw new InvalidDataException("Invalid linked background proportions.");
+            return ratio;
+        }
+
+        public void ResizeShip(double size)
+        {
+            if (ScaleBackgroundWithShip && size != Size)
+            {
+                if (linkedWidth == 0)
+                {
+                    linkedWidth = BackgroundWidth / Size;
+                    linkedHeight = BackgroundHeight / Size;
+                }
+                // Clamp the visible panel without changing its reference proportions.
+                double minimum = MinBackgroundSize / Math.Min(linkedWidth, linkedHeight);
+                double maximum = MaxBackgroundSize / Math.Max(linkedWidth, linkedHeight);
+                double factor = Math.Max(minimum, Math.Min(maximum, size));
+                backgroundWidth = ClampBackgroundSize(linkedWidth * factor);
+                backgroundHeight = ClampBackgroundSize(linkedHeight * factor);
+            }
+            this.size = size;
+        }
+
+        private static double ClampBackgroundSize(double size)
+        {
+            return Math.Max(MinBackgroundSize, Math.Min(MaxBackgroundSize, size));
         }
 
         private string cachedColors;
@@ -236,12 +314,11 @@ namespace Marigold
                 throw new InvalidOperationException("Unknown appearance setting.");
             a[index] = value;
             var parsed = Parse(string.Join(";", a));
+            if (field == "size")
+                ResizeShip(parsed.Size);
             X = parsed.X;
             ExpandedX = parsed.ExpandedX;
             Y = parsed.Y;
-            Size = parsed.Size;
-            BackgroundWidth = parsed.BackgroundWidth;
-            BackgroundHeight = parsed.BackgroundHeight;
             Background = parsed.Background;
             Outline = parsed.Outline;
             Fill = parsed.Fill;

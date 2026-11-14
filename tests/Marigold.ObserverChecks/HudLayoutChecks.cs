@@ -53,7 +53,71 @@ internal static class HudLayoutChecks
             Check(Near(HudLayoutGeometry.CaptionLeft(screen.X, rightPanel.X, 20), rightPanel.X),
                 "Short captions retain their background alignment");
         }
-        Console.WriteLine("PASS: 32 HUD layout checks for background anchoring, drag and captions.");
+        var linked = new HudAppearance { Size = .3, BackgroundWidth = .4, BackgroundHeight = .2 };
+        linked.ScaleBackgroundWithShip = false;
+        linked.ResizeShip(.4);
+        Check(linked.BackgroundWidth == .4 && linked.BackgroundHeight == .2, "Unlinked resizing changes only ship scale");
+        linked.ScaleBackgroundWithShip = true;
+        Check(linked.BackgroundWidth == .4 && linked.BackgroundHeight == .2, "Enabling the link keeps the current dimensions");
+        linked.ResizeShip(.6);
+        Check(Near(linked.BackgroundWidth, .6) && Near(linked.BackgroundHeight, .3), "Linked resizing keeps custom proportions");
+        linked.BackgroundWidth = .8;
+        linked.BackgroundHeight = .2;
+        linked.Set("size", "0.7");
+        Check(Near(linked.BackgroundWidth, .8 * .7 / .6) && Near(linked.BackgroundHeight, .2 * .7 / .6),
+            "Manually edited dimensions are the basis for the next linked resize");
+        linked.ResizeShip(.5);
+        linked.BackgroundWidth = .85;
+        linked.BackgroundHeight = .34;
+        linked.ResizeShip(.7);
+        Check(linked.Size == .7 && linked.BackgroundWidth <= HudAppearance.MaxBackgroundSize
+            && Near(linked.BackgroundWidth / linked.BackgroundHeight, 2.5),
+            "The background respects its size limit and aspect ratio while the ship can keep growing");
+        linked.Set("outline", "0.4");
+        linked = HudAppearance.Parse(linked.Encode());
+        linked.ResizeShip(.5);
+        Check(Near(linked.BackgroundWidth, .85) && Near(linked.BackgroundHeight, .34),
+            "Returning from the upper size limit restores both dimensions after a saved-layout round trip");
+
+        var narrow = new HudAppearance { BackgroundWidth = .1, BackgroundHeight = .05, Size = .4 };
+        narrow.ResizeShip(.12);
+        narrow = HudAppearance.Parse(narrow.Encode());
+        narrow.ResizeShip(.4);
+        Check(Near(narrow.BackgroundWidth, .1) && Near(narrow.BackgroundHeight, .05),
+            "Returning from the lower size limit restores dimensions regardless of initializer order");
+
+        linked.ResizeShip(.7);
+        linked.BackgroundWidth = .7;
+        linked.ResizeShip(.5);
+        Check(Near(linked.BackgroundWidth, .5) && Near(linked.BackgroundHeight, .38 * .5 / .7),
+            "Editing a background dimension establishes new linked proportions");
+
+        var toggled = new HudAppearance { Size = .5, BackgroundWidth = .85, BackgroundHeight = .34 };
+        toggled.ResizeShip(.7);
+        toggled.ScaleBackgroundWithShip = false;
+        toggled.ScaleBackgroundWithShip = true;
+        toggled.ResizeShip(.5);
+        Check(Near(toggled.BackgroundWidth, .95 * .5 / .7) && Near(toggled.BackgroundHeight, .38 * .5 / .7),
+            "Relinking keeps the current visible background as its new sizing reference");
+
+        var legacy = HudAppearance.Parse(string.Join(";", linked.Encode().Split(';'), 0, 19));
+        double savedWidth = legacy.BackgroundWidth, savedHeight = legacy.BackgroundHeight;
+        legacy.ResizeShip(.6);
+        Check(legacy.ScaleBackgroundWithShip && Near(legacy.BackgroundWidth, savedWidth * .6 / .5)
+            && Near(legacy.BackgroundHeight, savedHeight * .6 / .5),
+            "A pre-reference linked layout starts with its saved dimensions");
+
+        foreach (var ratios in new[] { new[] { "NaN", "1" }, new[] { "0", "1" }, new[] { "7", "0.1" } })
+        {
+            var values = linked.Encode().Split(';');
+            values[19] = ratios[0];
+            values[20] = ratios[1];
+            bool rejected = false;
+            try { HudAppearance.Parse(string.Join(";", values)); }
+            catch (System.IO.InvalidDataException) { rejected = true; }
+            Check(rejected, "Invalid or impossible linked proportions are rejected on import");
+        }
+        Console.WriteLine("PASS: 45 HUD layout checks for background scaling, anchoring, drag and captions.");
     }
 }
 

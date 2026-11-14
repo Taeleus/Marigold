@@ -52,8 +52,8 @@ namespace Marigold
                 private readonly List<MyGuiControlBase> toolbar = new List<MyGuiControlBase>();
                 private readonly NumericField[] fields = new NumericField[8];
                 private MyGuiControlCombobox element;
-                private MyGuiControlCheckbox showElement, showLabel, simpleLabel;
-                private MyGuiControlLabel hint, simpleLabelText;
+                private MyGuiControlCheckbox showElement, showLabel, simpleLabel, scaleBackground;
+                private MyGuiControlLabel hint, simpleLabelText, scaleBackgroundText;
                 private int selected;
                 private bool controlsAtTop, syncing, dragging, dragMoved, resizing;
                 private Vector2 dragOrigin, dragOffset, dragScreen, dragCursor;
@@ -95,7 +95,7 @@ namespace Marigold
 
                     AddLabel("Element", -.445f, -.047f, .09f);
                     element = new MyGuiControlCombobox(
-                        position: new Vector2(-.199f, -.047f), size: new Vector2(.298f, .044f),
+                        position: new Vector2(-.215f, -.047f), size: new Vector2(.265f, .044f),
                         openAreaItemsCount: 7, isAutoEllipsisEnabled: true
                     );
                     element.AddItem(0, editor.T("Ship schematic"), sort: false);
@@ -106,8 +106,8 @@ namespace Marigold
                     element.ItemSelected += () => Select((int)element.GetSelectedKey());
                     Add(element);
 
-                    showElement = AddCheckbox(-.023f, "Show element");
-                    AddLabel("Show element", .001f, -.047f, .132f);
+                    showElement = AddCheckbox(-.06f, "Show element");
+                    AddLabel("Show element", -.036f, -.047f, .116f);
                     showElement.IsCheckedChanged += checkbox =>
                     {
                         if (syncing)
@@ -117,8 +117,8 @@ namespace Marigold
                         else
                             Bar(selected).Enabled = checkbox.IsChecked;
                     };
-                    showLabel = AddCheckbox(.143f, "Show label");
-                    AddLabel("Show label", .167f, -.047f, .118f);
+                    showLabel = AddCheckbox(.097f, "Show label");
+                    AddLabel("Show label", .121f, -.047f, .118f);
                     showLabel.IsCheckedChanged += checkbox =>
                     {
                         if (syncing)
@@ -132,12 +132,19 @@ namespace Marigold
                             simpleLabelText.Enabled = checkbox.IsChecked;
                         }
                     };
-                    simpleLabel = AddCheckbox(.303f, "Show only the bar title.");
-                    simpleLabelText = AddLabel("Simple label", .327f, -.047f, .122f);
+                    simpleLabel = AddCheckbox(.255f, "Show only the bar title.");
+                    simpleLabelText = AddLabel("Simple label", .279f, -.047f, .176f);
                     simpleLabel.IsCheckedChanged += checkbox =>
                     {
                         if (!syncing && selected != 0)
                             Bar(selected).TitleOnly = checkbox.IsChecked;
+                    };
+                    scaleBackground = AddCheckbox(.255f, "Scale background with ship");
+                    scaleBackgroundText = AddLabel("Scale background with ship", .279f, -.047f, .176f, .57f);
+                    scaleBackground.IsCheckedChanged += checkbox =>
+                    {
+                        if (!syncing && selected == 0)
+                            draft.Appearance.ScaleBackgroundWithShip = checkbox.IsChecked;
                     };
 
                     for (int i = 0; i < fields.Length; i++)
@@ -261,6 +268,8 @@ namespace Marigold
                         simpleLabel.Visible = simpleLabelText.Visible = bar != null;
                         simpleLabel.Enabled = simpleLabelText.Enabled = bar?.Label ?? false;
                         simpleLabel.IsChecked = bar?.TitleOnly ?? false;
+                        scaleBackground.Visible = scaleBackgroundText.Visible = bar == null;
+                        scaleBackground.IsChecked = draft.Appearance.ScaleBackgroundWithShip;
                         ResetHint();
 
                         var appearance = draft.Appearance;
@@ -268,7 +277,7 @@ namespace Marigold
                         {
                             SetField(0, "Horizontal position", () => ShipX, value => ShipX = value);
                             SetField(1, "Vertical position", () => appearance.Y, value => appearance.Y = value);
-                            SetField(2, "Scale", () => appearance.Size, value => appearance.Size = value, .12, .7);
+                            SetField(2, "Ship scale", () => appearance.Size, ResizeShip, .12, .7);
                             SetField(3, "Outline opacity", () => appearance.Outline, value => appearance.Outline = value);
                             SetField(4, "Background width", () => appearance.BackgroundWidth, value => appearance.BackgroundWidth = value,
                                 HudAppearance.MinBackgroundSize, HudAppearance.MaxBackgroundSize);
@@ -310,6 +319,18 @@ namespace Marigold
                         ? "Drag the corner to resize. Apply layout saves custom bars for this ship."
                         : "Drag the corner to resize. Apply, then Save display.");
                     hint.ColorMask = Vector4.One;
+                }
+
+                private void ResizeShip(double size)
+                {
+                    var appearance = draft.Appearance;
+                    appearance.ResizeShip(size);
+                    if (appearance.ScaleBackgroundWithShip)
+                        Synchronize(() =>
+                        {
+                            SyncValue(fields[4]);
+                            SyncValue(fields[5]);
+                        });
                 }
 
                 private void SetField(int index, string text, Func<double> read, Action<double> write,

@@ -46,6 +46,7 @@ namespace Marigold
         public string Mode = "compare", Category = "all", StateFilter = "all";
         public bool Expanded;
         public bool Station = false, AutoAssociate = true;
+        public bool UseGpuTexturedShip = true;
         public int Page = 1;
 
         public string GeometryOptions

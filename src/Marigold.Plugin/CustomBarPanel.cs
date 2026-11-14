@@ -203,7 +203,7 @@ namespace Marigold
                     };
                     RecreateControls(false);
                 });
-                Note("Use Arrange HUD to move or resize custom bars.");
+                Note("Go back to use Arrange HUD. Save bar first to keep your edits.");
             }
         }
     }

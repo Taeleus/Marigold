@@ -4,7 +4,7 @@
 
 Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. Compare your ship with a saved layout, spot damaged or missing blocks, and keep an eye on the systems that matter to you.
 
-The PluginHub release is **0.16.1 for Pulsar Legacy**. The development version is **0.17.4**. See the [changelog](CHANGELOG.md) for what's new.
+PluginHub offers **0.17.15 for Pulsar Legacy**. The source on `master` is **0.17.15**. [Changelog](CHANGELOG.md)
 
 ## Get started
 
@@ -47,7 +47,7 @@ Views follow your saved cockpit orientation. Under **Ship > Systems and filters*
 
 Under **Ship display > State colors**, choose a state and open **Choose color visually...**. The color square and hue strip let you pick by eye, with original and selected swatches to compare. Exact RGB entry is available too. **Use color** applies your choice; Cancel or Back discards the selection.
 
-Open **Advanced** on Ship, Ship display, Systems and filters, or Health bars for detailed controls. Use **Arrange HUD** to drag elements, resize bars, or type exact percentages. The schematic's background width and height can be adjusted separately from the ship scale. Choose **Preview HUD** to inspect the layout at its actual size and **Return to editor** to pick up where you left off.
+Open **Advanced** on Ship, Ship display, Systems and filters, or Health bars for detailed controls. Use **Arrange HUD** to drag elements, resize bars, or type exact percentages. Set the schematic's background width and height, then enable **Scale background with ship** if you want both dimensions to follow **Ship scale**. Choose **Preview HUD** to inspect the layout at its actual size and **Return to editor** to keep editing.
 
 In **Arrange HUD**, **Apply layout** saves custom bar changes with their ship. To keep the schematic and system bar layout, open **Save & share** or choose **Save display**. **Save as my default** sets your layout for other ships. **Save for this ship** keeps a separate layout for the ship you're in.
 
@@ -83,7 +83,7 @@ If the original cockpit is gone, open **Recovery tools**. Drag the preview to lo
 
 ## Import a blueprint
 
-Open **Baselines > Import blueprint > Find blueprint**. Search any combination of **Local, Workshop and Cloud**, load a result, choose its grid and cockpit, then preview the alignment before accepting it.
+Open **Baselines > Import blueprint > Find blueprint**. Search any combination of **Local, Workshop and Cloud**, load a result, choose its grid and cockpit, then preview the alignment before accepting it. Press **Escape** or choose **Close** to discard the draft and return to your previous baseline.
 
 Workshop search uses blueprints already cached on your computer. Plain or gzip-compressed XML `bp.sbc` files are supported; protobuf-only and archived formats are not. You can also provide an XML file path. See [blueprint formats](docs/BLUEPRINT-FORMATS.md) for details.
 
@@ -91,13 +91,19 @@ Workshop search uses blueprints already cached on your computer. Plain or gzip-c
 
 Filled displays can cost more FPS on large, heavily damaged ships. Choose **Outlines only** under **Ship display > Rendering mode** for lighter rendering. Health-bar counts stay the same. Damage pulse settings are under **Preferences**.
 
+In the GPU test build, **Textured Ship** uses **GPU (experimental)** by default. Choose **CPU** under **Preferences > Performance > Textured Ship renderer** to save a different preference. Use `/mg stats` to check the active renderer, preview resolution and update rate.
+
 Optional **Show connector-docked ships** adds context for ships attached through connectors. It starts off. Connected ships with saved profiles can show their own damage, but do not become part of your main ship's baseline or bars. Rotor, hinge and piston subgrids are excluded.
 
-The schematic uses block bounds, so it will not reproduce every slope or small detail of the ship's model.
+Wireframe modes draw from block bounds. **Textured Ship** uses available models, paint and textures, with simpler shapes where needed.
+
+## Install from PluginHub
+
+Find **Marigold** in Pulsar Legacy's plugin list, enable it, and restart if prompted.
 
 ## Install a local package
 
-Marigold runs on **Pulsar Legacy** (`Legacy.exe`, .NET Framework 4.8) and **Pulsar Interim** (`Interim.exe`, .NET 10). Once the PluginHub entry declares both runtimes (`CLR;CoreCLR`), one entry serves both, because Pulsar compiles the source for whichever edition is running. A local package is edition-specific: use the Legacy package (`build.ps1`) on Legacy and the Interim package (`build.ps1 -Runtime Interim`) on Interim.
+Use the package for your launcher. Build **Pulsar Legacy** with `./build.ps1 -Runtime Legacy` and **Pulsar Interim** with `./build.ps1 -Runtime Interim`. Interim is available for local testing. [Interim test checklist](TESTING-TODO.md#pending-beta-checks)
 
 1. Close Space Engineers.
 2. Copy `plugin.dll`, `plugin.pdb` and `plugin.xml` from the package into the matching folder:
@@ -109,7 +115,7 @@ Marigold runs on **Pulsar Legacy** (`Legacy.exe`, .NET Framework 4.8) and **Puls
 
 On Bazzite, a player using Pulsar Legacy from the game's Steam folder confirmed this local plugin path. Put the three files in `~/.local/share/Steam/steamapps/common/SpaceEngineers/Pulsar/Legacy/Local/Marigold/`. On Bazzite, `~` can resolve to `/var/home/<username>`. If Steam or Pulsar is installed elsewhere, use the `Legacy/Local` folder under that Pulsar install.
 
-Both editions share the same saved data (see below).
+Both editions use the same Marigold profiles and settings when Space Engineers uses the same game data folder.
 
 If Windows blocks a trusted downloaded package with error **0x80131515**, unblock the ZIP in Properties before extracting it, or unblock the installed DLL.
 

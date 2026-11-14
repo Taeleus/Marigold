@@ -85,6 +85,33 @@ namespace Marigold
             Save(path, defaults);
         }
 
+        public static void LoadTexturedShipRenderer(string displaySettingsPath, SchematicControls c)
+        {
+            string path = TexturedShipRendererPath(displaySettingsPath);
+            if (!File.Exists(path))
+                return;
+            if (new FileInfo(path).Length > 32)
+                throw new InvalidDataException("Invalid Textured Ship renderer setting.");
+
+            string renderer = File.ReadAllText(path).Trim();
+            if (renderer == "CPU")
+                c.UseGpuTexturedShip = false;
+            else if (renderer == "GPU")
+                c.UseGpuTexturedShip = true;
+            else
+                throw new InvalidDataException("Invalid Textured Ship renderer setting.");
+        }
+
+        public static void SaveTexturedShipRenderer(string displaySettingsPath, bool useGpu)
+        {
+            SaveText(TexturedShipRendererPath(displaySettingsPath), useGpu ? "GPU" : "CPU");
+        }
+
+        private static string TexturedShipRendererPath(string displaySettingsPath)
+        {
+            return Path.Combine(Path.GetDirectoryName(displaySettingsPath), "textured-renderer.txt");
+        }
+
         public static string Export(SchematicControls c)
         {
             return string.Join(
@@ -138,7 +165,9 @@ namespace Marigold
                 version4 = a.Length == 12 && a[0] == "Marigold display 4",
                 version5 = a.Length == 13 && a[0] == "Marigold display 5",
                 version6 = a.Length == 14 && a[0] == "Marigold display 6";
-            var appearance = (version4 || version5 || version6) ? HudAppearance.Parse(a[11]) : new HudAppearance();
+            var appearance = (version4 || version5 || version6)
+                ? HudAppearance.Parse(a[11])
+                : new HudAppearance { ScaleBackgroundWithShip = false };
             if ((!version1 && !version2 && !version3 && !version4 && !version5 && !version6)
                 || !int.TryParse(a[1], out detail)
                 || detail < 0
@@ -194,11 +223,16 @@ namespace Marigold
 
         public static void Save(string path, SchematicControls c)
         {
+            SaveText(path, Export(c));
+        }
+
+        private static void SaveText(string path, string text)
+        {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             string temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                File.WriteAllText(temp, Export(c));
+                File.WriteAllText(temp, text);
                 if (File.Exists(path))
                     File.Replace(temp, path, path + ".bak");
                 else

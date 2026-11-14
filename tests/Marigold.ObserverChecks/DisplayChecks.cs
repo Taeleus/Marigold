@@ -159,14 +159,15 @@ internal static class DisplayChecks
         styled.Appearance.ShowShipLabel = false;
         styled.Appearance.BackgroundWidth = .43;
         styled.Appearance.BackgroundHeight = .16;
+        styled.Appearance.ScaleBackgroundWithShip = false;
         DisplaySettings.Import(DisplaySettings.Export(styled), c);
         Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48
             && c.Appearance.DrawFills && c.Appearance.DrawHull, "Textured style and opacity round-trip with the layout");
         Check(c.Appearance.ExpandedX == .23 && c.Appearance.X == .98,
             "Expanded horizontal placement round-trips independently of compact placement");
         Check(!c.Appearance.ShowShipLabel && c.SchematicVisible, "A layout can hide the label while keeping the schematic visible");
-        Check(c.Appearance.BackgroundWidth == .43 && c.Appearance.BackgroundHeight == .16 && c.Appearance.Size == .32,
-            "Background dimensions round-trip separately from ship scale");
+        Check(c.Appearance.BackgroundWidth == .43 && c.Appearance.BackgroundHeight == .16 && c.Appearance.Size == .32
+            && !c.Appearance.ScaleBackgroundWithShip, "Independent background dimensions and link state round-trip");
         c.Appearance.Set("size", "0.5");
         Check(c.Appearance.Rendering == HudAppearance.Textured && c.Appearance.ShipOpacity == .48,
             "Resizing retains textured style and opacity");
@@ -178,13 +179,23 @@ internal static class DisplayChecks
         Check(c.Appearance.Rendering == HudAppearance.HdWireframe && c.Appearance.ShipOpacity == .7
             && c.Appearance.ExpandedX == .5, "HD Wireframe round-trips with default model opacity and centered expanded view");
         Check(c.Appearance.ShowShipLabel, "New layouts show the ship label by default");
+        Check(defaults.Appearance.ScaleBackgroundWithShip && c.Appearance.ScaleBackgroundWithShip,
+            "New layouts link the background by default and preserve the link when shared");
+        string oldAppearance = string.Join(";", styled.Appearance.Encode().Split(';'), 0, 18);
+        DisplaySettings.Import(DisplaySettings.Export(styled).Replace(styled.Appearance.Encode(), oldAppearance), c);
+        Check(!c.Appearance.ScaleBackgroundWithShip && c.Appearance.BackgroundWidth == .43 && c.Appearance.BackgroundHeight == .16,
+            "Older saved layouts keep their independent background dimensions");
+        var firstDisplay = wireframe.Split('\n');
+        firstDisplay[0] = "Marigold display 1";
+        DisplaySettings.Import(string.Join("\n", firstDisplay, 0, 8), c);
+        Check(!c.Appearance.ScaleBackgroundWithShip, "Saved layouts from before the appearance record remain independent");
 
         var explicitSd = new HudAppearance { Rendering = HudAppearance.SdWireframe, Size = .5 }.Encode();
         Check(HudAppearance.Parse(explicitSd).Rendering == HudAppearance.SdWireframe,
             "Explicit SD Wireframe remains selected after saving");
         string oldSquare = string.Join(";", explicitSd.Split(';'), 0, 16);
         var migratedSquare = HudAppearance.Parse(oldSquare);
-        Check(migratedSquare.BackgroundWidth == .5 && migratedSquare.BackgroundHeight == .5,
+        Check(!migratedSquare.ScaleBackgroundWithShip && migratedSquare.BackgroundWidth == .5 && migratedSquare.BackgroundHeight == .5,
             "Older layouts retain their saved square background dimensions");
         var positionedSd = oldSquare.Substring(0, oldSquare.LastIndexOf(';'));
         Check(HudAppearance.Parse(positionedSd).ShowShipLabel, "Saved layouts from before the label toggle keep showing the label");
@@ -294,5 +305,32 @@ internal static class DisplayChecks
         Check(nextGrid.HealthBars.Bars[2].X == .75 && nextGrid.Language == "es"
             && !nextGrid.AutoAssociate && nextGrid.Station,
             "Selecting defaults with no file restores built-in placement and preserves preferences");
+
+        var renderer = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, renderer);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(renderer.UseGpuTexturedShip && renderer.Appearance.Rendering == defaults.Appearance.Rendering,
+            "A saved display without a renderer preference defaults Textured Ship to GPU and retains its display mode");
+        string defaultLayout = File.ReadAllText(defaultsPath);
+        DisplaySettings.SaveTexturedShipRenderer(defaultsPath, true);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(renderer.UseGpuTexturedShip && File.ReadAllText(defaultsPath) == defaultLayout,
+            "GPU preference reloads without changing the default layout file");
+
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, renderer);
+        DisplaySettings.Import(DisplaySettings.Export(defaults), renderer);
+        DisplaySettings.Reset(renderer);
+        Check(renderer.UseGpuTexturedShip,
+            "Ship layouts, shared layouts, and display reset keep the global renderer preference");
+
+        DisplaySettings.SaveTexturedShipRenderer(defaultsPath, false);
+        renderer = new SchematicControls();
+        DisplaySettings.Load(defaultsPath, renderer);
+        DisplaySettings.LoadTexturedShipRenderer(defaultsPath, renderer);
+        Check(!renderer.UseGpuTexturedShip, "An explicit CPU preference overrides the GPU default on restart");
+        DisplaySettings.LoadShipLayout(defaultsPath, shipPath, renderer);
+        DisplaySettings.Import(DisplaySettings.Export(defaults), renderer);
+        DisplaySettings.Reset(renderer);
+        Check(!renderer.UseGpuTexturedShip, "Ship layouts, shared layouts, and display reset keep a saved CPU preference");
     }
 }
