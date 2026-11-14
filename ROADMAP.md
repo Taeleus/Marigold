@@ -1,6 +1,6 @@
 # Marigold roadmap
 
-Marigold **0.16.1** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
+Marigold **0.17.15** is available for **Pulsar Legacy**. The first PluginHub listing went live on November 4, 2026. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Release review](https://github.com/StarCpt/PluginHub/pull/285)
 
 The **0.17.15** source is on `master`. The Legacy build keeps the wireframe visible until the first GPU frame is ready. Interim builds are experimental. [Changelog](CHANGELOG.md#01715--november-11-2026)
 
@@ -27,7 +27,7 @@ As feedback comes in, add a row with the request, its status and a link to the d
 
 ## Ideas for later
 
-- **Pulsar Interim support.** The Interim build compiles. Verify it in-game before adding Interim to the PluginHub listing.
+- **Pulsar Interim support.** A local 0.16.1 Interim build passed the [in-game checks](TESTING-TODO.md#completed-pulsar-interim-checks--0161). The development manifest can target both launchers. Test the current build and the pinned source on Interim before adding it to the PluginHub listing.
 - **Schematic pan.** Consider letting players pan the ship model within its display.
 - **Spanish translation.** Translate the remaining diagnostic messages as gaps are reported.
 - **Performance.** Revisit filled rendering if an improvement can preserve its appearance and damage coverage. Outline modes are available for large grids. [Performance results](docs/PERFORMANCE-RESULTS.md)

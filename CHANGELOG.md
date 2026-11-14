@@ -2,7 +2,11 @@
 
 Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
 
-The published PluginHub release is **0.16.1 for Pulsar Legacy**.
+The published PluginHub release is **0.17.15 for Pulsar Legacy**.
+
+## Unreleased
+
+- The development manifest can target both Pulsar Legacy and Interim. A local Interim build of 0.16.1 passed in-game checks. Current-version Interim testing is pending.
 
 ## 0.17.15 — November 11, 2026
 

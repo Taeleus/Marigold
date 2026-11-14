@@ -1,6 +1,6 @@
-# Legacy release procedure
+# Release procedure
 
-The source version is **0.17.15**. The Legacy build and regression suite passed. The local Legacy package showed the wireframe while the first GPU frame loaded and passed resolution and display-mode changes. PluginHub currently lists **0.16.1** for **Legacy/CLR**. [Test checklist](../TESTING-TODO.md#01715-gpu-preview-retest)
+PluginHub currently lists **0.17.15 for Pulsar Legacy (CLR)**. The Legacy build and regression suite passed, and the local package passed the GPU startup and display-mode tests. The current Interim build is available for testing. [Test checklist](../TESTING-TODO.md)
 
 ## Merge the source
 
@@ -12,8 +12,8 @@ Building locally requires a .NET 10 SDK, .NET Framework 4.8 reference assemblies
 
 ## Publish a PluginHub update
 
-1. From the tested `master` commit, run `./prepare-release.ps1 -Commit HEAD` to generate a Legacy manifest with the full source SHA and exactly one runtime entry (`CLR`).
-2. Disable the local binary and test loading the exact source pin through Pulsar Legacy. Check a fresh install and existing profiles. Back up the profiles before testing.
+1. From the tested `master` commit, run `./prepare-release.ps1 -Commit HEAD` to generate a candidate manifest with the full source SHA and `CLR;CoreCLR`. One PluginHub listing can compile the pinned source for either edition. Keep the published entry on `CLR` while Interim validation is pending. Local packages remain edition-specific.
+2. Disable the local binary and test loading the exact source pin on each edition targeted by the update. Check a fresh install and existing profiles. Back up the profiles before testing.
 3. Check the current upstream requirements and prepare the proposed PR text and descriptor for review. After approval, update the existing `Plugins/Marigold.xml` descriptor through the open PR, or open a PR if there is none. [PluginHub plan](PLUGINHUB-PLAN.md)
 
 See [test checklist](../TESTING-TODO.md), [historical notes](history/RELEASE-HISTORY.md), [documentation index](INDEX.md).

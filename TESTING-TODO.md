@@ -66,7 +66,19 @@ These results are from the local Pulsar Legacy package built from the source pin
 - [ ] **Check 0.17.8 layout fixes.** Link an 85% × 34% background at 50% ship scale. Raise ship scale to 70%, save and reload, then return to 50%. The background should return to 85% × 34%. In the custom-bar editor, check that the hint explains saving and going back before using **Arrange HUD**.
 - [ ] **Check Textured Ship on large grids.** Try a dense grid and a thin or hollow grid near 50,000 blocks. Confirm both show recognizable geometry and real textures. Record FPS and `/mg stats` during initial capture and rotation, then switch ships to check for stale images.
 - [ ] **Compare performance during sustained damage.** Compare HD, SD and Textured Ship at the same view and detail. Check that markers agree with the health bars, and record FPS with the display shown and hidden plus `/mg stats`. [Performance test procedure](docs/PERFORMANCE-TEST.md)
-- [ ] **Smoke-test Pulsar Interim.** Launch with the separate Interim package, open `/mg ui`, switch render modes, cycle filters and save a layout.
+- [ ] **Smoke-test Pulsar Interim.** Launch with the separate Interim package and open `/mg ui`. Check HD Wireframe, CPU and GPU Textured Ship, seat exit, filters and saving a layout. Then disable the local package and verify loading the exact proposed source pin on Interim.
+
+---
+
+## Completed Pulsar Interim checks — 0.16.1
+
+All five checks below are user-reported passed on November 8, 2026, on `Interim.exe` (Pulsar 2.4.3, runtime `CoreCLR`) with a local 0.16.1 `net10.0` Release build. The build was installed in the shared `%APPDATA%/Pulsar/Legacy/Local/Marigold` folder with `plugin.xml` tagged `<Runtimes>CoreCLR</Runtimes>`. Interim uses `%APPDATA%/Pulsar/Interim` only when that folder exists; otherwise it shares the Legacy folder, and this test ran on that shared setup. Loading from PluginHub source and the 0.17 features are not covered here. See **Smoke-test Pulsar Interim** above.
+
+- [x] **Loads on Interim.** Marigold initializes without dependency or Harmony errors.
+- [x] **Overlay and UI.** Sit in a cockpit, open `/mg ui`, capture a baseline and preview the HUD. The schematic draws over the HUD as it does on Legacy.
+- [x] **Shared data.** Profiles and settings saved on Legacy load on Interim, and the reverse.
+- [x] **Clipboard.** Export the display config to the clipboard and import it again.
+- [x] **Unload.** Leave to the main menu and load another world: no duplicate overlay and no errors. This check used a heavily modded world.
 
 ---
 
@@ -137,7 +149,7 @@ Already reported working: blueprint repairs, automatic matching, recovery contro
 
 The core checks above passed. Final Legacy source-loader testing with the local DLL disabled remains separate; updating the source pin does not claim that check passed. See [PR #285](https://github.com/StarCpt/PluginHub/pull/285) for the submitted pin.
 
-Earlier results: [history](docs/history/README.md), [performance results](docs/PERFORMANCE-RESULTS.md). Interim testing remains deferred.
+Earlier results: [history](docs/history/README.md), [performance results](docs/PERFORMANCE-RESULTS.md).
 
 ## October 26 results
 
