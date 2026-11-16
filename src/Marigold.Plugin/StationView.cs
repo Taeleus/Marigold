@@ -202,7 +202,7 @@ namespace Marigold
             return access;
         }
 
-        private void UpdateStationConnections(bool reconcileNow = false)
+        private void UpdateStationConnections(bool reconcileNow = false, bool refreshGeometry = false)
         {
             var session = MySession.Static;
             long player = session?.LocalPlayerId ?? 0;
@@ -274,8 +274,8 @@ namespace Marigold
             if (!enabled)
                 ClearStationAccess();
 
-            // Docked grids affect the merged geometry, its bounds, and the damage report.
-            if (removed)
+            // A ship can redock at a different berth while hidden without changing membership.
+            if (removed || (refreshGeometry && stationGrids.Count > 0))
                 ClearDisplayedStation();
             else if (stationModeActive != allowed || stationGrids.Count != nextStationGrids.Count)
             {
@@ -381,7 +381,7 @@ namespace Marigold
                 return;
             }
 
-            UpdateStationConnections();
+            UpdateStationConnections(refreshGeometry: stationRefreshDeferred);
             stationRefreshDeferred = false;
             int budget = Math.Max(32, 512 / Math.Max(1, stationObservers.Count));
             foreach (var observer in stationObservers.Values)
