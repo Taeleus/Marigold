@@ -2,7 +2,7 @@
 
 Marigold adds a ship schematic and damage HUD to **Space Engineers 1**. Compare your ship with a saved layout, spot damaged or missing blocks, and track individual systems.
 
-**Install from PluginHub.** Enable **Marigold** in the Pulsar Legacy plugin list and restart if prompted. PluginHub currently offers **0.17.15 for Legacy**. The **0.17.16** candidate passed local in-game testing on Windows with both Legacy and Interim. [Changelog](CHANGELOG.md)
+**Install from PluginHub.** In Pulsar’s plugin list, enable **Marigold** and restart if prompted.
 
 ## Get started
 
