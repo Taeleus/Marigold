@@ -1,4 +1,4 @@
-> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+> Historical document. See the [command reference](../COMMANDS.md) for current controls.
 
 # Controls: updated for 0.2.2
 

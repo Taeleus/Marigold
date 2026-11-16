@@ -1,18 +1,21 @@
 # Historical records
 
-Preserved development decisions and user test results. For current instructions, see the [user guide](../../README.md) and [release acceptance](../../TESTING-TODO.md).
+These records preserve earlier proposals, implementation decisions and release results. Installation paths and commands describe the builds covered by each record. [Current documentation](../INDEX.md)
 
-- [CONTROLS-0.2.1.md](CONTROLS-0.2.1.md)
-- [DEVELOPMENT-HISTORY.md](DEVELOPMENT-HISTORY.md)
-- [IN-GAME-CHECKLIST.md](IN-GAME-CHECKLIST.md)
-- [OUTLINE-0.3.md](OUTLINE-0.3.md)
-- [Original-proposal.txt](Original-proposal.txt)
-- [PROFILES-0.5.md](PROFILES-0.5.md)
-- [RELEASE-HISTORY.md](RELEASE-HISTORY.md)
-- [REPOSITORY-AUDIT.md](REPOSITORY-AUDIT.md)
-- [ROADMAP-HISTORY-through-0.14.14.md](ROADMAP-HISTORY-through-0.14.14.md)
-- [Research-and-plan-review.md](Research-and-plan-review.md)
-- [SCHEMATIC-0.2.md](SCHEMATIC-0.2.md)
-- [SNAPSHOTS-0.4.md](SNAPSHOTS-0.4.md)
-- [TESTING-HISTORY-through-0.14.14.md](TESTING-HISTORY-through-0.14.14.md)
-- [TESTING-HISTORY-through-0.14.8.md](TESTING-HISTORY-through-0.14.8.md)
+## Proposal and early development
+
+- [Original proposal](Original-proposal.txt). The initial design brief and its implementation assignment.
+- [Initial research and proposal review](Research-and-plan-review.md). October 20, 2026 research on Pulsar, PluginHub and the game API.
+- [Development through 0.7](DEVELOPMENT-HISTORY.md). Early implementation, builds and deployment notes.
+- [Schematic prototype 0.2](SCHEMATIC-0.2.md). The first rotating HUD outline.
+- [Controls in 0.2.1 and 0.2.2](CONTROLS-0.2.1.md). Game shortcut conflicts and the change to chat commands.
+- [Outline 0.3](OUTLINE-0.3.md). Hull geometry and performance controls.
+- [Snapshot diagnostics 0.4](SNAPSHOTS-0.4.md). Session-only references and damage comparison.
+- [Profiles and cockpit anchors 0.5](PROFILES-0.5.md). The first persistent profiles and alignment workflow.
+
+## Roadmap and release
+
+- [Roadmap through 0.14.14](ROADMAP-HISTORY-through-0.14.14.md). Feature milestones, release plans and deferred work.
+- [Repository audit](REPOSITORY-AUDIT.md). October 24, 2026 review of the 0.14.9 working tree.
+- [Release preparation history](RELEASE-HISTORY.md). Build and release notes through 0.14.1.
+- [Performance results](../PERFORMANCE-RESULTS.md). Measured frame rates and render timings across versions.

@@ -1,4 +1,4 @@
-> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+> Historical document. See the [user guide](../../README.md) for the current display.
 
 # Outline 0.3
 

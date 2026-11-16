@@ -1,5 +1,7 @@
 # Release preparation
 
+> Archived release notes through 0.14.1. [Current release procedure](../RELEASE.md)
+
 This is a testable prototype, not a validated public release. No PluginHub submission has been made.
 
 ## Repeatable checks
@@ -7,7 +9,7 @@ This is a testable prototype, not a validated public release. No PluginHub submi
 1. Run `./build.ps1` to compile the net48 plugin and run the automated suites.
 2. Run `./verify-source.ps1` to compile exactly the current descriptor's production source files without `LOCAL_BUILD` or SDK-generated assembly metadata. This catches differences between the binary and source paths. It is not execution inside Pulsar's compiler/loader.
 3. Commit the production source and metadata, then run `./prepare-release.ps1`. The resulting `artifacts/PluginHub/Marigold.xml` identifies `Taeleus/Marigold`, pins the source commit and restricts runtime to `NETFramework`.
-4. Complete the deferred runtime checks in TESTING-TODO.md before hub submission. Do not mark GUI appearance, Nexus behavior or live performance as validated from automated results.
+4. Check GUI appearance, Nexus behavior and performance in game before submitting the package to PluginHub.
 
 The local binary package contains only plugin.dll, plugin.pdb and plugin.xml. It does not include game assemblies or a second Harmony DLL. Build and verification scripts write only inside the workspace. Installation into Pulsar is a separate step.
 
@@ -33,7 +35,7 @@ October 22, 2026 validation: release binary and 23-file source-only builds passe
 
 Binary build, automated suites and the 30-file manifest-selected source compilation pass. The new feedback suite adds 68 checks covering recovery rotations, missing structure, ambiguity, cancellation, key aliases, category styles and settings migration. A sandboxed repeat emitted NU1900 when the NuGet audit service was unreachable; the network-enabled dependency restore/build completed without warnings. Actual Pulsar source loading remains a user acceptance check.
 
-The 0.9 runtime passes are recorded in TESTING-TODO.md. The new 0.10 section covers recovery, customization, reference libraries, imports and performance; none are marked passed by compilation. See ROADMAP.md for outstanding recovery/revision/import limitations. No PluginHub submission has been made.
+Runtime testing passed on 0.9. For 0.10, recovery, customization, reference libraries, imports and performance still needed in-game verification. PluginHub submission had yet to start.
 
 
 ## 0.11 validation scope
@@ -42,11 +44,11 @@ Health bars add pure classification and settings checks, with existing compariso
 
 ## 0.12.3 validation scope
 
-The system list no longer exposes a separate Mechanical category; those blocks are grouped under Utility/Other. Gas is labeled Tanks. Legacy `gas`/`mechanical` filters and the previous system-style ordering migrate when saved display settings load. Pagination and the other 0.12.2 browser fixes are user-verified; the new group labels and settings migration still need the checks in TESTING-TODO.md.
+The system list groups Mechanical blocks under Utility/Other and labels Gas as Tanks. Legacy `gas` and `mechanical` filters and the previous system-style ordering migrate when saved display settings load. The user verified pagination and the other 0.12.2 browser fixes. The new group labels and settings migration still needed in-game testing.
 
 ## 0.12.4 validation scope
 
-Adds a dedicated Tools health bar for welders, grinders, drills and ToolCore block definitions. ToolCore definitions also match the existing Tools schematic filter. Previous six- and seven-bar layouts retain their saved entries, with Tools disabled by default. Automated classification, health grouping and settings migration checks pass; in-game appearance and SDX2 modpack checks remain pending in TESTING-TODO.md.
+Adds a dedicated Tools health bar for welders, grinders, drills and ToolCore block definitions. ToolCore definitions also match the existing Tools schematic filter. Previous six- and seven-bar layouts retain their saved entries, with Tools disabled by default. Automated classification, health grouping and settings migration checks passed. In-game appearance and the SDX2 modpack still needed testing.
 
 ## 0.12.5 validation scope
 
@@ -60,7 +62,7 @@ Reviewed the 0.12.2 baseline through the committed blueprint browser fix and unc
 
 ## 0.13.0 dev validation
 
-Binary build and all automated suites pass, including 13 persistent-recovery/reference lifecycle checks and 129 profile persistence/alignment checks. All 35 manifest-selected sources compile without LOCAL_BUILD. NuGet vulnerability-data retrieval was unavailable (NU1900); no vulnerability scan is claimed. Runtime acceptance is pending in TESTING-TODO.md. Stable master remains 0.12.6; the dev package is not deployed. Profile format 3 requires a full pre-upgrade data-folder backup for rollback to stable.
+The binary build and all automated suites passed, including 13 persistent-recovery and reference lifecycle checks and 129 profile persistence and alignment checks. All 35 manifest-selected sources compiled without `LOCAL_BUILD`. NuGet could not retrieve vulnerability data (NU1900). Runtime acceptance was still pending, the stable branch remained at 0.12.6, and the development package was awaiting deployment. Rolling profile format 3 back to 0.12.6 required the pre-upgrade data-folder backup.
 
 
 ## 0.14.0 development scope
@@ -76,7 +78,7 @@ Validation: binary build and all regression suites passed, including 32 recovery
 
 The user reports all 12 0.14 checklist items passed and 10 of 11 0.13 items passed; the remaining 0.13 entry asks for a larger recovery preview with compact controls below. No functional failure is reported in those latest sections. Installed 0.14.0 DLL matches artifacts by SHA-256; package contents are only DLL/PDB/XML, and the manifest description is 964 characters. Historical validation text above describes its respective build and is not the current acceptance state.
 
-Do not publish as fully release-validated yet: recovery-preview usability needs implementation/retest, scale-specific performance and unique edge cases need final coverage, and the final pinned source package needs a live loader/fresh-install check. The 0.10 source-loader pass is retained as evidence but does not validate a newer pin. Current rules review and release packaging remain separate steps. See the consolidated readiness section in TESTING-TODO.md; original user notes are preserved.
+Remaining release work at the time covered recovery preview usability, performance at several grid scales, edge cases, and a fresh install from the final source pin. The earlier 0.10 source-loader pass covered that release. Rules review and packaging were still pending.
 
 
 ## 0.14.1 recovery preview

@@ -1,8 +1,10 @@
 # Marigold roadmap
 
+> Archived roadmap through 0.14.14. [Current roadmap](../../ROADMAP.md)
+
 Stable: **0.14.8**. Development: **0.14.9**. Updated October 24, 2026.
 
-The main feature set is implemented and has extensive user-reported in-game passes. Two reported issues and final release validation remain. See the [active testing checklist](../../TESTING-TODO.md) and [detailed test history](TESTING-HISTORY-through-0.14.8.md).
+By 0.14.14 the main feature set was implemented and had extensive user-reported in-game passes. Two reported issues and final release validation were still open at the time.
 
 ## Implemented
 

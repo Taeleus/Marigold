@@ -1,13 +1,13 @@
 # Changelog
 
-Changes to Marigold, newest first. Early entries were reconstructed from development notes and testing records. Some changes appeared in local builds before publication.
+Changes to Marigold, newest first. This log includes local development builds and PluginHub releases. Early entries were reconstructed from development and test records.
 
 The published PluginHub release is **0.17.15 for Pulsar Legacy**.
 
-## 0.17.16 — Development build
+## 0.17.16 — Release candidate
 
-- The release manifest targets both Pulsar Legacy and Interim by default. A local Interim build of 0.16.1 passed in-game checks. Current-version Interim testing is pending.
-- Station mode is available from static stations you own or that are shared with your faction. It only shows and follows connector links to grids that pass the same access check.
+- Separate Windows packages for Pulsar Legacy and Interim passed local in-game testing. The proposed PluginHub update targets both launchers. [Release status](ROADMAP.md#next-pluginhub-update)
+- Station mode is available on static grids. It shows owned or faction-shared docked ships and updates when access changes or grids merge. It keeps a matched baseline through ordinary undocking so redocking a damaged ship can still show its missing blocks.
 - HD Wireframe limits pulse-only redraws to 30 Hz. Ship rotation, damage changes and layout edits still update as they happen.
 - GPU Textured Ship reuses shaders and render states when you switch ships or display modes, avoiding recompilation on those transitions.
 
@@ -52,8 +52,6 @@ The published PluginHub release is **0.17.15 for Pulsar Legacy**.
 
 - Closing Marigold with **Escape** or **Close** ends an unsaved blueprint preview and returns the HUD to its previous baseline.
 
-The Legacy smoke test passed. [Testing checklist](TESTING-TODO.md#0177-legacy-smoke-test)
-
 ## 0.17.6 — November 7, 2026
 
 - In **Arrange HUD**, **Scale background with ship** lets the background follow **Ship scale** while keeping the proportions you set with **Background width** and **Background height**. New layouts start linked. Existing layouts keep their independent sizing.
@@ -86,15 +84,13 @@ The Legacy smoke test passed. [Testing checklist](TESTING-TODO.md#0177-legacy-sm
 - Changing language or automatic matching preserves your saved default layout.
 - **Textured Ship** now follows system and damage-state filters. **Other systems opacity** dims or hides unselected systems. Missing blocks still show red markers.
 
-The main Legacy beta checks passed in game. [Large-grid, sustained-damage and Interim checks](TESTING-TODO.md#pending-beta-checks) are still open.
-
 ## 0.17.1 — November 5, 2026
 
 - **Textured Ship** shares its triangle budget across the grid and uses simpler textured meshes for dense parts.
 - Rotating previews render faster by sharing vertices across faces. The preview reuses its mesh when the ship's render data is unchanged.
 - `/mg stats` reports preview FPS separately from mesh build and raster times.
 
-The Legacy station retest reached **768 px at 16.5 preview FPS** with zero reported painted box replacements. [Testing checklist](TESTING-TODO.md#display-follow-up)
+The Legacy station retest reached **768 px at 16.5 preview FPS** with zero reported painted box replacements. [Performance results](docs/PERFORMANCE-RESULTS.md)
 
 ## 0.17.0 — November 5, 2026
 

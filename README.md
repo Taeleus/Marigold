@@ -1,19 +1,16 @@
 # Marigold
 
-**See your ship. Find the damage. Know what's missing.**
+Marigold adds a ship schematic and damage HUD to **Space Engineers 1**. Compare your ship with a saved layout, spot damaged or missing blocks, and track individual systems.
 
-Marigold is a ship schematic and damage HUD for **Space Engineers 1**, running through **Pulsar Legacy**. Compare your ship with a saved layout, spot damaged or missing blocks, and keep an eye on the systems that matter to you.
-
-PluginHub offers **0.17.15 for Pulsar Legacy**. The source on `master` is **0.17.15**. [Changelog](CHANGELOG.md)
+**Install from PluginHub.** Enable **Marigold** in the Pulsar Legacy plugin list and restart if prompted. PluginHub currently offers **0.17.15 for Legacy**. The **0.17.16** candidate passed local in-game testing on Windows with both Legacy and Interim. [Changelog](CHANGELOG.md)
 
 ## Get started
 
 1. Sit in the cockpit you want to use as the ship's orientation reference.
-2. Type **`/mg ui`**.
-3. Open **Baselines**, choose **Capture this ship**, then click again to confirm.
-4. Close the panel to see your ship schematic.
+2. Type **`/mg capture`** in chat to save a **baseline** for missing-block detection. From **`/mg ui`**, you can also use **Baselines > Capture this ship** and click again to confirm.
+3. Use **`/mg ui`** to configure the schematic and health bars.
 
-A **baseline** is the layout your ship should have. Capturing records the blocks currently present; damage to those blocks still shows. For sections already missing, use a saved baseline or import a blueprint instead.
+A baseline is the layout your ship should have. Capture records the blocks currently present, including damaged ones. If sections are already missing, use a saved baseline or import a blueprint of the complete ship.
 
 The baseline stays fixed while you take damage and make repairs. Capture again when you want a changed ship layout to become the new reference.
 
@@ -30,22 +27,22 @@ The baseline stays fixed while you take damage and make repairs. Capture again w
 
 Detached blocks count as missing, even when they are floating nearby. Switching equipment off or losing power does not make it orange.
 
-Fresh orange/red faults can pulse together briefly to draw your attention. Yellow stays steady. Both the fresh alert and the gentler missing-block pulse can be turned off.
+Fresh orange and red faults can pulse together briefly. Yellow stays steady. Use **Pulse missing blocks** and **Emphasize fresh damage** in **Preferences** to control the two effects.
 
 ## Make it yours
 
-Everything starts in **`/mg ui`**:
+Use **`/mg ui`** to open the control panel.
 
-- **Ship:** show or hide the HUD, choose views, pause rotation, focus on systems or damage states, and read a damage report.
-- **Baselines:** capture a layout, import a blueprint, manage saved ships and versions, or recover alignment after cockpit loss.
-- **Ship display:** choose a rendering mode, compact or expanded view, and state colors.
-- **Health bars:** enable system bars or create bars for particular blocks and groups.
-- **Preferences:** choose performance options, pulses, automatic matching, language and shortcuts.
+- **Ship** lets you show or hide the HUD, choose views, pause rotation, focus on systems or damage states, and read a damage report.
+- **Baselines** covers capture, blueprint import, saved ships and versions, and recovering alignment after cockpit loss.
+- **Ship display** controls the rendering mode, compact or expanded view, and state colors.
+- **Health bars** lets you enable system bars or create bars for particular blocks and groups.
+- **Preferences** covers rendering performance, pulses, automatic matching, language, and shortcuts.
 - **Save & share** lets you save a default or a layout for this ship, reuse a named layout, or share a layout through the clipboard.
 
-Views follow your saved cockpit orientation. Under **Ship > Systems and filters**, choose a system or a quick preset and hide or dim the rest of the ship. Open **Advanced** to combine systems, set an exact opacity for other systems, or style them individually.
+Views follow the cockpit you're using. Marigold uses the saved cockpit to align the baseline. Under **Ship > Systems and filters**, choose a system or a quick preset and hide or dim the rest of the ship. Open **Advanced** to combine systems, set an exact opacity for other systems, or style them individually.
 
-Under **Ship display > State colors**, choose a state and open **Choose color visually...**. The color square and hue strip let you pick by eye, with original and selected swatches to compare. Exact RGB entry is available too. **Use color** applies your choice; Cancel or Back discards the selection.
+Under **Ship display > State colors**, choose a state and open **Choose color visually...**. The color square and hue strip let you pick by eye, with original and selected swatches to compare. Exact RGB entry is available too. **Use color** applies your choice. **Cancel** or **Back** discards the selection.
 
 Open **Advanced** on Ship, Ship display, Systems and filters, or Health bars for detailed controls. Use **Arrange HUD** to drag elements, resize bars, or type exact percentages. Set the schematic's background width and height, then enable **Scale background with ship** if you want both dimensions to follow **Ship scale**. Choose **Preview HUD** to inspect the layout at its actual size and **Return to editor** to keep editing.
 
@@ -71,7 +68,7 @@ Want to watch one coilgun, a group of drives or a bank of PDCs? Open **Health ba
 
 Damage and repairs update automatically. Destroyed members stay counted as missing until repaired. After adding or removing members in a terminal group, use **Update tracked blocks** if you want the bar to follow the changed list.
 
-Custom-bar edits have their own **Save bar** button. Leaving the editor discards unsaved bar edits. Capturing or importing a new baseline starts a new set of custom bars; the previous set stays with the archived baseline version.
+Use **Save bar** to keep custom-bar edits before leaving the editor. Capturing or importing a new baseline starts a new set of custom bars. The previous set stays with the archived baseline version.
 
 ## Return to your ship
 
@@ -91,26 +88,22 @@ Workshop search uses blueprints already cached on your computer. Plain or gzip-c
 
 Filled displays can cost more FPS on large, heavily damaged ships. Choose **Outlines only** under **Ship display > Rendering mode** for lighter rendering. Health-bar counts stay the same. Damage pulse settings are under **Preferences**.
 
-In the GPU test build, **Textured Ship** uses **GPU (experimental)** by default. Choose **CPU** under **Preferences > Performance > Textured Ship renderer** to save a different preference. Use `/mg stats` to check the active renderer, preview resolution and update rate.
+**Textured Ship** uses **GPU (experimental)** when you have no saved renderer preference. Choose **CPU** under **Preferences > Performance > Textured Ship renderer** to save a different preference. Use `/mg stats` to check the active renderer, preview resolution and update rate.
 
-**Show connector-docked ships** is off by default and available from a static station you own or that is shared with your faction. The same access check applies to every docked grid. More than half of a grid's ownership-capable blocks must be yours, or more than half must be explicitly shared with your faction. Docked ships with saved profiles can show their own damage. The station's baseline and health bars cover the station itself. Rotor, hinge and piston subgrids are excluded.
+**Show connector-docked ships** in Preferences is off by default. Docked ships can show damage against their own saved baselines. The station's baseline and health bars cover the station itself. In **0.17.16**, the controlled grid must be static and each grid in the connector chain must pass a [personal or faction ownership check](docs/COMMANDS.md#station-mode-and-automatic-association).
 
 Wireframe modes draw from block bounds. **Textured Ship** uses available models, paint and textures, with simpler shapes where needed.
 
-## Install from PluginHub
-
-Find **Marigold** in Pulsar Legacy's plugin list, enable it, and restart if prompted.
-
 ## Install a local package
 
-Use the package for your launcher. Build **Pulsar Legacy** with `./build.ps1 -Runtime Legacy` and **Pulsar Interim** with `./build.ps1 -Runtime Interim`. Interim is available for local testing. [Interim test checklist](TESTING-TODO.md#pending-beta-checks)
+Use the package for your launcher. [Build instructions](docs/RELEASE.md#build-and-check)
 
 1. Close Space Engineers.
 2. Copy `plugin.dll`, `plugin.pdb` and `plugin.xml` from the package into the matching folder:
    - Legacy: `%APPDATA%/Pulsar/Legacy/Local/Marigold`
-   - Interim: `%APPDATA%/Pulsar/Interim/Local/Marigold` if that folder exists. Otherwise use `%APPDATA%/Pulsar/Legacy/Local/Marigold`, because Interim then shares the Legacy folder. Don't create `Pulsar/Interim` just for Marigold: Interim would switch to that empty folder and stop seeing your existing profile and plugins. The Interim package's `plugin.xml` is tagged `CoreCLR`, so Legacy ignores it in a shared folder, but a shared folder can hold only one of the two packages.
+   - Interim: If `%APPDATA%/Pulsar/Interim` exists, use its `Local/Marigold` subfolder. Otherwise use `%APPDATA%/Pulsar/Legacy/Local/Marigold`. Creating a separate `Interim` directory switches the launcher to that data directory.
 
-   An existing `MarigoldDev` folder also works. Enable only one copy.
+   An existing `MarigoldDev` folder also works. Keep one Marigold package in the scanned folder. For a portable Pulsar install, use the equivalent folder under the launcher directory.
 3. Start Pulsar, enable Marigold and restart if prompted. Sit in a cockpit and open **`/mg ui`**.
 
 On Bazzite, a player using Pulsar Legacy from the game's Steam folder confirmed this local plugin path. Put the three files in `~/.local/share/Steam/steamapps/common/SpaceEngineers/Pulsar/Legacy/Local/Marigold/`. On Bazzite, `~` can resolve to `/var/home/<username>`. If Steam or Pulsar is installed elsewhere, use the `Legacy/Local` folder under that Pulsar install.
@@ -129,6 +122,6 @@ Start with **`/mg ui`**, or see the [command reference](docs/COMMANDS.md). `/mar
 
 [Report a problem](https://github.com/Taeleus/Marigold/issues) with your version, what happened and a screenshot if useful.
 
-More information: [changelog](CHANGELOG.md), [documentation](docs/INDEX.md), [roadmap](ROADMAP.md), [performance testing](docs/PERFORMANCE-TEST.md) and [building from source](docs/RELEASE.md).
+[Changelog](CHANGELOG.md) · [Documentation](docs/INDEX.md) · [Roadmap](ROADMAP.md) · [Performance testing](docs/PERFORMANCE-TEST.md) · [Building from source](docs/RELEASE.md)
 
 Marigold is available under the [MIT License](LICENSE).

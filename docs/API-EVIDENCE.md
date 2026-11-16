@@ -1,52 +1,41 @@
-# API evidence for milestone 1
+# Space Engineers and Pulsar API evidence
 
-Target: installed SE 1.210.014. Paths below are relative to the game-code skill's `Data/Decompiled` directory. Generated sources remain outside this repository and must not be redistributed.
+The game API observations below come from a read-only inspection of Space Engineers 1.210.014. Paths refer to the game-code skill's `Data/Decompiled` tree. The generated game sources stay outside this repository. See the [roadmap](../ROADMAP.md) for current release status and [performance results](PERFORMANCE-RESULTS.md) for measured behavior.
 
-| API | Inspected source | Evidence/use |
-| --- | --- | --- |
-| IPlugin.Init/Update/Dispose | VRage/VRage/Plugins/IPlugin.cs; Sandbox.Game/Sandbox/MySandboxGame.cs | Game calls plugin.Update in its update loop under exclusive Havok access. No background game-object reads in Marigold. |
-| MySession.Static / ControlledEntity | Sandbox.Game/Sandbox/Game/World/MySession.cs | ControlledEntity reads LocalHumanPlayer's controller. Null expected outside a session/control. |
-| MySession.OnUnloading | Same | Static Action event invoked during unload; unsubscribe in Dispose. Keep unloading session suppressed until the current session changes. |
-| IMyShipController | Sandbox.Common/Sandbox/ModAPI/IMyShipController.cs | Public mod interface for cockpit/remote/cryopod; inherits cube-block access. Actual control of these variants still needs runtime tests. |
-| MyCubeGrid.BlocksCount | Sandbox.Game/Sandbox/Game/Entities/MyCubeGrid.cs | Returns m_cubeBlocks.Count, not occupied-cell volume or a terminal-block count. |
-| IMyUtilities.CreateNotification | Sandbox.Game/Sandbox/ModAPI/MyAPIUtilities.cs | Creates a MyHudNotification using the CustomText format and supplied arguments. |
-| IMyHudNotification.Text/Show/Hide | Sandbox.Game/Sandbox/Game/GUI/MyHudNotification.cs | Text sets format arguments; Show adds to notification collection; Hide removes it. |
-| Notification draw caching | Sandbox.Game/Sandbox/Game/GUI/MyHudNotifications.cs | Add reuses an existing notification and resets lifetime; draw text is prepared on insertion. Hide before changing text and Show afterwards rebuild the cached drawing data. |
+## Game lifecycle and observations
 
-Read-only source access, successful net48 compilation and isolated behavior tests establish API compatibility and local logic only. They do not prove successful loading in Pulsar or in-game UI behavior.
+| API | Observed behavior and use |
+| --- | --- |
+| `IPlugin.Init`, `Update`, `Dispose` | `VRage/VRage/Plugins/IPlugin.cs` has no drawing callback. `Sandbox.Game/Sandbox/MySandboxGame.cs` calls plugin `Update` in its update loop under exclusive Havok access. |
+| `MySession.Static`, `ControlledEntity`, `OnUnloading` | In `Sandbox.Game/Sandbox/Game/World/MySession.cs`, control comes from the local human player's controller. It can be absent before the player controls a grid. Marigold unsubscribes from the unload event on dispose and clears the prior session's display and observers. |
+| `IMyShipController`, `MyCockpit`, `MyBlockOrientation.GetMatrix` | Marigold reads the current ship controller's grid and orientation for the live view. It uses a seated `MyCockpit` for manual anchoring and a cockpit's position, orientation, and definition for alignment. Verified `Base6Directions.Direction` order is Forward, Backward, Left, Right, Up, Down. |
+| `MyCubeGrid.GetBlocks`, `BlocksCount` and block events | In `Sandbox.Game/Sandbox/Game/Entities/MyCubeGrid.cs`, these refer to slim block records. `BlocksCount` counts block records. Marigold updates observations from add, remove, and integrity events and reconciles with periodic scans. |
+| `MySlimBlock.Integrity`, `BuildIntegrity`, `MaxIntegrity` | `Sandbox.Game/Sandbox/Game/Entities/Cube/MySlimBlock.cs` exposes these values through the component stack. `CurrentDamage` is build integrity minus current integrity. Marigold copies geometry, definition, orientation, and integrity into a worker sample. |
+| `MyCubeBlock.IsFunctional` | In `Sandbox.Game/Sandbox/Game/Entities/MyCubeBlock.cs`, this comes from the component stack. Marigold tracks that state for fat blocks implementing `IMyFunctionalBlock`. `IsWorking`, power availability, and the enabled switch are separate from structural integrity. |
+| `MyCubeGrid.OnGridSplit` | The game invokes `Action<MyCubeGrid, MyCubeGrid>` with the original and detached grids. Marigold tracks this event while a reference is bound and clears subscriptions on detach or session teardown. |
 
-## Loader and template reference revisions
+Marigold's game update code reads live grid and block state. Background matching and outline building work on copied values. The textured mesh path snapshots the loaded geometry and model references it needs before starting worker processing. Old worker results are discarded when the relevant display or reference changes. Automatic matching binds an existing profile in memory and leaves its saved baseline fixed.
 
-- Pulsar: `013a108ee1aa6f8912aa97a4832397a781a8051e` from https://github.com/SpaceGT/Pulsar
-- Client template: `2d530601755b36afb45cee2045fa252153edd077` from https://github.com/CometWorks/client-plugin-template
+## Rendering
 
-Pulsar `Shared/Data/LocalPlugin.cs` reads adjacent XML as GitHubPlugin metadata, loads a local DLL and infers its runtime from references. Missing repository/commit fields are not used in this local-binary path. `Shared/Data/LocalFolderPlugin.cs` filters source directories and excludes bin/obj in its fallback scan. `Shared/Data/GitHubPlugin.cs` restricts archive compilation by SourceDirectories.
+- **HUD draw.** An owner-scoped Harmony postfix runs after the game's `MyGuiScreenHudSpace.Draw` in `Sandbox.Game/Sandbox/Game/GUI`. The method's return value tells Marigold whether the HUD drew. `MyRenderProxy.DrawSprite` queues sprite messages and the game renderer rotates a sprite around the destination rectangle center. Marigold uses the game's regular HUD drawing path for the schematic and generates a texture for the rasterized outline display. `Sandbox.Graphics/Sandbox/Graphics/MyGuiManager.cs` uses `Textures/GUI/Blank.dds` for solid UI rectangles.
+- **GPU Textured Ship.** An additional Harmony prefix targets `VRageRender.MyRender11.RenderMainSprites` in `VRage.Render11/VRageRender/MyRender11.cs`. The prefix submits this plugin's preview to the game's Direct3D 11 device using the installed SharpDX assemblies. The renderer manages its preview resources on this path and uses the existing wireframe while it has no matching textured frame. The CPU renderer is available in Preferences.
+- **Input.** `IMyGui` exposes cursor and chat entry visibility. `IMyInput` exposes modifiers and new key presses. The game still receives keys assigned to Marigold shortcuts.
 
-The current loader's runtime identifiers differ from descriptions found in the template documentation. Consequently this prototype omits explicit runtime metadata and relies on local assembly inference. Recheck schema before publication or adding Interim support. The installed loader version has not been compared with this downloaded revision.
+In the first prototype, `IMyUtilities.CreateNotification` used `MyHudNotification` and its custom text. `MyHudNotifications` caches draw text on insertion, so the prototype hid and re-showed notifications to update it. The later HUD hook replaced that approach for schematic rendering. `DebugDrawLine2D`, HUD Hooks and HudLcd 3 were investigated as alternatives. The installed Pulsar Legacy Harmony assembly inspected during development reported 2.4.2.0.
 
-## Renderer follow-up
+## Station context and reconnects
 
-Implemented in 0.2: one owner-scoped Harmony postfix on `MyGuiScreenHudSpace.Draw` (returns bool); the method returns false while HUD is hidden/transitioning. Plugin IPlugin has no draw callback. MySession.RegisterComponent does not populate the prepared synchronous draw list on its own, so ad-hoc registration was not used. MyRenderProxy.DrawSprite queues a sprite message; `VRage.Render11/VRage/Render11/Sprites/MySpritesRenderer.cs` rotates it about DestinationRectangle.Center. `Sandbox.Graphics/Sandbox/Graphics/MyGuiManager.cs` uses `Textures/GUI/Blank.dds` for solid UI rectangles. MyCubeGrid.GetBlocks returns its slim-block set; add/remove events supply MySlimBlock. IMyGui exposes cursor/chat visibility and IMyInput exposes the modifier/new-key checks. All compile against local installed DLLs. The installed Pulsar Legacy Harmony assembly reports 2.4.2.0.
+`Sandbox.ModAPI.IMyShipConnector.OtherConnector` and `MyShipConnectorStatus.Connected` identify locked connector links. `MyCubeGrid.IsStatic` identifies whether the controlled grid can act as a station. Each docked grid's cell positions are transformed using its `WorldMatrix`, the station's `WorldMatrixNormalizedInv`, and their grid-size ratio. Damage is calculated in each grid's own coordinates first.
 
-The installed `VRage.Render/VRageRender/MyRenderProxy.cs` contains `DebugDrawLine2D` and `DrawSprite`. These are candidates for a schematic feasibility experiment, not an established production rendering path. Verify the draw callback, viewport clipping, debug-render gating and UI lifetime before adopting either. The plugin registry search also returned HUD Hooks (`VanirDev/se-plugin-hudhooks`) and HudLcd 3 (`StarCpt/SE-HudLcdSprite`) as reference candidates; their implementations and licenses have not yet been reviewed.
+Station access in the 0.17.16 development build counts each ownership-capable fat block. It reads `MyEntityOwnershipComponent.OwnerId` and `ShareMode`, falling back to the block's `IDModule`. The game takes the same component-first order in `MyCubeBlock.ChangeOwner`. `MyCubeGrid.BigOwners` can return ties and the largest plurality of functional blocks. `MyIDModule.GetUserRelationToOwner` also returns `FactionShare` for public sharing. Marigold checks explicit `Faction` sharing and current membership from `MySession.Static.Factions`. Ownership, fat-block, merge, connector and faction notifications mark station access for refresh. The update thread performs the rescan.
 
-## Snapshot diagnostics 0.4 evidence
+Reconnect matching uses local block and cockpit observations. Earlier restart and sector-transfer checks cover the tested server setup. [Nexus Seamless Client](https://github.com/SE-Nexus/SeamlessClient)
 
-Installed decompiled Sandbox.Game/Entities/Cube/MySlimBlock.cs exposes Integrity, BuildIntegrity and MaxIntegrity from m_componentStack. CurrentDamage is BuildIntegrity - Integrity (lines 957-969). Position/Min/Max, BlockDefinition.Id and Orientation are copied into numeric/string samples. No mutable game objects cross into the worker.
+## Pulsar loader and release evidence
 
-MyCubeGrid.OnGridSplit is Action<MyCubeGrid,MyCubeGrid> (line 3878); split creation invokes originalGrid.OnGridSplit(originalGrid,myCubeGrid) at line 4810. Captured references retain this subscription until clear/session teardown. MultiplayerActive/IsServer compile against the installed ModAPI; client absence is conservatively unknown. These facts verify signatures/implementation, not live multiplayer observation freshness.
+The inspected Pulsar commit `013a108ee1aa6f8912aa97a4832397a781a8051e` is the v2.4.3 release. The client template revision `2d530601755b36afb45cee2045fa252153edd077` was an earlier packaging reference. [Pulsar v2.4.3](https://github.com/SpaceGT/Pulsar/releases/tag/v2.4.3) · [Client template revision](https://github.com/CometWorks/client-plugin-template/tree/2d530601755b36afb45cee2045fa252153edd077)
 
-0.4.4: installed Sandbox.Game/Entities/MyCubeBlock.cs line 321 defines IsFunctional as SlimBlock.ComponentStack.IsFunctional; IsWorking is a separate property at line 327. Only FatBlock instances implementing Sandbox.ModAPI.IMyFunctionalBlock are sampled for the orange state; Enabled and IsWorking are not used to infer structural failure.
+Pulsar reads an adjacent `plugin.xml` for a precompiled local DLL. The descriptor can override its inferred runtime. The local packages carry explicit `CLR` (Legacy) or `CoreCLR` (Interim) tags. For a GitHub source descriptor, Pulsar downloads the `RepoId` and `Commit` archive and compiles the C# files selected by `SourceDirectories`. A local development folder also honors those directories and excludes build output in its fallback scan. These loader paths read the descriptor and source files directly. [Local DLL loader](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Data/LocalPlugin.cs) · [Local development folder](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Data/LocalFolderPlugin.cs) · [GitHub source loader](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Data/GitHubPlugin.cs)
 
-## Profiles 0.5
-
-MyCockpit in Sandbox.Game.Entities provides Position, Orientation, BlockDefinition and CustomName; these accesses compile against the installed assemblies. MyBlockOrientation.GetMatrix provides the anchor's discrete axes. Verified Base6Directions.Direction order in installed VRage.Math: Forward, Backward, Left, Right, Up, Down. Profile alignment transforms these directions and all envelope corners. No world IDs, grid names or runtime entity IDs are used as automatic persistent identity. Explicit profile selection pairs the cockpit after reload.
-
-
-## 0.7 station and reconnect implementation
-
-The installed `Sandbox.ModAPI.IMyShipConnector` exposes `OtherConnector`; its ingame base exposes `Status` with `MyShipConnectorStatus.Connected`. Station traversal reads only these locked links, never the logical/physical group that could include unintended mechanical attachments. A visited set prevents cycles. Local cell coordinates use each grid's `WorldMatrix`, the controlled grid's `WorldMatrixNormalizedInv`, and the ratio of grid sizes. Connected-grid geometry is normalized independently before conversion into the shared controlled-grid frame; no block positions are used as cross-grid comparison keys.
-
-Reassociation uses existing `MyCockpit` local Position/Orientation/definition and immutable block samples. All game entities are read on the update thread; the worker matches copied values and receives no game objects. Candidate results carry the display generation and are discarded across grid/session changes or intervening profile operations. Automatic binding changes only the in-memory reference; `ProfileStore.Put` is never called by matching. The source-build assembly version and startup log were updated to 0.7.0 alongside the binary project version.
-
-Nexus primary reference: https://github.com/SE-Nexus/SeamlessClient describes post-transfer entity synchronization delays. Marigold does not hook Nexus or claim a cluster identity token. Repeated stable snapshots and retries are a client-side compatibility strategy that still requires the queued Nexus test.
+PluginHub publishes 0.17.15 for Legacy. The 0.17.16 candidate descriptor lists both runtimes. The candidate passed in-game testing from local DLL packages on Windows in Legacy and Interim. Pinned source loading and native Linux Interim remain unverified. `CoreCLR` can also select native Linux Interim when `Platforms` is unrestricted. [Live descriptor](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Pulsar environment filters](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Tools.cs) · [Pinned source test](RELEASE.md#test-the-pinned-source)

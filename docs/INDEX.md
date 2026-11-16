@@ -1,21 +1,21 @@
-# Documentation
+# Marigold documentation
 
-## Using Marigold
+## Play
 
-- [User guide](../README.md)
-- [Chat commands](COMMANDS.md)
-- [Blueprint formats](BLUEPRINT-FORMATS.md)
-- [Performance options and test procedure](PERFORMANCE-TEST.md)
+- [Get started and install Marigold](../README.md)
+- [Chat commands and detailed controls](COMMANDS.md)
+- [Blueprint formats and import sources](BLUEPRINT-FORMATS.md)
+- [Rendering options and performance tests](PERFORMANCE-TEST.md)
 
-## Development and release
+## Test and release
 
-- [Roadmap](../ROADMAP.md)
-- [Release acceptance](../TESTING-TODO.md)
-- [Release procedure](RELEASE.md)
+- [Roadmap and release status](../ROADMAP.md)
+- [Changelog](../CHANGELOG.md)
+- [Build, pinned source test, and release procedure](RELEASE.md)
 - [PluginHub submission plan](PLUGINHUB-PLAN.md)
-- [Performance results](PERFORMANCE-RESULTS.md)
-- [API evidence](API-EVIDENCE.md)
+- [Measured performance results](PERFORMANCE-RESULTS.md)
+- [Space Engineers API and implementation evidence](API-EVIDENCE.md)
 
 ## History
 
-Earlier proposals, designs, reviews and test notes are retained under [history](history/README.md). They describe earlier versions and are not current usage or installation instructions.
+The [historical records](history/README.md) preserve earlier proposals, designs, milestones, and test evidence. Use the guides above for current commands and installation.

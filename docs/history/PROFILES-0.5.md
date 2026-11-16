@@ -1,4 +1,4 @@
-> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+> Historical document. See the [user guide](../../README.md#return-to-your-ship) for current profile behavior.
 
 # Profiles and cockpit anchors — 0.5
 

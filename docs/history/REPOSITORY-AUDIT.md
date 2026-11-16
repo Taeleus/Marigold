@@ -1,5 +1,7 @@
 # Repository audit — October 24, 2026
 
+> Archived audit of the 0.14.9 working tree. [Current roadmap](../../ROADMAP.md) · [Release procedure](../RELEASE.md)
+
 Scope: current working tree on `dev-launcher-compatibility`, based on master `f0635cd`, including uncommitted 0.14.9 compatibility changes. This is an inventory and source review, not a PluginHub approval or complete in-game validation. No production fixes, deployment, commits or pushes were performed by this audit.
 
 ## Readiness
@@ -26,7 +28,7 @@ Not ready for submission yet. The intended destination is normally **StarCpt/Plu
 
 - `.agents/` is ignored but still tracked. Ignore rules do not remove existing tracked files. Untrack the copied skills while preserving local copies. This removes unrelated example C# and large dependency locks from the submission repository. Manifest SourceDirectories already excludes them from production, but the repository remains cluttered.
 - Move Original-proposal.txt and Research-and-plan-review.md into an explicitly historical docs area, or remove only after preserving useful decisions. Keep user test history.
-- Consolidate historical milestone docs (CONTROLS-0.2.1, SCHEMATIC-0.2, OUTLINE-0.3, SNAPSHOTS-0.4, PROFILES-0.5, old IN-GAME-CHECKLIST) behind a history index. They are not current instructions.
+- Consolidate the early controls, schematic, outline, snapshot and profile milestone documents behind a history index.
 - docs/RELEASE.md still ends with 0.14.1 readiness information and earlier untested claims. Replace its current release procedure with a concise accurate one; move chronological notes to development history.
 - README starts with 0.14.8/Legacy-only language and appends 0.14.9 Interim development instructions. Unify the introduction and installation guidance once support is validated. ROADMAP similarly needs one clear current/stable distinction.
 - New Power labels and pulse controls are English strings without matching Spanish entries. Add localization and check truncation, especially narrow Power sections.

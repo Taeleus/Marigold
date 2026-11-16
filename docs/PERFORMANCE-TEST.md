@@ -1,6 +1,6 @@
 # Repeatable in-game performance test
 
-Use a disposable local copy of one saved world. Keep its original intact and reload that same copy before each trial. Repeat on Legacy and Interim separately; do not compare different launchers as if only Marigold changed.
+Use a disposable local copy of a saved world and reload the same starting state before each trial. Measure Legacy and Interim separately so launcher overhead does not change between paired runs.
 
 ## Fix the conditions
 
@@ -10,14 +10,24 @@ Prepare named saves for approximately 1k, 10k and 50k baseline blocks. For each 
 
 ## Run paired trials
 
-1. Warm up for 60 seconds after the world and display finish loading. Wait for stable simulation speed.
+1. Warm up for 60 seconds after the world and display finish loading. Wait for stable simulation speed. Measure first-frame startup separately if comparing load time.
 2. Measure 60 seconds with the plugin disabled (restart as required). Record frame-time median/p95/p99 using the same frame-time tool each time, or clearly label FPS-only measurements if that is all you have.
-3. Reload the same save with Marigold enabled, same preset and filters. Warm up, then measure another 60 seconds. Run `/mg stats` at 15, 30, 45 and 60 seconds; copy the matching `[Marigold]` log entries after exiting the game. Do not type during frame-time sampling if possible; take stats immediately adjacent to each interval instead.
+3. Reload the same save with Marigold enabled and the same preset and filters. Warm up, record `/mg stats`, then measure another 60 seconds with chat closed. Record `/mg stats` again immediately afterward. Use separate runs if you need more diagnostics during a specific part of the trial.
 4. Repeat the disabled/enabled pair three times, alternating which goes first to reduce order bias. Compare medians across trials rather than selecting the fastest run.
-5. On the enabled build compare schematic+bars, bars-only and hidden HUD. Hidden HUD is not equivalent to disabling the plugin. Test static view and spinning separately, then station mode off/on using the fixed dock save.
+5. With Marigold enabled, compare schematic plus bars, bars only, and all HUD elements hidden. For bars only, turn off **Ship display → Show ship schematic**. To hide all Marigold HUD elements use `/mg hide`. Keep the fully disabled run as a separate control.
 6. Repeat the sustained-fire trial with the same setup and duration. Record whether updates lag or any damage category disappears. Check after fire stops that the final report, bars and display settle to the expected state.
 
-`/mg stats` reports last snapshot/worker time and displayed-model HUD CPU mean/max, with up to 600 draws per statistics window; rebuilds reset draw samples. It does not report GPU time, total plugin overhead or a true percentile. Capture several samples; do not present its maximum as p99. Rebuild-pending messages mean timings describe the previous model. Routine rebuild timings are no longer logged starting in 0.14.15. Explicit `/mg stats` requests still log the displayed timings; error logs remain. These are not a complete profiler.
+## Compare display settings
+
+- Keep view and scale fixed while comparing **HD Wireframe**, **SD Wireframe**, and **Outlines only**. For the 0.17.16 redraw change, stop rotation on a grid with missing blocks and run the same test with **Pulse missing blocks** on and off.
+- Compare **Textured Ship** with **CPU** and **GPU (experimental)** under **Preferences → Performance → Textured Ship renderer**. Match preview dimensions and compact or expanded layout. Check the renderer reported by `/mg stats` and record if the display stays on wireframe while a textured frame loads or cannot draw. Compare the first frame and rotation separately.
+- Compare station mode on and off in the same static station with eligible connector-docked grids. Repeat with the HUD hidden if measuring the cost of tracking connections. Record the number of docked grids and whether they have active baselines.
+
+## Read `/mg stats`
+
+Use the last snapshot and worker times to describe rebuild work. Worker time is elapsed background work. HUD CPU mean and maximum cover up to 600 draws and reset on a rebuild. When a rebuild is pending, geometry and draw statistics refer to the model still on screen. Use game frame-time samples for percentiles and total cost.
+
+Textured Ship adds preview dimensions, preview update rate and last mesh time. CPU mode reports raster time. GPU mode reports CPU time spent submitting graphics work. For GPU rendering time use a GPU profiler. Copy the `[Marigold]` log lines for your explicit `/mg stats` requests if the chat output is hard to capture.
 
 ## Record results
 

@@ -7,5 +7,10 @@ research/
 artifacts/
 .agents/
 
+# Local testing notes
+/TESTING-TODO.md
+/docs/history/IN-GAME-CHECKLIST.md
+/docs/history/TESTING-HISTORY-*.md
+
 # Downloaded reference snapshot, not project source
 PluginHub-Plugins.md

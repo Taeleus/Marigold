@@ -1,29 +1,134 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Cube;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Entity.EntityComponents;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ShipConnector = Sandbox.ModAPI.IMyShipConnector;
 
 namespace Marigold
 {
     internal sealed partial class SchematicOverlay
     {
         private const string StationModeRequirement = "Station mode requires a static grid you own or that is shared with your faction.";
+        private const int StationGridLimit = 8;
+        private const int StationRefreshInterval = 60;
+
         private string stationStatus = "";
-        private bool stationModeActive, stationGridLimit;
+        private bool stationModeActive, stationGridLimit, stationDiscoveryPending;
+        private long stationPlayer, stationFactionId;
+        private int stationRefreshIn, stationGraphDirty, stationFactionDirty;
+        private MyFactionCollection stationFactions;
         private List<MyCubeGrid> stationGrids = new List<MyCubeGrid>();
         private List<MyCubeGrid> nextStationGrids = new List<MyCubeGrid>();
         private readonly HashSet<MyCubeGrid> examinedStationGrids = new HashSet<MyCubeGrid>();
-        private readonly Queue<MyCubeGrid> stationQueue = new Queue<MyCubeGrid>();
-        private readonly Dictionary<long, StationGrid> stationBaselines = new Dictionary<long, StationGrid>();
+        private readonly HashSet<MyCubeGrid> deniedStationGrids = new HashSet<MyCubeGrid>();
+        private readonly Queue<StationGridAccess> stationQueue = new Queue<StationGridAccess>();
+        private readonly Dictionary<MyCubeGrid, StationGridAccess> stationAccess = new Dictionary<MyCubeGrid, StationGridAccess>();
+        private readonly Dictionary<MyCubeGrid, StationGrid> stationBaselines = new Dictionary<MyCubeGrid, StationGrid>();
         private readonly Dictionary<MyCubeGrid, GridObservation> stationObservers = new Dictionary<MyCubeGrid, GridObservation>();
+
+        private sealed class StationGridAccess : IDisposable
+        {
+            private readonly Action markGraphChanged;
+            private int ownershipDirty = 1, connectorsDirty = 1;
+            public readonly MyCubeGrid Grid;
+            public readonly List<ShipConnector> Connectors = new List<ShipConnector>();
+            public bool Allowed { get; private set; }
+
+            public StationGridAccess(MyCubeGrid grid, Action markGraphChanged)
+            {
+                Grid = grid;
+                this.markGraphChanged = markGraphChanged;
+                Grid.OnBlockOwnershipChanged += OwnershipChanged;
+                Grid.OnFatBlockAdded += BlockChanged;
+                Grid.OnFatBlockRemoved += BlockChanged;
+                Grid.OnGridMerge += GridMerged;
+            }
+
+            public void Refresh(long player, IMyFaction faction, bool reconcile)
+            {
+                bool recount = Interlocked.Exchange(ref ownershipDirty, 0) != 0 || reconcile;
+                bool refreshConnectors = Interlocked.Exchange(ref connectorsDirty, 0) != 0 || reconcile;
+                if (!recount && !refreshConnectors)
+                    return;
+
+                if (refreshConnectors)
+                    ClearConnectors();
+                Allowed = HasStationAccess(Grid, player, faction, refreshConnectors ? Connectors : null);
+                if (refreshConnectors)
+                    foreach (var connector in Connectors)
+                        connector.IsConnectedChanged += ConnectionChanged;
+            }
+
+            private void OwnershipChanged(MyCubeGrid source)
+            {
+                Interlocked.Exchange(ref ownershipDirty, 1);
+                markGraphChanged();
+            }
+
+            private void BlockChanged(MyCubeBlock block)
+            {
+                if (block.CubeGrid != Grid)
+                    return;
+
+                if (block is ShipConnector)
+                    Interlocked.Exchange(ref connectorsDirty, 1);
+                OwnershipChanged(Grid);
+            }
+
+            private void GridMerged(MyCubeGrid destination, MyCubeGrid source)
+            {
+                // A merged-away grid can lose its connectors without block-removal events.
+                Interlocked.Exchange(ref connectorsDirty, 1);
+                OwnershipChanged(Grid);
+            }
+
+            private void ConnectionChanged(ShipConnector connector)
+            {
+                markGraphChanged();
+            }
+
+            private void ClearConnectors()
+            {
+                foreach (var connector in Connectors)
+                    connector.IsConnectedChanged -= ConnectionChanged;
+                Connectors.Clear();
+            }
+
+            public void Dispose()
+            {
+                Grid.OnBlockOwnershipChanged -= OwnershipChanged;
+                Grid.OnFatBlockAdded -= BlockChanged;
+                Grid.OnFatBlockRemoved -= BlockChanged;
+                Grid.OnGridMerge -= GridMerged;
+                ClearConnectors();
+            }
+        }
+
+        private void ClearStationAccess()
+        {
+            foreach (var access in stationAccess.Values)
+                access.Dispose();
+            stationAccess.Clear();
+            deniedStationGrids.Clear();
+            if (stationFactions != null)
+                stationFactions.FactionStateChanged -= StationFactionChanged;
+            stationFactions = null;
+            stationPlayer = stationFactionId = 0;
+            stationRefreshIn = 0;
+            stationDiscoveryPending = false;
+        }
 
         private void ClearStationObservers()
         {
+            ClearStationAccess();
             foreach (var value in stationObservers.Values)
                 value.Dispose();
             stationObservers.Clear();
@@ -34,6 +139,23 @@ namespace Marigold
             stationModeActive = stationGridLimit = false;
         }
 
+        private void MarkStationGraphChanged()
+        {
+            // Grid ownership notifications can arrive outside the game update thread.
+            Interlocked.Exchange(ref stationGraphDirty, 1);
+        }
+
+        private void StationFactionChanged(MyFactionStateChange action, long from, long to, long member, long sender)
+        {
+            if (action != MyFactionStateChange.RemoveFaction && action != MyFactionStateChange.FactionMemberAcceptJoin
+                && action != MyFactionStateChange.FactionMemberKick && action != MyFactionStateChange.FactionMemberLeave)
+                return;
+
+            long faction = Interlocked.Read(ref stationFactionId);
+            if (member == Interlocked.Read(ref stationPlayer) || (faction != 0 && (from == faction || to == faction)))
+                Interlocked.Exchange(ref stationFactionDirty, 1);
+        }
+
         private bool CanUseStationMode()
         {
             var session = MySession.Static;
@@ -42,7 +164,8 @@ namespace Marigold
                 && HasStationAccess(grid, player, session.Factions.TryGetPlayerFaction(player));
         }
 
-        private static bool HasStationAccess(MyCubeGrid candidate, long player, IMyFaction faction)
+        private static bool HasStationAccess(MyCubeGrid candidate, long player, IMyFaction faction,
+            List<ShipConnector> connectors = null)
         {
             if (candidate.Closed || candidate.MarkedForClose)
                 return false;
@@ -50,6 +173,9 @@ namespace Marigold
             int total = 0, owned = 0, shared = 0;
             foreach (var block in candidate.GetFatBlocks())
             {
+                if (connectors != null && block is ShipConnector connector)
+                    connectors.Add(connector);
+
                 var ownership = block.Components.Get<MyEntityOwnershipComponent>();
                 var module = block.IDModule;
                 if (ownership == null && module == null)
@@ -67,46 +193,60 @@ namespace Marigold
             return StationGeometry.HasAccess(total, owned, shared);
         }
 
+        private StationGridAccess GetStationAccess(MyCubeGrid candidate, long player, IMyFaction faction, bool reconcile)
+        {
+            if (!stationAccess.TryGetValue(candidate, out var access))
+                stationAccess.Add(candidate, access = new StationGridAccess(candidate, MarkStationGraphChanged));
+            access.Refresh(player, faction, reconcile);
+            return access;
+        }
+
         private void UpdateStationConnections()
         {
-            if (!controls.Station && !stationModeActive)
-                return;
-
             var session = MySession.Static;
             long player = session?.LocalPlayerId ?? 0;
-            var faction = player != 0 ? session.Factions.TryGetPlayerFaction(player) : null;
-            bool allowed = controls.Station && player != 0 && grid != null && grid.IsStatic
-                && HasStationAccess(grid, player, faction);
-            stationGridLimit = false;
+            bool enabled = controls.Station && player != 0 && grid != null && grid.IsStatic
+                && !grid.Closed && !grid.MarkedForClose;
+            if (!enabled && !stationModeActive && stationAccess.Count == 0)
+                return;
 
-            if (allowed)
+            var factions = enabled ? session.Factions : null;
+            var faction = factions?.TryGetPlayerFaction(player);
+            long factionId = faction?.FactionId ?? 0;
+            bool factionChanged = Interlocked.Exchange(ref stationFactionDirty, 0) != 0
+                || stationPlayer != player || stationFactionId != factionId || stationFactions != factions;
+            bool graphChanged = Interlocked.Exchange(ref stationGraphDirty, 0) != 0;
+            bool reconcile = stationRefreshIn <= 0 && !stationDiscoveryPending;
+            if (stationRefreshIn > 0)
+                stationRefreshIn--;
+            bool gridClosed = stationGrids.Exists(candidate => candidate.Closed || candidate.MarkedForClose);
+            if (enabled && !factionChanged && !graphChanged && !reconcile && !stationDiscoveryPending && !gridClosed)
+                return;
+
+            Interlocked.Exchange(ref stationPlayer, player);
+            Interlocked.Exchange(ref stationFactionId, factionId);
+            if (stationFactions != factions)
             {
-                examinedStationGrids.Add(grid);
-                stationQueue.Enqueue(grid);
-                while (stationQueue.Count > 0)
-                {
-                    foreach (var block in stationQueue.Dequeue().GetFatBlocks())
-                    {
-                        if (!(block is Sandbox.ModAPI.IMyShipConnector connector)
-                            || connector.Status != MyShipConnectorStatus.Connected)
-                            continue;
-
-                        var next = connector.OtherConnector?.CubeGrid as MyCubeGrid;
-                        if (next == null || !examinedStationGrids.Add(next) || !HasStationAccess(next, player, faction))
-                            continue;
-
-                        if (nextStationGrids.Count >= 8)
-                        {
-                            stationGridLimit = true;
-                            continue;
-                        }
-
-                        nextStationGrids.Add(next);
-                        stationQueue.Enqueue(next);
-                    }
-                }
-                examinedStationGrids.Clear();
+                if (stationFactions != null)
+                    stationFactions.FactionStateChanged -= StationFactionChanged;
+                stationFactions = factions;
+                if (stationFactions != null)
+                    stationFactions.FactionStateChanged += StationFactionChanged;
             }
+
+            if (reconcile || factionChanged)
+            {
+                stationRefreshIn = StationRefreshInterval;
+                deniedStationGrids.Clear();
+                ForgetClosedStationMatches();
+            }
+
+            bool refreshAccess = reconcile || factionChanged;
+            var root = enabled ? GetStationAccess(grid, player, faction, refreshAccess) : null;
+            bool allowed = root?.Allowed == true;
+            stationGridLimit = stationDiscoveryPending = false;
+            if (allowed)
+                DiscoverStationGrids(root, player, faction, refreshAccess);
 
             bool removed = stationModeActive && !allowed;
             foreach (var previous in stationGrids)
@@ -115,13 +255,23 @@ namespace Marigold
                     continue;
 
                 removed = true;
-                stationBaselines.Remove(previous.EntityId);
+                // An ordinary disconnect keeps the match. Readmission still requires a fresh access check.
+                if (previous.Closed || previous.MarkedForClose || deniedStationGrids.Contains(previous))
+                    stationBaselines.Remove(previous);
                 if (stationObservers.TryGetValue(previous, out var observer))
                 {
                     observer.Dispose();
                     stationObservers.Remove(previous);
                 }
+                if (stationAccess.TryGetValue(previous, out var access))
+                {
+                    access.Dispose();
+                    stationAccess.Remove(previous);
+                }
             }
+
+            if (!enabled)
+                ClearStationAccess();
 
             // Docked grids affect the merged geometry, its bounds, and the damage report.
             if (removed)
@@ -137,6 +287,75 @@ namespace Marigold
             stationGrids = nextStationGrids;
             nextStationGrids = old;
             nextStationGrids.Clear();
+        }
+
+        private void DiscoverStationGrids(StationGridAccess root, long player, IMyFaction faction, bool refreshAccess)
+        {
+            int newGridChecks = StationGridLimit;
+            examinedStationGrids.Add(grid);
+            stationQueue.Enqueue(root);
+            while (stationQueue.Count > 0)
+            {
+                var accessFrom = stationQueue.Dequeue();
+                foreach (var connector in accessFrom.Connectors)
+                {
+                    if (connector.CubeGrid != accessFrom.Grid || connector.Status != MyShipConnectorStatus.Connected)
+                        continue;
+
+                    var next = connector.OtherConnector?.CubeGrid as MyCubeGrid;
+                    if (next == null || !examinedStationGrids.Add(next) || deniedStationGrids.Contains(next))
+                        continue;
+
+                    if (nextStationGrids.Count >= StationGridLimit)
+                    {
+                        stationGridLimit = true;
+                        continue;
+                    }
+
+                    if (next.Closed || next.MarkedForClose)
+                        continue;
+
+                    // Existing branches are revalidated first when reached. Spread checks for
+                    // newly discovered grids across updates so a crowded dock cannot queue them all at once.
+                    if (!stationAccess.ContainsKey(next))
+                    {
+                        if (newGridChecks == 0)
+                        {
+                            stationDiscoveryPending = true;
+                            continue;
+                        }
+                        newGridChecks--;
+                    }
+
+                    var access = GetStationAccess(next, player, faction, refreshAccess);
+                    if (!access.Allowed)
+                    {
+                        deniedStationGrids.Add(next);
+                        stationBaselines.Remove(next);
+                        access.Dispose();
+                        stationAccess.Remove(next);
+                        continue;
+                    }
+
+                    nextStationGrids.Add(next);
+                    stationQueue.Enqueue(access);
+                }
+            }
+            examinedStationGrids.Clear();
+        }
+
+        private void ForgetClosedStationMatches()
+        {
+            if (stationBaselines.Count == 0)
+                return;
+
+            List<MyCubeGrid> closed = null;
+            foreach (var candidate in stationBaselines.Keys)
+                if (candidate.Closed || candidate.MarkedForClose)
+                    (closed ?? (closed = new List<MyCubeGrid>())).Add(candidate);
+            if (closed != null)
+                foreach (var candidate in closed)
+                    stationBaselines.Remove(candidate);
         }
 
         private void ClearDisplayedStation()
@@ -168,7 +387,7 @@ namespace Marigold
 
             var result = new List<StationGrid>();
             int blocks = 0;
-            bool limited = stationGridLimit;
+            bool limited = stationGridLimit || stationDiscoveryPending;
             foreach (var current in stationGrids)
             {
                 GridObservation observer;
@@ -201,7 +420,7 @@ namespace Marigold
                 Reference binding;
                 references.TryGetValue(current, out binding);
                 StationGrid cached;
-                stationBaselines.TryGetValue(current.EntityId, out cached);
+                stationBaselines.TryGetValue(current, out cached);
                 if (manualDetached.Contains(current))
                     cached = null;
                 if (cached != null)

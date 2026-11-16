@@ -936,7 +936,7 @@ namespace Marigold
         {
             if (!available)
                 ClosePanel();
-            if (!available && references.Count > 0)
+            if (!available && (references.Count > 0 || stationBaselines.Count > 0 || stationByGrid.Count > 0))
                 ClearReferences();
             BindCommands(available ? MyAPIGateway.Utilities : null);
         }
@@ -1037,12 +1037,18 @@ namespace Marigold
                         if (stationBaselines.Count > 128)
                             stationBaselines.Clear();
                         foreach (var docked in result.Station)
-                            if (docked.MatchedProfile != null)
-                                stationBaselines[docked.EntityId] = new StationGrid
+                        {
+                            if (docked.MatchedProfile == null)
+                                continue;
+
+                            var candidate = stationGrids.Find(currentGrid => currentGrid.EntityId == docked.EntityId);
+                            if (candidate != null)
+                                stationBaselines[candidate] = new StationGrid
                                 {
                                     Baseline = docked.Baseline,
                                     MatchedProfile = docked.MatchedProfile
                                 };
+                        }
                         controls.Page = result.Page;
                         health = result.Health;
                         healthPreview = result.Preview;

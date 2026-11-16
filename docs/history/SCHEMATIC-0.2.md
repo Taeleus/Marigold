@@ -1,4 +1,4 @@
-> Historical document. Current instructions: [user guide](../../README.md), [active testing](../../TESTING-TODO.md).
+> Historical document. See the [user guide](../../README.md) for the current display.
 
 # Schematic prototype 0.2
 
@@ -17,14 +17,7 @@ The former Ctrl+Alt keybinds have been removed. Use local chat commands instead;
 - At most 256 cells / 3,072 line sprites per rendered frame. This cap bounds cost; it does not prove acceptable GPU or render-thread performance. Detailed mesh rendering, deduplicated edges, stronger batching and better shape preservation remain future work.
 - Synthetic CPU geometry results on this machine: approximately 4 ms / 25 ms / 88 ms for 1k / 10k / 50k input blocks. These measure worker computations only, not snapshot collection, draw time or game frame time. The 50k result is why processing runs off-thread.
 
-## Required in-game checks
-
-- [ ] Restart Legacy with 0.2 and enter both test ships. Confirm the panel contains a recognizable rotating outline.
-- [ ] Verify /mg show, hide, spin, reset, rotation and both zoom directions. Confirm no drawing escapes the panel.
-- [ ] Exit, switch ships quickly, rename, add/remove a block and reload a world. No stale geometry or retained grid handlers.
-- [ ] Open terminal/chat, hide HUD and pause. No control surprises or stale overlay on menus.
-- [ ] Inspect `[Marigold] Schematic snapshot` and `Schematic worker` log timings. Check for drawing/initialization failures.
-- [ ] Compare actual frame times with schematic visible/hidden; assess large ships before increasing detail.
+## Validation at the time
 
 Automated checks: release compile against installed assemblies, 13 observer checks using API doubles, and 24 pure geometry checks. The observer double does not exercise the actual Harmony hook or asynchronous renderer integration. In-game rendering remains unverified until tested.
 

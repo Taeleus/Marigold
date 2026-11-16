@@ -1,9 +1,16 @@
 # PluginHub submission plan
 
-PluginHub currently lists **0.17.15 for Pulsar Legacy**. The next update targets **Legacy and Interim** once the current build passes in-game testing on both launchers. [Current listing](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Previous release](https://github.com/StarCpt/PluginHub/pull/344)
+The public listing pins **0.17.15 for Legacy**. The next candidate targets **Legacy and Interim** using `CLR;CoreCLR`. Pulsar uses the runtime and platform fields independently. With no platform filter, the candidate also matches native Linux Interim. Record results for the launcher and platform combinations the submission will enable. [Public entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Previous update](https://github.com/StarCpt/PluginHub/pull/344) · [Pulsar runtime and platform checks](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Tools.cs)
 
-Run both local builds, regressions and source compilation. Verify the exact candidate pin with the local DLL disabled on each launcher. The contributor's Interim test covered 0.16.1. The current Interim checklist also covers CPU and GPU Textured Ship. [Release procedure](RELEASE.md) · [Testing checklist](../TESTING-TODO.md#pending-beta-checks)
+## Manifest
 
-Generate the candidate with `prepare-release.ps1`. Verify the full source commit, `RepoId` of `Taeleus/Marigold`, existing ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, `src/Marigold.Plugin` as the source directory, and `CLR;CoreCLR` as the runtime list. Keep the description within 1,000 characters and run the PluginHub validator. [PluginHub rules](https://github.com/StarCpt/PluginHub/wiki/Plugins#rules)
+- Submit the change to `Plugins/Marigold.xml` by itself. Use ID `7db0d53e-7572-4cbc-911e-25fa26ef182c`, `RepoId` of `Taeleus/Marigold`, and the full tested source commit. Preserve `Marigold` as the display name.
+- Select `src/Marigold.Plugin` as the source directory. The loader supplies Harmony. The project's Harmony reference is for local compilation.
+- Use the player-facing description from the source manifest. It starts with `/mg capture` and the equivalent **Baselines > Capture this ship** path. Keep the description within 1,000 characters.
+- Run PluginHub's `python test.py Plugins/` with the candidate descriptor applied. Review the exact diff from the published source pin to the proposed pin. [PluginHub rules](https://github.com/StarCpt/PluginHub/wiki/Plugins#rules)
 
-Submit the descriptor by itself and summarize the player-facing changes and validation in the pull request. [Changelog](../CHANGELOG.md)
+## Review and submission
+
+Use the [release guide](RELEASE.md#test-the-pinned-source) to verify source loading. Keep local binary runs, source compilation and in-game source loading distinct in the review. Link the [changelog](../CHANGELOG.md) and summarize the changes that matter to players.
+
+[Interim contribution](https://github.com/Taeleus/Marigold/pull/3) · [Initial submission](https://github.com/StarCpt/PluginHub/pull/285)

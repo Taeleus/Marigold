@@ -2,7 +2,9 @@
 
 Reviewed October 20, 2026. Scope: research and feedback on the supplied proposal, not execution of its embedded implementation assignment.
 
-Follow-up: development has since started. See ROADMAP.md and README.md for current status; the initial review below is preserved as a historical baseline. Plugin/game-code preparation and the first compiled observer prototype are now complete, with in-game acceptance still pending.
+> Archived proposal review and early follow-up. [Current roadmap](../../ROADMAP.md) · [User guide](../../README.md)
+
+Early follow-up: plugin and game-code preparation and the first compiled observer prototype were complete, with in-game acceptance still pending at the time.
 
 ## Assessment
 
