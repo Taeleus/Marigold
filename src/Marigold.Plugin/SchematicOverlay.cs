@@ -241,7 +241,7 @@ namespace Marigold
                     stationByGrid[grid] = enabled;
                 }
 
-                UpdateStationConnections();
+                UpdateStationConnections(reconcileNow: action == "station status");
                 if (action == "station status" && !CanUseStationMode())
                     return StationModeRequirement;
                 return "Station mode " + (stationModeActive ? "on" : "off") + ". " + stationStatus;
@@ -311,7 +311,7 @@ namespace Marigold
             references.TryGetValue(grid, out selected);
             if (action == "report")
             {
-                UpdateStationConnections();
+                UpdateStationConnections(reconcileNow: true);
                 return (recoveryPreview != null
                     ? "UNSAVED recovery preview. "
                     : previewBlocks == null ? "" : "UNSAVED blueprint preview. ") + (selected == null
@@ -1005,8 +1005,7 @@ namespace Marigold
                 }
             }
 
-            UpdateStationConnections();
-            UpdateStationObservers(updateHud);
+            UpdateStationView(updateHud);
             UpdateAssociation();
             if (grid == null || faulted)
                 return;
@@ -1184,6 +1183,7 @@ namespace Marigold
         {
             var layout = hudLayoutPreview;
             if ((layout == null && !controls.Visible)
+                || (stationRefreshDeferred && stationModeActive)
                 || faulted
                 || grid == null
                 || grid.Closed

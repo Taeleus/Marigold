@@ -8,6 +8,7 @@ The published PluginHub release is **0.17.15 for Pulsar Legacy**.
 
 - Separate Windows packages for Pulsar Legacy and Interim passed local in-game testing. The proposed PluginHub update targets both launchers. [Release status](ROADMAP.md#next-pluginhub-update)
 - Station mode is available on static grids. It shows owned or faction-shared docked ships and updates when access changes or grids merge. It keeps a matched baseline through ordinary undocking so redocking a damaged ship can still show its missing blocks.
+- Station mode pauses ownership scans while the HUD is hidden and refreshes access before showing docked ships again or reporting on them.
 - HD Wireframe limits pulse-only redraws to 30 Hz. Ship rotation, damage changes and layout edits still update as they happen.
 - GPU Textured Ship reuses shaders and render states when you switch ships or display modes, avoiding recompilation on those transitions.
 

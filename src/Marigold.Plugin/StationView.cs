@@ -21,7 +21,7 @@ namespace Marigold
         private const int StationRefreshInterval = 60;
 
         private string stationStatus = "";
-        private bool stationModeActive, stationGridLimit, stationDiscoveryPending;
+        private bool stationModeActive, stationGridLimit, stationDiscoveryPending, stationRefreshDeferred;
         private long stationPlayer, stationFactionId;
         private int stationRefreshIn, stationGraphDirty, stationFactionDirty;
         private MyFactionCollection stationFactions;
@@ -124,6 +124,7 @@ namespace Marigold
             stationPlayer = stationFactionId = 0;
             stationRefreshIn = 0;
             stationDiscoveryPending = false;
+            stationRefreshDeferred = false;
         }
 
         private void ClearStationObservers()
@@ -201,7 +202,7 @@ namespace Marigold
             return access;
         }
 
-        private void UpdateStationConnections()
+        private void UpdateStationConnections(bool reconcileNow = false)
         {
             var session = MySession.Static;
             long player = session?.LocalPlayerId ?? 0;
@@ -216,7 +217,7 @@ namespace Marigold
             bool factionChanged = Interlocked.Exchange(ref stationFactionDirty, 0) != 0
                 || stationPlayer != player || stationFactionId != factionId || stationFactions != factions;
             bool graphChanged = Interlocked.Exchange(ref stationGraphDirty, 0) != 0;
-            bool reconcile = stationRefreshIn <= 0 && !stationDiscoveryPending;
+            bool reconcile = reconcileNow || stationRefreshDeferred || (stationRefreshIn <= 0 && !stationDiscoveryPending);
             if (stationRefreshIn > 0)
                 stationRefreshIn--;
             bool gridClosed = stationGrids.Exists(candidate => candidate.Closed || candidate.MarkedForClose);
@@ -371,10 +372,17 @@ namespace Marigold
             ReleaseTexturedShip();
         }
 
-        private void UpdateStationObservers(bool updateHud)
+        private void UpdateStationView(bool updateHud)
         {
             if (!updateHud)
+            {
+                // Keep event invalidation armed and reconcile access before using the cached station view again.
+                stationRefreshDeferred = true;
                 return;
+            }
+
+            UpdateStationConnections();
+            stationRefreshDeferred = false;
             int budget = Math.Max(32, 512 / Math.Max(1, stationObservers.Count));
             foreach (var observer in stationObservers.Values)
                 observer.Step(budget);
