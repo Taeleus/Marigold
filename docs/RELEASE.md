@@ -21,7 +21,7 @@ Each package contains `plugin.dll`, `plugin.pdb`, and `plugin.xml` for its launc
 
 ## Test the pinned source
 
-1. Push the candidate commit so Pulsar can fetch it. From a checkout without pending production changes, pass the full commit SHA to `./prepare-release.ps1 -Commit`. The script writes `artifacts/PluginHub/Marigold.xml` with the requested commit and the `CLR;CoreCLR` runtime list.
+1. Push the candidate commit so Pulsar can fetch it. From a checkout without pending production changes, pass the full commit SHA to `./prepare-release.ps1 -Commit`. The script writes `artifacts/PluginHub/Marigold.xml` with the requested commit, the `CLR;CoreCLR` runtime list, and the platform filter from the pinned source.
 2. Close Space Engineers. Move any installed Marigold package with the production plugin ID outside Pulsar's scanned `Local` folders, or use an isolated Pulsar installation. Remove any same-ID development folder source and older test Local Hub entries. Pulsar can discover a competing local copy even if it is disabled.
 3. Copy the candidate XML into a dedicated folder. Launch Pulsar with `-sources`, open **Plugins → Sources → Add Local Hub**, and select that folder. Apply the changes, enable the candidate, and restart. Verify the commit in the descriptor and the Local Hub origin in Pulsar.
 4. Load a world, sit in a cockpit and open `/mg ui`. Check the version, the HUD, and the Pulsar log for compilation or loading errors. Record the launcher, platform, commit, and results.

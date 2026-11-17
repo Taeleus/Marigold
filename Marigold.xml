@@ -21,5 +21,6 @@ Open Arrange HUD to drag and resize your display and bars. Save a layout for thi
   <SourceDirectories><Directory>src/Marigold.Plugin</Directory></SourceDirectories>
 
   <Runtimes>CLR;CoreCLR</Runtimes>
+  <Platforms>Windows;Proton</Platforms>
 
 </PluginData>
