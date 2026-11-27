@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../../src/Marigold.Plugin/TexturedShipRaster.cs" Link="TexturedShipRaster.cs" />
     <Compile Include="../../src/Marigold.Plugin/DataPaths.cs" Link="DataPaths.cs" />
     <Compile Include="../../src/Marigold.Plugin/FillRaster.cs" Link="FillRaster.cs" />
     <Compile Include="../../src/Marigold.Plugin/SchematicRaster.cs" Link="SchematicRaster.cs" />

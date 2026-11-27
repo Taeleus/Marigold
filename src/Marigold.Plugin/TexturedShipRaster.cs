@@ -216,6 +216,7 @@ namespace Marigold
             }
 
             int samples = image.Expanded ? ExpandedSampleBudget : CompactSampleBudget;
+            var monochrome = filter.MonochromeColor;
             bool foundTexture = false;
             bool foundColorPath = false;
             bool usedPaintFallback = false;
@@ -261,16 +262,16 @@ namespace Marigold
                     return false;
                 }
 
-                if (triangle.ColorTexture != lastPath)
+                if (!monochrome.HasValue && triangle.ColorTexture != lastPath)
                 {
                     lastPath = triangle.ColorTexture;
                     texture = GetTexture(lastPath);
+                    foundColorPath |= !string.IsNullOrEmpty(lastPath);
                 }
-                foundColorPath |= !string.IsNullOrEmpty(triangle.ColorTexture);
                 float nx = abY * acZ - abZ * acY;
                 float ny = abZ * acX - abX * acZ;
                 float light = .60f + .40f * Math.Abs(area) / (float)Math.Sqrt(nx * nx + ny * ny + area * area);
-                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, filter.MonochromeColor.HasValue ? null : texture, filter.MonochromeColor ?? triangle.PaintRgb, light, alpha, size, pixels))
+                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, texture, monochrome ?? triangle.PaintRgb, light, alpha, size, pixels))
                 {
                     drewSurface = true;
                     foundTexture |= texture != null;
@@ -286,6 +287,8 @@ namespace Marigold
 
             if (!drewSurface)
                 image.Status = "No textured surfaces visible with the current filters.";
+            else if (monochrome.HasValue)
+                image.Status = "Monochrome ship.";
             else if (!foundTexture)
             {
                 image.Caption = "Painted model";
@@ -301,7 +304,7 @@ namespace Marigold
             if (mesh.ReducedModels > 0)
                 image.Status += " " + mesh.ReducedModels + " parts use reduced meshes.";
             if (mesh.SimplifiedModels > 0)
-                image.Status += " " + mesh.SimplifiedModels + " parts use painted shapes.";
+                image.Status += " " + mesh.SimplifiedModels + (monochrome.HasValue ? " parts use simplified shapes." : " parts use painted shapes.");
             if (!string.IsNullOrEmpty(mesh.SimplificationReason))
                 image.Status += " " + mesh.SimplificationReason;
 

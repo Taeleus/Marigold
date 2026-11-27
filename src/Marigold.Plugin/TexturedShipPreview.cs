@@ -248,7 +248,7 @@ namespace Marigold
         }
 
         private uint? MonochromeColor => DrawingAppearance.Rendering == HudAppearance.Monochrome
-            ? (uint?)Convert.ToUInt32(DrawingAppearance.Colors.Split(',')[0], 16) : null;
+            ? (uint?)DrawingAppearance.Color((int)ChangeKind.Hull) : null;
 
         private bool MatchesTexturedOptions(TexturedShipFilter filter)
         {

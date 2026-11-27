@@ -4,7 +4,7 @@ Changes to Marigold, newest first. This log includes local development builds an
 
 The published PluginHub release is **0.17.16 for Pulsar Legacy and Interim on Windows and Proton**. [PluginHub release PR](https://github.com/StarCpt/PluginHub/pull/362)
 
-## 0.17.17 — Monochrome Ship
+## 0.17.17 â€” Monochrome Ship
 
 - Added **Monochrome Ship** to the rendering choices. It shows ship models in your configurable healthy block/wireframe color, with depth shading.
 - Supports CPU and GPU rendering, existing opacity controls, and separate damage colors.

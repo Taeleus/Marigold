@@ -9,6 +9,15 @@ $ErrorActionPreference = 'Stop'
 $env:DOTNET_CLI_HOME = Join-Path $PSScriptRoot '.cache\dotnet'
 $env:NUGET_PACKAGES = Join-Path $PSScriptRoot '.cache\nuget'
 
+$strictUtf8 = [System.Text.UTF8Encoding]::new($false, $true)
+foreach ($doc in (git -C $PSScriptRoot ls-files -- '*.md')) {
+    try {
+        $null = $strictUtf8.GetString([IO.File]::ReadAllBytes((Join-Path $PSScriptRoot $doc)))
+    } catch {
+        throw "Cannot validate UTF-8 in ${doc}: $_"
+    }
+}
+
 [xml]$manifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Marigold.xml') -Raw
 if ($manifest.PluginData.Description.Length -gt 1000) {
     throw 'PluginHub description exceeds 1000 characters.'
