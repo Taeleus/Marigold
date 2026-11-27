@@ -1,6 +1,6 @@
 # PluginHub submission plan
 
-The public listing pins **0.17.15 for Legacy**. The next candidate uses `CLR;CoreCLR` for **Legacy and Interim** and `Windows;Proton` for platform eligibility. This includes Bazzite when running through Proton. Native Linux Interim needs model and texture path fixes and in-game checks of both Textured Ship renderers before it can be listed. [Public entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Pulsar runtime and platform checks](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Tools.cs) · [Platform review](https://github.com/StarCpt/PluginHub/pull/362#pullrequestreview-5928295452)
+PluginHub published **0.17.16** on November 18, 2026. The live listing pins `Taeleus/Marigold` at `2791f992ebd30d92f329cf8d988422f55f696c1d` and uses `CLR;CoreCLR` for **Legacy and Interim** and `Windows;Proton` for platform eligibility. This includes Bazzite through Proton. Native Linux Interim remains unsupported pending model and texture path fixes and in-game testing of both Textured Ship renderers. [Merged PR](https://github.com/StarCpt/PluginHub/pull/362) · [Public entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Pulsar runtime and platform checks](https://github.com/SpaceGT/Pulsar/blob/v2.4.3/Shared/Tools.cs) · [Platform review](https://github.com/StarCpt/PluginHub/pull/362#pullrequestreview-5928295452)
 
 ## Manifest
 
@@ -11,6 +11,8 @@ The public listing pins **0.17.15 for Legacy**. The next candidate uses `CLR;Cor
 - Run PluginHub's `python test.py Plugins/` with the candidate descriptor applied. Review the exact diff from the published source pin to the proposed pin. [PluginHub rules](https://github.com/StarCpt/PluginHub/wiki/Plugins#rules)
 
 ## Review and submission
+
+For 0.17.16, PluginHub's XML check and offline source compilation for both runtimes passed. Earlier local Windows packages passed in-game testing, and the station-visibility fixes passed 48 offline checks. Installation and in-game loading from the live PluginHub listing remain unverified.
 
 Use the [release guide](RELEASE.md#test-the-pinned-source) to verify source loading. Keep local binary runs, source compilation and in-game source loading distinct in the review. Link the [changelog](../CHANGELOG.md) and summarize the changes that matter to players.
 

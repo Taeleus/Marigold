@@ -1,15 +1,15 @@
 # Marigold roadmap
 
-**Published** · 0.17.15 for Pulsar Legacy. **Next release** · 0.17.16 for Legacy and Interim on Windows and Proton. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Changelog](CHANGELOG.md)
+**Published** · 0.17.16 for Pulsar Legacy and Interim on Windows and Proton. [PluginHub entry](https://github.com/StarCpt/PluginHub/blob/main/Plugins/Marigold.xml) · [Changelog](CHANGELOG.md)
 
-## Next PluginHub update
+## 0.17.16 release status
 
 | Work | Status |
 | --- | --- |
-| Station mode access and lifecycle | Local station-mode checks passed. Performance at a busy multiplayer dock remains unmeasured on this build. |
+| Station mode access and lifecycle | Earlier local station-mode checks passed. The station-visibility fixes passed 48 offline checks. Performance at a busy multiplayer dock remains unmeasured on this build. |
 | HUD performance fixes | Local checks passed for the HD Wireframe pulse and CPU/GPU renderer transitions. |
-| Pulsar Interim | The Windows package loaded and passed in-game testing. The candidate listing allows Windows and Proton. |
-| PluginHub submission | Verify that Pulsar compiles and loads the proposed source pin, then submit the descriptor and confirm the public listing after publication. |
+| Pulsar Interim | The local Windows package passed in-game testing before the station-visibility fixes. |
+| PluginHub publication | Published November 18, 2026. The XML check and offline source compilation for both runtimes passed. Installation and in-game loading from the live listing remain unverified. [Merged PR](https://github.com/StarCpt/PluginHub/pull/362) |
 
 The [release guide](docs/RELEASE.md) covers local source testing and publication. [Performance results](docs/PERFORMANCE-RESULTS.md) records in-game measurements from earlier builds.
 

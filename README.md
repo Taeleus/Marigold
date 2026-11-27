@@ -88,6 +88,8 @@ Workshop search uses blueprints already cached on your computer. Plain or gzip-c
 
 Filled displays can cost more FPS on large, heavily damaged ships. Choose **Outlines only** under **Ship display > Rendering mode** for lighter rendering. Health-bar counts stay the same. Damage pulse settings are under **Preferences**.
 
+**Monochrome Ship** uses the same models in your healthy block/wireframe color, with depth shading and separate damage colors. Choose it in the rendering menu and adjust the healthy block color in the color settings.
+
 **Textured Ship** uses **GPU (experimental)** when you have no saved renderer preference. Choose **CPU** under **Preferences > Performance > Textured Ship renderer** to save a different preference. Use `/mg stats` to check the active renderer, preview resolution and update rate.
 
 **Show connector-docked ships** in Preferences is off by default. Docked ships can show damage against their own saved baselines. The station's baseline and health bars cover the station itself. In **0.17.16**, the controlled grid must be static and each grid in the connector chain must pass a [personal or faction ownership check](docs/COMMANDS.md#station-mode-and-automatic-association).

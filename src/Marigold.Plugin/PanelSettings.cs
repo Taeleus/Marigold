@@ -71,11 +71,11 @@ namespace Marigold
             {
                 var modes = new[]
                 {
-                    HudAppearance.Textured, HudAppearance.HdWireframe, HudAppearance.SdWireframe, HudAppearance.Outlines
+                    HudAppearance.Textured, HudAppearance.Monochrome, HudAppearance.HdWireframe, HudAppearance.SdWireframe, HudAppearance.Outlines
                 };
                 ChoiceField("Rendering mode", new[]
                 {
-                    "Textured Ship", "HD Wireframe", "SD Wireframe", "Outlines only"
+                    "Textured Ship", "Monochrome Ship", "HD Wireframe", "SD Wireframe", "Outlines only"
                 }, Array.IndexOf(modes, owner.controls.Appearance.Rendering), i =>
                 {
                     owner.controls.Appearance.Rendering = modes[i];
@@ -86,7 +86,7 @@ namespace Marigold
                     owner.RefreshReference("Rendering mode changed.");
                     Status("Updated. Save display to keep this setting.");
                 });
-                Note("Textured Ship shows models and paint. HD Wireframe draws sharper lines. Outlines only skips damage shading.");
+                Note("Textured Ship shows models and paint. Monochrome Ship uses your healthy block color with depth shading. HD Wireframe draws sharper lines. Outlines only skips damage shading.");
             }
 
             private void DamagePulses()

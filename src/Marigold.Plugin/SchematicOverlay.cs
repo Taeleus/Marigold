@@ -485,7 +485,7 @@ namespace Marigold
                 ? "no samples"
                 : (drawTotalMs / drawSamples).ToString("F2") + "/" + drawMaxMs.ToString("F2") + " ms (" + drawSamples + " draws)")
                 + ". HUD CPU only; excludes GPU and other game work."
-                + (controls.Appearance.Rendering == HudAppearance.Textured ? TexturedStatistics() : "");
+                + (controls.Appearance.UsesShipModel ? TexturedStatistics() : "");
         }
 
         private Point3 cockpitRight = new Point3(1, 0, 0),

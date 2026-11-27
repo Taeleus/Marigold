@@ -49,7 +49,7 @@ namespace Marigold
             var appearance = DrawingAppearance;
             double fillOpacity = appearance.Fill * (textured ? appearance.ShipOpacity : 1);
             int mode = appearance.Rendering;
-            if (!hdUnavailable && (mode == HudAppearance.HdWireframe || mode == HudAppearance.Textured) && points.Length != 0)
+            if (!hdUnavailable && (mode == HudAppearance.HdWireframe || mode == HudAppearance.Textured || mode == HudAppearance.Monochrome) && points.Length != 0)
             {
                 try
                 {

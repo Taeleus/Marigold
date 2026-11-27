@@ -24,7 +24,7 @@ namespace Marigold
 
         private bool IsGpuTexturedShip(bool recoveryFocus)
         {
-            return controls.UseGpuTexturedShip && DrawingAppearance.Rendering == HudAppearance.Textured
+            return controls.UseGpuTexturedShip && DrawingAppearance.UsesShipModel
                 && !recoveryFocus && recoveryPreview == null && previewBlocks == null;
         }
 

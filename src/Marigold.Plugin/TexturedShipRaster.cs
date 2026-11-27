@@ -40,13 +40,15 @@ namespace Marigold
     {
         public static readonly string DefaultStyles = DisplayFilter.DefaultStyles;
         public readonly string Category, State, Styles;
+        public readonly uint? MonochromeColor;
         public readonly byte ContextAlpha;
         public readonly int ClassificationRevision;
         public readonly BlockSample[] Current, Baseline;
 
         public TexturedShipFilter(string category, string state, string styles, byte contextAlpha,
-            BlockSample[] current, BlockSample[] baseline)
+            BlockSample[] current, BlockSample[] baseline, uint? monochromeColor = null)
         {
+            MonochromeColor = monochromeColor;
             Category = category;
             State = state;
             Styles = styles;
@@ -268,7 +270,7 @@ namespace Marigold
                 float nx = abY * acZ - abZ * acY;
                 float ny = abZ * acX - abX * acZ;
                 float light = .60f + .40f * Math.Abs(area) / (float)Math.Sqrt(nx * nx + ny * ny + area * area);
-                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, texture, triangle.PaintRgb, light, alpha, size, pixels))
+                if (DrawTriangle(a, b, c, x0, x1, y0, y1, area, filter.MonochromeColor.HasValue ? null : texture, filter.MonochromeColor ?? triangle.PaintRgb, light, alpha, size, pixels))
                 {
                     drewSurface = true;
                     foundTexture |= texture != null;

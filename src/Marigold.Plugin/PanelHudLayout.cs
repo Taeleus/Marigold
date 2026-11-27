@@ -65,7 +65,7 @@ namespace Marigold
                 private float ToolbarY => controlsAtTop ? -.325f : .325f;
                 private int SystemCount => draft.Bars.Bars.Length;
                 private int ElementCount => 1 + SystemCount + draft.CustomBars.Count;
-                private bool Textured => draft.Appearance.Rendering == HudAppearance.Textured;
+                private bool Textured => draft.Appearance.UsesShipModel;
 
                 public HudLayoutScreen(Panel editor, HudLayoutDraft draft)
                     : base(new Vector2(.5f, .5f), null, Vector2.One)

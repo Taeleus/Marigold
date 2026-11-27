@@ -10,6 +10,7 @@ cbuffer Preview : register(b0)
     float4 CameraNear;
     float4 CenterInverseRadius;
     float4 Settings; // Zoom, ship opacity, hull depth tolerance, depth scale.
+    float4 Monochrome; // Linear model color and enable flag.
 };
 
 Texture2D<float4> ColorMap : register(t0);
@@ -66,14 +67,14 @@ float Light(float3 p)
 float4 PaintPixel(ModelPixel input) : SV_Target
 {
     float alpha = input.Color.a * Settings.y;
-    return float4(input.Color.rgb * Light(input.View) * alpha, alpha);
+    return float4(lerp(input.Color.rgb, Monochrome.rgb, Monochrome.a) * Light(input.View) * alpha, alpha);
 }
 
 float4 TexturedPixel(ModelPixel input) : SV_Target
 {
     float alpha = input.Color.a * Settings.y;
     float3 tex = ColorMap.Sample(MaterialSampler, input.Uv).rgb;
-    return float4(tex * (.25 + .75 * input.Color.rgb) * Light(input.View) * alpha, alpha);
+    return float4(lerp(tex * (.25 + .75 * input.Color.rgb), Monochrome.rgb, Monochrome.a) * Light(input.View) * alpha, alpha);
 }
 
 struct OverlayInput

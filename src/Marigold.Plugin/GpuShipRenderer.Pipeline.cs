@@ -21,10 +21,12 @@ namespace Marigold
         private struct CameraConstants
         {
             private const float DepthScale = .125f;
-            public Vector4 Right, Up, Near, CenterInverseRadius, Settings;
+            public Vector4 Right, Up, Near, CenterInverseRadius, Settings, Monochrome;
 
             public CameraConstants(GpuShipFrame frame)
             {
+                uint color = frame.Filter.MonochromeColor ?? 0;
+                Monochrome = new Vector4(InstanceData.Srgb[(color >> 16) & 255], InstanceData.Srgb[(color >> 8) & 255], InstanceData.Srgb[color & 255], frame.Filter.MonochromeColor.HasValue ? 1 : 0);
                 var min = frame.Bounds.Min;
                 var max = frame.Bounds.Max;
                 double dx = max.X - min.X, dy = max.Y - min.Y, dz = max.Z - min.Z;
@@ -41,7 +43,7 @@ namespace Marigold
         [StructLayout(LayoutKind.Sequential)]
         private struct InstanceData
         {
-            private static readonly float[] Srgb = LinearColors();
+            public static readonly float[] Srgb = LinearColors();
             public Vector4 X, Y, Z, Uv, Paint;
 
             public InstanceData(TexturedShipGpuInstance instance, byte alpha)

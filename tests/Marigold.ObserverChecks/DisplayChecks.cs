@@ -194,6 +194,15 @@ internal static class DisplayChecks
         Check(HudAppearance.Parse(explicitSd).Rendering == HudAppearance.SdWireframe,
             "Explicit SD Wireframe remains selected after saving");
         string oldSquare = string.Join(";", explicitSd.Split(';'), 0, 16);
+        var monochrome = new SchematicControls();
+        monochrome.Appearance.Rendering = HudAppearance.Monochrome;
+        monochrome.Appearance.Colors = "123456,FF3737,DCCD41,DC64FF,5AFF78,BEBEBE,FF8214";
+        var restoredMonochrome = new SchematicControls();
+        DisplaySettings.Import(DisplaySettings.Export(monochrome), restoredMonochrome);
+        Check(restoredMonochrome.Appearance.Rendering == HudAppearance.Monochrome
+            && restoredMonochrome.Appearance.UsesShipModel
+            && restoredMonochrome.Appearance.Colors == monochrome.Appearance.Colors,
+            "Monochrome mode and selected color survive layout sharing");
         var migratedSquare = HudAppearance.Parse(oldSquare);
         Check(!migratedSquare.ScaleBackgroundWithShip && migratedSquare.BackgroundWidth == .5 && migratedSquare.BackgroundHeight == .5,
             "Older layouts retain their saved square background dimensions");

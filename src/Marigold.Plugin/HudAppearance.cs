@@ -12,6 +12,8 @@ namespace Marigold
         public const int FaultOutlines = 3;
         public const int HdWireframe = 4;
         public const int Textured = 5;
+        public const int Monochrome = 6;
+        public bool UsesShipModel => Rendering == Textured || Rendering == Monochrome;
         public const double MinBackgroundSize = .05, MaxBackgroundSize = .95;
 
         private const double DefaultShipOpacity = .7;
@@ -147,7 +149,7 @@ namespace Marigold
             bool legacyStyle = a.Length == 15 && bool.TryParse(a[13], out texturedShip);
             bool unifiedRendering = a.Length >= 14 && !legacyStyle;
             if (a.Length >= 10 && (!int.TryParse(a[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out rendering)
-                || rendering < SdWireframe || rendering > (unifiedRendering ? Textured : FaultOutlines)))
+                || rendering < SdWireframe || rendering > (unifiedRendering ? Monochrome : FaultOutlines)))
                 throw new InvalidDataException("Invalid rendering mode.");
             if (!unifiedRendering && rendering == SdWireframe)
                 rendering = HdWireframe; // The earlier default Full display moves to HD Wireframe.

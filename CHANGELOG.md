@@ -2,11 +2,11 @@
 
 Changes to Marigold, newest first. This log includes local development builds and PluginHub releases. Early entries were reconstructed from development and test records.
 
-The published PluginHub release is **0.17.15 for Pulsar Legacy**.
+The published PluginHub release is **0.17.16 for Pulsar Legacy and Interim on Windows and Proton**. [PluginHub release PR](https://github.com/StarCpt/PluginHub/pull/362)
 
-## 0.17.16 — Release candidate
+## 0.17.16 — November 18, 2026
 
-- Separate Windows packages for Pulsar Legacy and Interim passed local in-game testing. The proposed PluginHub update enables both runtimes on Windows and Proton. [Release status](ROADMAP.md#next-pluginhub-update)
+- Earlier local Windows packages for Legacy and Interim passed in-game testing. Installation from the published PluginHub listing remains unverified. [Release status](ROADMAP.md#01716-release-status)
 - Station mode is available on static grids. It shows owned or faction-shared docked ships and updates when access changes or grids merge. It keeps a matched baseline through ordinary undocking so redocking a damaged ship can still show its missing blocks.
 - Station mode pauses ownership scans while the HUD is hidden and refreshes access before showing docked ships again or reporting on them. When the HUD returns, it rebuilds docked ship positions and damage markers, including ships that moved to another berth while hidden.
 - HD Wireframe limits pulse-only redraws to 30 Hz. Ship rotation, damage changes and layout edits still update as they happen.

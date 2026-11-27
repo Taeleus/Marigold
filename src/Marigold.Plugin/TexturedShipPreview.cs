@@ -41,7 +41,7 @@ namespace Marigold
 
         private string TexturedCaption(bool renderedModel)
         {
-            if (DrawingAppearance.Rendering != HudAppearance.Textured)
+            if (!DrawingAppearance.UsesShipModel)
                 return "";
             if (IsGpuTexturedShip(false))
                 return renderedModel ? " [GPU]" : texturedFallback ? " [GPU preview unavailable]" : " [Preparing GPU preview]";
@@ -54,7 +54,7 @@ namespace Marigold
         private bool TryDrawTexturedShip(ref ShipProjection view, float left, float top, float side, bool recoveryFocus, bool expanded)
         {
             var appearance = DrawingAppearance;
-            if (appearance.Rendering != HudAppearance.Textured)
+            if (!appearance.UsesShipModel)
             {
                 ReleaseTexturedShip();
                 return false;
@@ -247,9 +247,13 @@ namespace Marigold
                 view, size, preferredSize, filter, expanded, useGpu));
         }
 
+        private uint? MonochromeColor => DrawingAppearance.Rendering == HudAppearance.Monochrome
+            ? (uint?)Convert.ToUInt32(DrawingAppearance.Colors.Split(',')[0], 16) : null;
+
         private bool MatchesTexturedOptions(TexturedShipFilter filter)
         {
-            return filter.Category == controls.Category && filter.State == controls.StateFilter
+            return filter.MonochromeColor == MonochromeColor
+                && filter.Category == controls.Category && filter.State == controls.StateFilter
                 && filter.Styles == controls.SystemStyles
                 && filter.ClassificationRevision == DisplayFilter.ClassificationRevision
                 && filter.ContextAlpha == (byte)(DrawingAppearance.ContextOpacity * 255);
@@ -264,7 +268,7 @@ namespace Marigold
             if (texturedFilter == null || !MatchesTexturedOptions(texturedFilter)
                 || texturedFilter.Current != current || texturedFilter.Baseline != baseline)
                 texturedFilter = new TexturedShipFilter(controls.Category, controls.StateFilter, controls.SystemStyles,
-                    (byte)(DrawingAppearance.ContextOpacity * 255), current, baseline);
+                    (byte)(DrawingAppearance.ContextOpacity * 255), current, baseline, MonochromeColor);
             return texturedFilter;
         }
 
